@@ -1,0 +1,24 @@
+%YAML 1.2
+---
+image_width: 1280
+image_height: 720
+camera_matrix: !!opencv-matrix
+   rows: 3
+   cols: 3
+   dt: d
+   data: [ 900.04073290961333, 0., 626.19451011884701, 0.,
+       899.96443398472593, 352.05303335371809, 0., 0., 1. ]
+dist_coeffs: !!opencv-matrix
+   rows: 1
+   cols: 5
+   dt: d
+   data: [ -0.10942854009080541, 0.13893226831431024,
+       0.0011918379767071677, -0.00032277768790844663, 0. ]
+rms_px: 0.36588916185793463
+views: 61
+square_mm: 29.800000000000001
+quality: LAYAK
+f_sd_pct: 0.43215671044781162
+coverage_cells: 12
+tilt_sides: "kiri,kanan,atas,bawah"
+frames: "data\\calib_laptop\\20261011_115110"
