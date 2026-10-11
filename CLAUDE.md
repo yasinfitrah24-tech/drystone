@@ -1,6 +1,6 @@
 # Drystone - OpenCV AI Competition 2026
 
-Konteks untuk Claude (dipakai Yasin dan Vincent). Status, keputusan, dan jadwal terbaru ada di doc project HACKATHON `claude/opencv-ai-competition.md`.
+Konteks untuk Claude (dipakai Yasin dan Vincent). **Baca `docs/STATUS.md` dulu** untuk status, jadwal, hasil tes, dan pembagian tugas terbaru. (Sumber utama Yasin: doc project HACKATHON `claude/opencv-ai-competition.md`; `docs/STATUS.md` adalah salinannya di repo.)
 
 ## Projek
 Drystone: satu kamera + OpenCV 5 membaca posisi tiap kardus (marker ArUco + katalog ukuran dan berat), membangun kembaran digital tumpukan, lalu simulasi MuJoCo (Monte Carlo) menghitung peluang roboh untuk calon posisi kardus berikutnya. Agent memandu, minta persetujuan, atau menolak, lalu mengecek ulang setelah kardus ditaruh.
@@ -53,3 +53,11 @@ Pastikan muncul `(.venv)` di awal baris sebelum menjalankan pip atau python. Pyt
 - Versi dependency di-pin di `requirements.txt`.
 - Tiap klaim di README dan laporan harus didukung angka evaluasi. Drystone adalah alat bantu keputusan, bukan perangkat keselamatan bersertifikat.
 - Jangan pakai layanan AWS Marketplace dan jangan upgrade akun AWS ke Paid plan.
+
+## Kerja berdua (Yasin + Vincent)
+- Repo: GitHub private `drystone`. Selalu `git pull` sebelum mulai, commit + push setelah selesai.
+- Bagi file per orang supaya jarang bentrok (misalnya `tools/` Yasin, `aws/` Vincent).
+- Kalibrasi kamera per kamera: `data/camera_laptop.yaml` hanya untuk webcam laptop Yasin. Kamera lain wajib kalibrasi sendiri (`--name <nama>`).
+- Kalau ada keputusan atau hasil tes baru, update `docs/STATUS.md` di commit yang sama.
+- Repo akan dibuat public sebelum submit: jangan commit secret, data pribadi, atau info akun/pembayaran.
+
