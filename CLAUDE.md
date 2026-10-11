@@ -1,6 +1,6 @@
 # Drystone - OpenCV AI Competition 2026
 
-Konteks untuk Claude (dipakai Yasin dan Vincent). **Baca `docs/STATUS.md` dulu** untuk status, jadwal, hasil tes, dan pembagian tugas terbaru. (Sumber utama Yasin: doc project HACKATHON `claude/opencv-ai-competition.md`; `docs/STATUS.md` adalah salinannya di repo.)
+Konteks untuk Claude (dipakai Yasin dan Vincent). **Baca `docs/STATUS.md` lalu `docs/HANDOFF.md` dulu** untuk status, jadwal, hasil tes, dan pembagian tugas terbaru. (Sumber utama Yasin: doc project HACKATHON `claude/opencv-ai-competition.md`; `docs/STATUS.md` adalah salinannya di repo.)
 
 ## Projek
 Drystone: satu kamera + OpenCV 5 membaca posisi tiap kardus (marker ArUco + katalog ukuran dan berat), membangun kembaran digital tumpukan, lalu simulasi MuJoCo (Monte Carlo) menghitung peluang roboh untuk calon posisi kardus berikutnya. Agent memandu, minta persetujuan, atau menolak, lalu mengecek ulang setelah kardus ditaruh.
