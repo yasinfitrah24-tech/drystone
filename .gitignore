@@ -1,0 +1,14 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# Secrets (AWS keys, API keys): never commit
+.env
+.env.*
+!.env.example
+
+# Raw camera captures are large; calibration .yaml and test .csv files stay in git
+data/**/*.png
+data/**/*.jpg
+data/**/*.jpeg

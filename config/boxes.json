@@ -1,0 +1,8 @@
+{
+  "_cara_isi": "Satu entri per ID marker. Ukuran dalam cm: length = lebar sisi depan (sisi yang ada markernya), height = tinggi, depth = tebal depan-belakang. mass_kg = berat kardus + isinya (timbang). Marker ditempel di tengah sisi depan. ID 0 = kardus paling bawah.",
+  "0": {"length_cm": 30.0, "depth_cm": 20.0, "height_cm": 20.0, "mass_kg": 1.0},
+  "1": {"length_cm": 30.0, "depth_cm": 20.0, "height_cm": 20.0, "mass_kg": 1.0},
+  "2": {"length_cm": 30.0, "depth_cm": 20.0, "height_cm": 20.0, "mass_kg": 1.0},
+  "3": {"length_cm": 30.0, "depth_cm": 20.0, "height_cm": 20.0, "mass_kg": 1.0},
+  "4": {"length_cm": 30.0, "depth_cm": 20.0, "height_cm": 20.0, "mass_kg": 1.0}
+}
