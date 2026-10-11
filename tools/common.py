@@ -59,7 +59,7 @@ def read_image(path):
     return img
 
 
-def save_calibration(path, K, dist, size, rms, views, square_mm):
+def save_calibration(path, K, dist, size, rms, views, square_mm, extra=None):
     os.makedirs(os.path.dirname(path), exist_ok=True)
     fs = cv2.FileStorage(path, cv2.FILE_STORAGE_WRITE)
     fs.write("image_width", int(size[0]))
@@ -69,6 +69,8 @@ def save_calibration(path, K, dist, size, rms, views, square_mm):
     fs.write("rms_px", float(rms))
     fs.write("views", int(views))
     fs.write("square_mm", float(square_mm))
+    for key, value in (extra or {}).items():
+        fs.write(key, value)
     fs.release()
 
 
@@ -79,7 +81,13 @@ def load_calibration(path):
     K = fs.getNode("camera_matrix").mat()
     dist = fs.getNode("dist_coeffs").mat()
     size = (int(fs.getNode("image_width").real()), int(fs.getNode("image_height").real()))
+    node = fs.getNode("quality")
+    quality = "" if node.isNone() else node.string()
     fs.release()
+    if quality != "LAYAK":
+        print(f"PERINGATAN: {os.path.basename(path)} belum lolos cek kualitas kalibrasi "
+              f"({quality or 'belum dicek'}). Angka posisi bisa meleset. "
+              "Ulangi tools/calibrate.py sampai vonisnya LAYAK.")
     return K, dist, size
 
 

@@ -16,10 +16,18 @@ Drystone: satu kamera + OpenCV 5 membaca posisi tiap kardus (marker ArUco + kata
 - Peluang roboh selalu dari Monte Carlo dengan galat kamera hasil ukur sendiri (Tes 1), bukan satu simulasi.
 - Keputusan keselamatan tetap deterministik dan tercatat di log, tidak diserahkan ke LLM.
 
-## Setup (Windows, PowerShell)
+## Setup (Windows)
+Command Prompt (cmd):
+    cd /d E:\opencv-project
+    .venv\Scripts\activate
+    pip install -r requirements.txt
+
+PowerShell:
     cd E:\opencv-project
     .venv\Scripts\Activate.ps1
     pip install -r requirements.txt
+
+Pastikan muncul `(.venv)` di awal baris sebelum menjalankan pip atau python. Python global di laptop ini 3.14, venv 3.12.
 
 ## Struktur
 - `tools/calibrate.py`: kalibrasi kamera dengan papan ChArUco
@@ -33,6 +41,11 @@ Drystone: satu kamera + OpenCV 5 membaca posisi tiap kardus (marker ArUco + kata
 - Papan kalibrasi: ChArUco 7x5, kotak 30 mm, marker 22 mm, DICT_5X5_100
 - Marker kardus: DICT_4X4_50, sisi hitam 80 mm, ID 0-11, ditempel di tengah sisi depan kardus
 - Selalu ukur hasil cetak dan isi ukuran aslinya (`--square-mm`, `--marker-mm`)
+
+## Kalibrasi
+- Papan ChArUco wajib ditempel di bidang keras dan rata. Kertas yang dipegang langsung melengkung dan merusak kalibrasi (percobaan 11 Okt: RMS 1.18 px, fx meleset +-75 px).
+- Kalibrasi hanya dipakai kalau vonisnya LAYAK: RMS <= 1.0 px (bagus < 0.5), ketidakpastian fx/fy <= 1%, cakupan >= 9 dari 12 kotak gambar, minimal 10 posisi papan berbeda. Hasil ULANGI disimpan sebagai `camera_<nama>_draft.yaml`.
+- Kamera sendirian: pakai `--auto`. Frame kembar ditolak otomatis.
 
 ## Aturan kerja
 - Semua jam pakai waktu China.
