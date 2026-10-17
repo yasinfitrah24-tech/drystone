@@ -1,8 +1,6 @@
 {
-  "_cara_isi": "Satu entri per ID marker. Kardus 邮政纸箱 5号 dipakai BERDIRI (flap di atas). Ukuran dalam cm: length = lebar sisi depan (sisi polos 29 cm yang ada markernya, arah menjorok kiri-kanan), height = tinggi (19), depth = tebal depan-belakang (17). Ukur ulang ukuran luar setelah dirakit. mass_kg = berat kardus + isi (timbang; target ±1 kg, semua sama). ID 0 = kardus paling bawah.",
+  "_cara_isi": "Satu entri per ID marker. Kardus 邮政纸箱 5号 dipakai BERDIRI (flap di atas). Ukuran dalam cm: length = lebar sisi depan (sisi polos 29 cm yang ada markernya, arah menjorok kiri-kanan), height = tinggi (19), depth = tebal depan-belakang (17). Ukur ulang ukuran luar setelah dirakit. mass_kg = berat kardus + isi (timbang; target ±1 kg, semua sama). ID 0 = kardus paling bawah. Hanya tulis kardus yang benar-benar ada dan sudah bermarker (agent memakai daftar ini untuk menentukan kardus berikutnya).",
   "0": {"length_cm": 29.0, "depth_cm": 17.0, "height_cm": 19.0, "mass_kg": 1.0},
   "1": {"length_cm": 29.0, "depth_cm": 17.0, "height_cm": 19.0, "mass_kg": 1.0},
-  "2": {"length_cm": 29.0, "depth_cm": 17.0, "height_cm": 19.0, "mass_kg": 1.0},
-  "3": {"length_cm": 29.0, "depth_cm": 17.0, "height_cm": 19.0, "mass_kg": 1.0},
-  "4": {"length_cm": 29.0, "depth_cm": 17.0, "height_cm": 19.0, "mass_kg": 1.0}
+  "2": {"length_cm": 29.0, "depth_cm": 17.0, "height_cm": 19.0, "mass_kg": 1.0}
 }
