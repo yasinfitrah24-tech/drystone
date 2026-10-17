@@ -124,13 +124,14 @@ Target tambahan (S3, DynamoDB, dashboard/alarm CloudWatch, deteksi tanpa marker)
 ## Wajib sebelum submit
 - **Validasi setelan ketidakpastian** (posisi 1 cm, isi 2 cm) di percobaan baru (evaluasi 21 Okt, pipeline persepsi baru), target **0 roboh di zona GREEN**.
 - **Vincent masuk tim di Devpost.**
-- **Cek Official Rules** apakah repo wajib publik.
 
 ## Berikutnya
-- **18 Okt:** latihan adegan override → roboh · cek Official Rules soal repo publik.
+- **18 Okt:** latihan adegan override → roboh.
 - **19 Okt:** README utama + rapikan repo.
 - **20 Okt:** cadangan.
 - **21 Okt:** evaluasi 20–30 percobaan baru dengan pipeline persepsi baru (akurasi, Brier, roboh di zona GREEN, waktu keputusan, retake, fallback) + kasus gagal; sekaligus validasi setelan ketidakpastian Tes 2; malamnya fitur dikunci.
+
+- **25–26 Okt:** jadikan repo publik + cek ulang tidak ada secret, nomor akun AWS, atau Function URL di seluruh riwayat git (bukan hanya commit terakhir).
 
 ## Bonus (hanya kalau inti selesai)
 - S3 (foto bukti per keputusan) + DynamoDB (log keputusan, approval, override). Log approve/override dari halaman juri **sudah** tercatat di CloudWatch Logs (satu baris JSON `web_supervisor_choice`).
@@ -144,5 +145,5 @@ Target tambahan (S3, DynamoDB, dashboard/alarm CloudWatch, deteksi tanpa marker)
 ## Aturan kerja
 - Semua jam waktu China.
 - Secret (AWS key, API key) hanya di `.env` atau `aws configure`. Jangan pernah di-commit. Tiap orang pakai IAM user sendiri.
-- Repo akan dibuat public sebelum submit: jangan commit data pribadi, foto kamar/wajah, atau info akun/pembayaran.
+- Repo akan dibuat public sebelum submit: jangan commit data pribadi, foto kamar/wajah, atau info akun/pembayaran. Official Rules (dicek 18 Okt): repo tidak wajib publik ("A public or private judge-accessible code repository or archive. The code does not have to be open source."); keputusan: tetap dijadikan publik supaya juri pasti bisa mengakses.
 - Versi dependency di-pin. Tiap klaim di README/laporan harus didukung angka evaluasi. Drystone adalah alat bantu keputusan, bukan perangkat keselamatan bersertifikat.
