@@ -58,6 +58,21 @@ Target tambahan (S3, DynamoDB, dashboard/alarm CloudWatch, deteksi tanpa marker)
 ### Layanan AWS (17 Okt) — kode
 - `tools/service.py`: 1–5 foto → keputusan JSON (mode decide / check), `lambda_handler`. Uji dengan foto asli: +6 cm HIJAU 1% (1,7 dtk), +12 cm KUNING 41% + usulan (8,3 dtk), +16 cm MERAH 87% (8,2 dtk). Jalan di Python 3.12 bersih dengan paket Lambda (OpenCV headless).
 
+### Latihan override → roboh dengan kardus asli (18 Okt 02.37–02.48, `agent.py --aws`)
+- Log: `data/agent_20261018_023749/log.jsonl` (tidak di-commit; folder berisi foto). ID 1 HIJAU di +6 cm tiap kali (cek ulang OK, −0,5 / +0,1 / −0,0 cm).
+- **3 percobaan ID 2 MERAH** (+17 cm 86%, +18 cm 95%, +18 cm 95%), semua override oleh Yasin, **semua roboh (3/3)**, **FELL terdeteksi 3/3** ("box ID 2 is on the floor next to the stack -> it fell"), tanpa retake. Perbaikan cek ulang terbukti dengan kardus asli.
+- Waktu: keputusan MERAH lewat Lambda **8,8–9,5 dtk** round trip (server 5,9–6,6 dtk); keputusan HIJAU 3,8–5,2 dtk; cek ulang **2,9–4,1 dtk**.
+- Usulan agent selalu **+10 cm**, P(fall) 4,0 / 5,7 / 5,3%.
+- **Untuk video: pakai +18 cm (95%).**
+- Ditemukan bug alur setelah FELL (lihat di bawah): agent langsung meminta keputusan berikutnya, retake otomatis 3× untuk ID 2 yang masih di lantai (langkah 7–15 di log, 3 kali SPASI), dan ID 2 tidak ditawarkan lagi.
+
+### Alur setelah FELL (18 Okt) — diperbaiki di laptop, belum diuji dengan kardus asli
+- Setelah FELL, kardus yang jatuh kembali berstatus "belum ditaruh"; tumpukan = kardus yang masih berdiri. Agent berhenti dengan instruksi "box ID 2 fell. Pick it up and keep it out of the camera view, then press SPACE to plan ID 2 again." Geseran yang diminta dipertahankan, jadi keputusan ulang menampilkan risiko dan usulan yang sama (pilih s → kotak hijau → cek ulang OK).
+- SPASI saat kardus yang jatuh masih terlihat: satu bacaan, instruksi diulang, tercatat `wait_pickup`; tidak ada retake otomatis. Untuk keputusan biasa, kardus di luar tumpukan juga tidak lagi di-retake 3× (kardus tidak pindah sendiri): satu pesan, tunggu pekerja.
+- Kardus yang jatuh direncanakan ulang lebih dulu. "every box in the catalogue is already on the stack" hanya kalau semua kardus berdiri di tumpukan. Ringkasan akhir punya `retry_after_fall`; log keputusan punya `retry_after_fall`, log cek punya `fell_ids`.
+- Tes `tests/test_agent_flow.py` (kamera palsu, loop `agent.py` utuh, lokal dan `--aws` lewat handler Lambda): ID 1 HIJAU → ID 2 MERAH → override → jatuh → FELL → SPASI saat masih di lantai (1× `wait_pickup`, 0 retake) → diangkat → keputusan ulang ID 2 MERAH → s → OK. Tes gagal dengan kode lama. Total 42 tes lulus.
+- Hanya loop laptop yang berubah (`main`, `perceive`); Lambda tidak memakainya, jadi **tidak perlu deploy** untuk perbaikan ini.
+
 ### Bug cek ulang setelah override MERAH (18 Okt) — diperbaiki, live di `9523213`
 - **Kejadian:** ID 2 di +18 cm, RED 95%, override Yasin. ID 2 jatuh dan mendarat tegak di lantai, kanan tumpukan. Layar `stack: [0, 2, 1]`; cek ulang 3× "box ID 1 is not on the stack (lying next to it?) -> move it out of the camera view" lalu "still failing". Jatuhnya tidak tercatat.
 - **Penyebab (direproduksi dengan foto sintetis):** (1) urutan tumpukan diambil dari tinggi di gambar, jadi kardus di lantai samping tumpukan (y ≈ 0) masuk ke urutan, dan pesan menyebut kardus yang salah; (2) arah hadap gabungan ikut merata-ratakan marker kardus yang jatuh: kardus di lantai yang berputar 20 / 35 / 50° memiringkan acuan seluruh tumpukan 6 / 11 / 16° (juga sebab kerangka merah miring di layar). Angka persis "ID 1" dari kejadian asli tidak tereproduksi; kedua penyebab ini tetap diperbaiki.
@@ -148,7 +163,7 @@ Target tambahan (S3, DynamoDB, dashboard/alarm CloudWatch, deteksi tanpa marker)
 - **Vincent masuk tim di Devpost.**
 
 ## Berikutnya
-- **18 Okt:** latihan adegan override → roboh.
+- **18 Okt:** ~~latihan adegan override → roboh~~ (selesai, 3/3) · ulangi dengan kardus asli: jatuh → angkat → keputusan ulang ID 2 → s → cek OK (menguji perbaikan alur setelah FELL).
 - **19 Okt:** README utama + rapikan repo.
 - **20 Okt:** cadangan.
 - **21 Okt:** evaluasi 20–30 percobaan baru dengan pipeline persepsi baru (akurasi, Brier, roboh di zona GREEN, waktu keputusan, retake, fallback) + kasus gagal; sekaligus validasi setelan ketidakpastian Tes 2; malamnya fitur dikunci.

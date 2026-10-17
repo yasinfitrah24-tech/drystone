@@ -294,7 +294,11 @@ def perceive(cap, detector, catalog, obj, K, dist, base_id, log, reason, allow_l
     for attempt in range(1, MAX_RETRIES + 1):
         stack, loose, R0, t0, frame, problem = read_scene(cap, detector, catalog, obj, K, dist, base_id)
         if problem is None and loose and not allow_loose:
+            # a box off the stack will not move by itself: tell the worker once instead of retaking
             problem = loose_problem(loose[0], stack)
+            print(f"  [agent] {reason}: {problem}. Then press SPACE again.")
+            log.write("retake", frame, reason=reason, attempt=attempt, problem=problem)
+            return None, loose, None, None, frame, problem
         if problem is None:
             if attempt > 1:
                 print(f"  [agent] reading {attempt} is clean")
@@ -404,10 +408,20 @@ def ask_text(prompt, min_len=1):
         print(f"  required (at least {min_len} characters)")
 
 
-def next_box_id(stack, catalog):
+def next_box_id(stack, catalog, fallen=()):
+    """Next box to place: a box that fell is planned again first, otherwise the smallest ID not on the stack."""
     used = {b["id"] for b in stack}
+    again = [i for i in sorted(fallen) if i not in used and i in catalog]
+    if again:
+        return again[0]
     free = [i for i in sorted(catalog) if i not in used]
     return free[0] if free else None
+
+
+def fallen_message(ids):
+    names = ", ".join(f"ID {i}" for i in ids)
+    return (f"box {names} fell. Pick it up and keep it out of the camera view, "
+            f"then press SPACE to plan {names} again.")
 
 
 def print_decision(d):
@@ -496,7 +510,8 @@ def main():
     offset = 0.0          # candidate shift (m) relative to the current top box
     plan = None           # approved placement waiting to be checked: {"before", "box", "how", "zone", "p"}
     last = None           # last decision, drawn until the candidate moves
-    stats = {"decisions": 0, "GREEN": 0, "YELLOW": 0, "RED": 0, "override": 0, "fell": 0}
+    fallen = []           # boxes that fell off: not placed any more, planned again once picked up
+    stats = {"decisions": 0, "GREEN": 0, "YELLOW": 0, "RED": 0, "override": 0, "fell": 0, "retry_after_fall": 0}
     try:
         while True:
             ok, frame = cap.read()
@@ -515,7 +530,9 @@ def main():
                     draw_box(view, plan["box"], catalog, R0, t0, K, dist, COLORS[plan["zone"]], 3)
                     lines.append(f"place box ID {plan['box']['id']} in the wireframe, let go, then SPACE = check")
                 else:
-                    nid = next_box_id(stack, catalog)
+                    if fallen:
+                        lines.append(fallen_message(fallen))
+                    nid = next_box_id(stack, catalog, fallen)
                     if nid is not None:
                         cand = core.candidate_box(stack, nid, offset, catalog)
                         color = COLORS[last["zone"]] if last else COLORS["CANDIDATE"]
@@ -545,14 +562,28 @@ def main():
                 log.write("cancel", None, box_id=plan["box"]["id"], note="plan cancelled before placement")
                 plan = None
             elif key == ord(" ") and plan is None:
+                if fallen:
+                    _, loose, _, _, shot, _ = read_scene(cap, detector, catalog, obj, K, dist, args.base_id, n=3)
+                    still = [b for b in loose if b["id"] in fallen]
+                    if still:                      # one reading, no retakes: the worker has to move the box
+                        print(f"  [agent] {fallen_message([b['id'] for b in still])} "
+                              f"(ID {still[0]['id']} is still in view, {still[0]['where']})")
+                        log.write("wait_pickup", shot, box_ids=[b["id"] for b in still],
+                                  where=[b["where"] for b in still])
+                        continue
                 stack, _, R0, t0, shot, _ = perceive(cap, detector, catalog, obj, K, dist, args.base_id, log,
                                                      "decision")
                 if stack is None:
                     continue
-                nid = next_box_id(stack, catalog)
+                nid = next_box_id(stack, catalog, fallen)
                 if nid is None:
                     print("  [agent] every box in the catalogue is already on the stack.")
                     continue
+                retry = nid in fallen
+                if retry:
+                    fallen.remove(nid)
+                    stats["retry_after_fall"] += 1
+                    print(f"  [agent] planning box ID {nid} again after it fell.")
                 if args.aws:
                     print("  [agent] sending photos to AWS ...")
                     d, problem = decide_aws(args.aws, cap, shot, stack, nid, offset, catalog, settings)
@@ -563,6 +594,7 @@ def main():
                 else:
                     d = core.decide(stack, nid, offset, catalog, settings)
                     d["source"] = "laptop"
+                d["retry_after_fall"] = retry
                 stats["decisions"] += 1
                 stats[d["zone"]] += 1
                 print_decision(d)
@@ -609,17 +641,27 @@ def main():
                     elif extra["zone_now"] == "YELLOW":
                         print(f"  [agent] CAUTION: the stack is borderline now (P(fall) {extra['p_now']:.0%}). "
                               "Ask the supervisor before adding another box.")
+                fell_ids = []
                 if v["status"].startswith("FELL"):
                     stats["fell"] += 1
+                    on_stack = {b["id"] for b in stack} if stack is not None else set()
+                    fell_ids = sorted({plan["box"]["id"]} | {b["id"] for b in plan["before"] if b["id"] not in on_stack
+                                                             and b["id"] != args.base_id})
                 log.write("check", shot, **v, planned_by=plan["how"], planned_zone=plan["zone"],
-                          planned_p=plan["p"], checked_on=src, **extra)
+                          planned_p=plan["p"], checked_on=src, fell_ids=fell_ids, **extra)
                 if v["status"] == "NOT_PLACED":
                     continue                       # box not placed yet: keep the plan
                 if v["status"] == "OFF_PLAN" and extra.get("zone_now", "GREEN") != "GREEN":
                     continue                       # wait for the worker to fix it, then check again
                 plan = None
-                offset = 0.0
                 last = None
+                if fell_ids:
+                    # the fallen boxes are "not placed" again; keep the requested shift so the new decision
+                    # shows the same risk and its suggestion
+                    fallen = sorted(set(fallen) | set(fell_ids))
+                    print(f"  [agent] {fallen_message(fell_ids)}")
+                else:
+                    offset = 0.0
     except KeyboardInterrupt:
         print("\nStopped with Ctrl+C.")
     cap.release()
