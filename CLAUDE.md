@@ -1,6 +1,8 @@
 # Drystone - OpenCV AI Competition 2026
 
-Konteks untuk Claude (dipakai Yasin dan Vincent). **Baca `docs/STATUS.md` lalu `docs/HANDOFF.md` dulu** untuk status, jadwal, hasil tes, dan pembagian tugas terbaru. (Sumber utama Yasin: doc project HACKATHON `claude/opencv-ai-competition.md`; `docs/STATUS.md` adalah salinannya di repo.)
+Konteks untuk Claude (akun Yasin maupun Vincent). **Baca `docs/STATUS.md` lalu `docs/HANDOFF.md` dulu** untuk status, jadwal, hasil tes, dan tugas berikutnya. Doc project claude.ai Yasin tidak terbaca dari akun lain, jadi `docs/STATUS.md` adalah sumber status di repo.
+
+**Bahasa:** ngobrol dengan Yasin/Vincent pakai bahasa Indonesia. Semua teks produk (output agent, overlay kamera, JSON AWS, README publik, komentar baru) pakai **bahasa Inggris** karena lombanya internasional.
 
 ## Projek
 Drystone: satu kamera + OpenCV 5 membaca posisi tiap kardus (marker ArUco + katalog ukuran dan berat), membangun kembaran digital tumpukan, lalu simulasi MuJoCo (Monte Carlo) menghitung peluang roboh untuk calon posisi kardus berikutnya. Agent memandu, minta persetujuan, atau menolak, lalu mengecek ulang setelah kardus ditaruh.
@@ -10,9 +12,10 @@ Drystone: satu kamera + OpenCV 5 membaca posisi tiap kardus (marker ArUco + kata
 - Target: Agentic Vision Award + juara utama.
 
 ## Aturan agent
-- P(roboh) < 10% = HIJAU: pandu penempatan.
-- 10-50% = KUNING: minta persetujuan supervisor.
-- > 50% = MERAH: tolak dan usulkan posisi lain. Lanjut hanya lewat override supervisor dengan alasan yang tercatat.
+- P(fall) < 10% = GREEN -> GUIDE: pandu penempatan.
+- 10-50% = YELLOW -> ASK_SUPERVISOR: minta persetujuan supervisor (a approve / s use suggestion / r reject).
+- > 50% = RED -> REJECT: tolak dan usulkan posisi lain (s use suggestion / o override dengan nama + alasan / c cancel).
+- Setelah kardus ditaruh, cek ulang: OK / OFF_PLAN / FELL / NOT_PLACED.
 - Peluang roboh selalu dari Monte Carlo, bukan satu simulasi. Ketidakpastian default: posisi 1 cm (kamera 0,5 dari Tes 1 + penempatan/tepi kardus dari Tes 2) dan titik berat isi 2 cm.
 - Kode keputusan hanya di `tools/drystone_core.py`; agent laptop dan layanan AWS sama-sama memakainya. Jangan menulis ulang aturan zona di tempat lain.
 - Keputusan keselamatan tetap deterministik dan tercatat di log, tidak diserahkan ke LLM.
@@ -38,6 +41,7 @@ Pastikan muncul `(.venv)` di awal baris sebelum menjalankan pip atau python. Pyt
 - `tools/drystone_core.py`: keputusan (zona, Monte Carlo adaptif, usulan posisi, cek ulang). Tanpa kamera/GUI.
 - `tools/agent.py`: agent live di laptop (kamera, wireframe calon, persetujuan/override di cmd, log `data/agent_<waktu>/log.jsonl`)
 - `tools/service.py`: foto -> keputusan JSON (CLI + `lambda_handler` untuk AWS)
+- `aws/test_endpoint.py`: kirim foto ke Docker lokal / Function URL / `aws lambda invoke`
 - `aws/`: Dockerfile Lambda, `requirements-lambda.txt`, langkah deploy (`aws/README.md`)
 - `config/boxes.json`: katalog kardus per ID marker (ukuran cm, berat kg). ID 0 = kardus paling bawah.
 - `data/`: hasil kalibrasi (`camera_*.yaml`) dan hasil tes (`*.csv`). Foto mentah dan folder `agent_*` / `service_*` tidak di-commit (bisa memuat wajah/kamar).
@@ -55,14 +59,17 @@ Pastikan muncul `(.venv)` di awal baris sebelum menjalankan pip atau python. Pyt
 
 ## Aturan kerja
 - Semua jam pakai waktu China.
-- Secret (AWS key, API key) hanya di `.env` atau `aws configure`. Jangan pernah ditulis di kode, repo, atau file ini.
+- Secret (AWS key, API key) hanya di `.env` atau `aws configure`. Jangan pernah ditulis di kode, repo, atau file ini. Nomor kartu, API key, secret juga jangan ditempel di chat.
+- Nomor akun AWS dan Function URL jangan masuk repo. URL dipakai lewat `set DRYSTONE_URL=...` di cmd.
+- Jangan commit `event.json`, `out.json`, `*_result.jpg`, `hasil_endpoint.jpg`, `data/agent_*`, `data/service_*` (foto memuat kamar/wajah).
+- Perintah untuk Yasin: cmd Windows, satu perintah per baris/blok, dijelaskan singkat.
 - Versi dependency di-pin di `requirements.txt`.
 - Tiap klaim di README dan laporan harus didukung angka evaluasi. Drystone adalah alat bantu keputusan, bukan perangkat keselamatan bersertifikat.
 - Jangan pakai layanan AWS Marketplace dan jangan upgrade akun AWS ke Paid plan.
 
 ## Kerja berdua (Yasin + Vincent)
 - Repo: GitHub private `drystone`. Selalu `git pull` sebelum mulai, commit + push setelah selesai.
-- Bagi file per orang supaya jarang bentrok (misalnya `tools/` Yasin, `aws/` Vincent).
+- AWS dipegang Yasin (laptop Yasin). Vincent: video, naskah, diagram, Devpost.
 - Kalibrasi kamera per kamera: `data/camera_laptop.yaml` hanya untuk webcam laptop Yasin. Kamera lain wajib kalibrasi sendiri (`--name <nama>`).
 - Kalau ada keputusan atau hasil tes baru, update `docs/STATUS.md` di commit yang sama.
 - Repo akan dibuat public sebelum submit: jangan commit secret, data pribadi, atau info akun/pembayaran.

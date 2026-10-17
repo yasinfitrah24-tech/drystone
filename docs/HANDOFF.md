@@ -34,15 +34,37 @@ Baca file ini setelah `CLAUDE.md` dan `docs/STATUS.md`. Isinya cara kerja yang s
 - Uji dulu dengan kamera palsu (`test_agent.py` di sesi Claude: render kardus + ArUco dari kalibrasi asli, tombol & jawaban cmd di-script). Data sintetis terlalu bersih untuk goyangan, jadi untuk itu uji juga langsung di tingkat pose (rotasi diacak 1–5°).
 - Mengirim file ke laptop lewat device bridge: SendUserFile → commit pakai fileUuid → stage ulang → `cmp`. Jangan pakai stagedPath dari file yang di-`cp` (pernah menulis isi lama).
 
+## Pelajaran 17 Okt malam
+- **Bahasa:** semua teks produk (pesan agent, overlay kamera, trace, JSON AWS, README publik) dalam **bahasa Inggris** karena lomba internasional. Obrolan dengan Yasin tetap bahasa Indonesia. Kode: `GREEN/YELLOW/RED`, `GUIDE/ASK_SUPERVISOR/REJECT`, cek `OK/OFF_PLAN/FELL/NOT_PLACED`, layanan `RETAKE/CONTINUE/FIX_PLACEMENT/STOP/WAIT/DONE`, plans `requested/suggested`. `predict_test.py`, `aws/README.md`, `docs/`, `CLAUDE.md` masih sebagian Indonesia → terjemahkan saat menyiapkan repo publik.
+- **Simulasi cepat:** `drystone_core.simulate_once` = fisika & undian acak sama dengan `predict_test.simulate_once`, tapi berhenti saat kardus jatuh atau semua diam. Diuji identik di 1.500 sampel, ±2,9× lebih cepat. Kalau mengubah fisika, ulangi uji sampel-per-sampel itu.
+- **Usulan posisi** wajib lolos konfirmasi 150 simulasi sebelum disebut GREEN (screening 60 sampel saja pernah memberi 3% lalu 8% setelah ditaruh pas).
+- **Setelah penempatan:** RED, atau OFF_PLAN yang membuat tumpukan YELLOW → WARNING dan rencana ditahan sampai dibetulkan. Sesuai rencana tapi YELLOW (angka dekat garis 10%) → CAUTION saja.
+- **Tampilan live** pakai `LiveSmoother` (arah dari semua marker + rata-rata bergerak alpha 0,15, lompat kalau pindah > 3 cm). Hanya tampilan; keputusan tetap `read_stack` (median 10 frame).
+- **AWS dari China lambat:** build image pertama ±99 menit (`public.ecr.aws` + PyPI). Build berikutnya detik karena cache, **selama `aws/requirements-lambda.txt` tidak diubah**. Kalau terpaksa ubah: `--build-arg PIP_INDEX_URL=https://pypi.tuna.tsinghua.edu.cn/simple`. Build untuk Lambda selalu `--provenance=false`.
+- Kirim foto ke Lambda sebagai JPEG (PNG 1,4 MB butuh ±8 dtk upload). Overhead jaringan China→Singapura ±3–4 dtk per panggilan.
+
 ## Tugas berikutnya (urut)
-1. **Deploy Lambda** (18–19 Okt): ikuti `aws/README.md` (Docker Desktop → ECR → Lambda container 2048 MB / 60 dtk → Function URL AWS_IAM). Uji dengan foto dari `data/agent_*/langkah_*_cek_ulang.png` (foto mentah). Siapa yang deploy: Vincent kalau setuju (≤19 Okt), kalau tidak Yasin dengan IAM user sendiri.
-2. **Latihan adegan demo:** hijau → kuning + usulan → meleset dibetulkan → merah + override → roboh terdeteksi (belum dicoba nyata).
-3. **AWS lanjutan** (20–21 Okt): S3 foto bukti, DynamoDB log (isi = `log.jsonl`), dashboard statis approve/override, CloudWatch; `agent.py` opsi memanggil endpoint.
-4. **Evaluasi** (22 Okt): 20–30 percobaan baru lewat agent, catat hasil nyata; skrip ringkasan dari `log.jsonl` (akurasi, Brier, roboh di HIJAU, waktu, jumlah foto ulang) + kasus gagal. Malamnya fitur dikunci.
-5. Lalu video (24), dokumen (25), submit (26).
+1. **Halaman web untuk juri** (wajib "endpoint web"): halaman statis (S3 atau Function URL yang sama) — pilih contoh foto / unggah foto 1280×720 dari webcam yang sama, pilih geseran calon, tampilkan zona, P(fall), trace, usulan, foto beranotasi. Butuh 3–5 **contoh foto bersih** (tanpa wajah/kamar; ambil ulang dengan latar rapi). Function URL **jangan** di-commit ke repo sebelum diputuskan; simpan di env `DRYSTONE_URL`.
+2. **S3 + DynamoDB log** (bonus, menambah nilai observability & human control): simpan foto + isi `log.jsonl` per keputusan, termasuk approval/override.
+3. **Latihan adegan demo** dengan kardus asli: GREEN → YELLOW + usulan → meleset dibetulkan → RED + override → FELL terdeteksi (override → roboh belum pernah dicoba nyata).
+4. **Evaluasi (21 Okt)**: 20–30 percobaan baru lewat agent; skrip ringkasan dari `data/agent_*/log.jsonl` (akurasi, Brier, roboh di zona GREEN, waktu keputusan, jumlah retake, berapa kali fallback laptop) + kasus gagal. Malamnya fitur dikunci.
+5. Video 24 Okt (Yasin + Vincent), laporan/diagram/README 25 Okt, submit 26 Okt malam (deadline 27 Okt 14.45).
 
 ## Lingkungan
-- Laptop Yasin: repo di `E:\opencv-project`, webcam 1280×720 sudah dikalibrasi (`data/camera_laptop.yaml`). Agent: `python tools/agent.py --calib data/camera_laptop.yaml --marker-mm 80 --supervisor Yasin`.
-- Laptop Vincent: repo di folder hasil `git clone` (misalnya `C:\Users\Xlyph\drystone`). Belum ada kalibrasi kamera Vincent.
-- Kalau Claude bisa mengakses folder repo di laptop user, kerjakan file langsung di sana; kalau tidak, kirim file dan perintah untuk dijalankan user.
-- AWS: region ap-southeast-1, Free plan. Jangan pakai Marketplace, jangan upgrade ke Paid plan. Tiap orang pakai IAM user sendiri.
+- **Laptop Yasin** (`E:\opencv-project`): webcam 1280×720 terkalibrasi (`data/camera_laptop.yaml`), Docker Desktop (data di `E:\DockerData`, harus "Engine running"), AWS CLI v2 + `aws configure` (IAM user `yasin-dev`, ap-southeast-1). Claude di akun mana pun yang dipakai di laptop ini bisa memakai semua itu.
+- Agent lokal: `python tools/agent.py --calib data/camera_laptop.yaml --marker-mm 80 --supervisor Yasin`. Lewat AWS: `set DRYSTONE_URL=<Function URL>` dulu (berlaku per jendela cmd; minta URL ke Yasin, jangan ditulis di repo).
+- **AWS sekarang:** ECR repo `drystone-service`; Lambda `drystone` (container image, x86_64, 2048 MB, timeout 60 dtk); Function URL auth NONE + CORS POST. Update kode Lambda:
+  ```
+  docker build --provenance=false -f aws/Dockerfile -t drystone-service .
+  for /f %i in ('aws sts get-caller-identity --query Account --output text') do set ACC=%i
+  set REPO=%ACC%.dkr.ecr.ap-southeast-1.amazonaws.com/drystone-service
+  aws ecr get-login-password --region ap-southeast-1 | docker login --username AWS --password-stdin %ACC%.dkr.ecr.ap-southeast-1.amazonaws.com
+  docker tag drystone-service:latest %REPO%:latest
+  docker push %REPO%:latest
+  aws lambda update-function-code --function-name drystone --image-uri %REPO%:latest --region ap-southeast-1
+  aws lambda wait function-updated --function-name drystone --region ap-southeast-1
+  ```
+  (beri ke user satu perintah per blok). Tes: `python aws/test_endpoint.py --url %DRYSTONE_URL% --image <foto> --offset-cm 12`.
+- Laptop Vincent: repo hasil `git clone` (`C:\Users\Xlyph\drystone`), belum ada kalibrasi kamera Vincent, tidak punya akses AWS.
+- AWS: Free plan, jangan Marketplace, jangan upgrade ke Paid plan. Nomor akun dan Function URL jangan masuk repo publik. Jangan commit `event.json`, `out.json`, `*_result.jpg`, `hasil_endpoint.jpg`, `data/agent_*` (foto memuat kamar/wajah).
+- Doc project claude.ai Yasin (`claude/opencv-ai-competition.md`) **tidak terbaca** dari akun lain → `docs/STATUS.md` adalah sumber status di repo. Update di commit yang sama setiap ada progres.

@@ -2,7 +2,7 @@
 
 Salinan status untuk repo (dibaca Yasin, Vincent, dan Claude masing-masing). Update di commit yang sama setiap ada keputusan atau hasil tes baru. Semua jam = waktu China.
 
-Terakhir diperbarui: 17 Okt 2026 sore.
+Terakhir diperbarui: 17 Okt 2026 malam.
 
 ## Ringkasan
 - **Lomba:** OpenCV AI Competition 2026 (https://opencv26.devpost.com/). Deadline **27 Okt, 14.45** (target submit 26 Okt malam). Penjurian 27 Okt–10 Nov, endpoint harus tetap hidup.
@@ -17,8 +17,8 @@ Terakhir diperbarui: 17 Okt 2026 sore.
 | 0 | Persiapan | 11 Okt | ✅ |
 | 1 | Uji kelayakan: kalibrasi, Tes 1, Tes 2, go/no-go | 17 Okt | ✅ **GO** |
 | 2+3 | Persepsi + fisika + agent | 19 Okt | ✅ inti jalan dengan kardus asli (17 Okt) |
-| 4 | AWS: Lambda foto → keputusan, S3, DynamoDB log, dashboard approve/override, CloudWatch | 21 Okt | ⏳ kode layanan + Dockerfile siap, belum di-deploy |
-| 5 | Evaluasi 20–30 percobaan baru + kasus gagal. **Fitur dikunci** | 22 Okt malam | — |
+| 4 | AWS: Lambda foto → keputusan, S3, DynamoDB log, dashboard approve/override, CloudWatch | 21 Okt | ⏳ Lambda + Function URL + `agent.py --aws` ✅; sisa halaman web juri, S3, DynamoDB, CloudWatch |
+| 5 | Evaluasi 20–30 percobaan baru + kasus gagal. **Fitur dikunci** | 21 Okt malam (dimajukan) | — |
 | 6 | Gladi (23) + rekam video (24) | 24 Okt | — |
 | 7 | Laporan teknis, diagram, README | 25 Okt | — |
 | 8 | Edit video, isi Devpost, submit | 26 Okt malam | — |
@@ -27,7 +27,8 @@ Uji deteksi kardus tanpa marker adalah target tambahan, hanya dikerjakan kalau i
 
 ## Pembagian tugas
 - **Yasin:** kamera/OpenCV, tes, simulasi, agent (juga pegang teknis Echolocate, freeze 22 Okt).
-- **Vincent:** usulan: AWS (deploy Lambda 18–21 Okt, ikuti `aws/README.md`). **Belum dikonfirmasi, jawaban paling lambat 19 Okt.**
+- **AWS dipegang Yasin** (keputusan 17 Okt), IAM user `yasin-dev` di laptop Yasin.
+- **Vincent:** bantu video (24 Okt, belum dikonfirmasi), naskah, diagram; opsional kalibrasi webcam-nya + Tes 1.
 - Vincent perlu daftar Devpost dan kirim username untuk diundang ke tim.
 
 ## Hasil
@@ -47,13 +48,20 @@ Uji deteksi kardus tanpa marker adalah target tambahan, hanya dikerjakan kalau i
 - **Perbaikan persepsi:** arah hadap satu marker goyang beberapa derajat per frame. Cara lama (tengah kardus dari arah tiap marker, rotasi kardus bawah per frame) membuat posisi melompat 1,5–3,6 cm. Sekarang arah = rata-rata semua marker × 10 frame dan posisi = median, sehingga goyangnya ±0,1 cm (uji sintetis) dan biasnya juga hilang. Tes 2 masih memakai cara lama.
 - Uji nyata: B +6 cm HIJAU → ditaruh +1,6 cm (MELESET, tetap hijau) · C diminta +12 cm → KUNING 40%, usulan +8 cm (4%) → ditaruh meleset +2,1 cm → agent memperingatkan KUNING 20–29% → dibetulkan → OK +0,8 cm, HIJAU 6%.
 
-### Layanan AWS (17 Okt) — siap deploy
+### Agent lewat AWS + versi Inggris (17 Okt malam)
+- Lambda `drystone` jalan (container image ECR `drystone-service`, 2048 MB, timeout 60 dtk) + Function URL. `agent.py --aws` (atau env `DRYSTONE_URL`): keputusan & cek ulang dihitung di Lambda, 3 foto JPEG; kalau AWS gagal → dihitung di laptop dan tercatat.
+- Simulasi dipercepat (berhenti saat jatuh/diam; identik di 1.500 sampel, ±2,9×): kasus YELLOW di server Lambda 16,3 → 3,8–5,6 dtk; round trip dari laptop 7–8,5 dtk.
+- Usulan posisi dikonfirmasi 150 simulasi sebelum disebut GREEN. Tampilan live dihaluskan (goyang wireframe 8,4 → 2,1 px).
+- Uji nyata via AWS: B +6 cm GREEN → cek OK · C +12 cm YELLOW 25–37% → usulan +8/+10 cm → ditaruh pas (±0,3 cm).
+- Semua teks produk sekarang bahasa Inggris (GREEN/YELLOW/RED, GUIDE/ASK_SUPERVISOR/REJECT, OK/OFF_PLAN/FELL).
+
+### Layanan AWS (17 Okt) — kode
 - `tools/service.py`: 1–5 foto → keputusan JSON (mode decide / check), `lambda_handler`. Uji dengan foto asli: +6 cm HIJAU 1% (1,7 dtk), +12 cm KUNING 41% + usulan (8,3 dtk), +16 cm MERAH 87% (8,2 dtk). Jalan di Python 3.12 bersih dengan paket Lambda (OpenCV headless). Image Docker belum pernah dibangun.
 
 ## Berikutnya
-- **18–19 Okt:** build Docker + deploy Lambda (`aws/README.md`) · latihan adegan demo termasuk override → roboh · tempel ulang marker ID 2 · ukur tinggi asli kardus (terbaca ±20 cm, katalog 19).
-- **20–21 Okt:** S3 foto bukti, DynamoDB log, dashboard approve/override, CloudWatch; agent laptop memanggil endpoint.
-- **22 Okt:** evaluasi 20–30 percobaan baru (akurasi, Brier, roboh di HIJAU, waktu keputusan, foto ulang) + kasus gagal; malamnya fitur dikunci.
+- **18–19 Okt:** halaman web untuk juri + contoh foto bersih · S3 + DynamoDB log · latihan adegan override → roboh · tempel ulang marker ID 2 · ukur tinggi asli kardus (terbaca ±20 cm, katalog 19).
+- **20 Okt:** CloudWatch, rapikan, cadangan.
+- **21 Okt:** evaluasi 20–30 percobaan baru (akurasi, Brier, roboh di zona GREEN, waktu keputusan, retake, fallback) + kasus gagal; malamnya fitur dikunci.
 
 ## Kardus
 - 邮政纸箱 5号, 29 × 17 × 19 cm, dipakai berdiri: lebar 29 cm kiri-kanan (arah menjorok), tinggi 19, dalam 17. Marker 80 mm di tengah sisi depan. Isi 1,0 kg di tengah, semua sama. ID 0 selalu di bawah. Hanya kardus yang ditumpuk boleh terlihat kamera.
