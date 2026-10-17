@@ -34,6 +34,9 @@ FALL_DROP_M = 0.03       # a box counts as fallen if it drops more than 3 cm ...
 FALL_TILT_DEG = 15.0     # ... or tilts more than 15 degrees
 
 
+FLIP_Z = np.diag([-1.0, -1.0, 1.0])
+
+
 def zone(p):
     if p < 0.10:
         return "HIJAU", (0, 170, 0)
@@ -101,7 +104,8 @@ def stack_from_poses(poses, catalog, base_id):
         c = p - normal * catalog[i]["D"] / 2.0      # marker sits on the middle of the front face
         Rrel = R0.T @ R
         boxes.append({"id": i, "x": float(c[0]), "y": float(p[1]), "z": float(c[2]),
-                      "turn_deg": rot_angle_deg(np.eye(3), Rrel)})
+                      # a marker stuck upside-down reads as 180 deg about its own axis: not a real turn
+                      "turn_deg": min(rot_angle_deg(np.eye(3), Rrel), rot_angle_deg(FLIP_Z, Rrel))})
     boxes.sort(key=lambda b: b["y"])
     return boxes
 
@@ -213,6 +217,8 @@ def evaluate(img, poses, catalog, args, rng, trial, out_dir):
     cv2.putText(view, f"#{trial}  P(roboh) {p:.0%}  {name}  | statis: {'berdiri' if stable else 'roboh'}",
                 (10, 32), cv2.FONT_HERSHEY_SIMPLEX, 0.9, color, 2)
     cv2.imwrite(os.path.join(out_dir, f"percobaan_{trial:02d}.png"), view)
+    # raw frame too: the annotated one has outlines over the markers and cannot be re-detected reliably
+    cv2.imwrite(os.path.join(out_dir, f"percobaan_{trial:02d}_mentah.png"), img)
     return {"boxes": boxes, "stable": stable, "margin": margin, "p": p, "zone": name, "n": n, "view": view}
 
 
@@ -244,6 +250,10 @@ def report(results, args, out_dir):
               f"{'LULUS' if sim_acc >= 0.8 else 'BELUM'}")
         print(f"Akurasi hitungan statis: {st_acc:.0%}")
         print(f"Brier score            : {brier:.3f} (0 = sempurna, 0.25 = sama dengan menebak 50%)")
+        green = [r for r in done if r["zone"] == "HIJAU"]
+        green_fell = [r["trial"] for r in green if r["fell"]]
+        print(f"Roboh di zona HIJAU    : {len(green_fell)} dari {len(green)} (target 0)"
+              + (f" -> percobaan {green_fell}" if green_fell else ""))
     path = os.path.join(out_dir, "hasil.csv")
     with open(path, "w", newline="") as f:
         w = csv.writer(f)
@@ -319,30 +329,60 @@ def run_camera(args, catalog, obj, K, dist, calib_size, rng, out_dir):
     report(results, args, out_dir)
 
 
+def recheck(args, catalog):
+    """Re-run the Monte Carlo on box positions saved in an old hasil.csv (same physics, new settings)."""
+    rng = np.random.default_rng(args.seed)
+    results = []
+    with open(args.recheck, newline="") as f:
+        for row in csv.DictReader(f):
+            ids = [int(v) for v in row["box_ids_bottom_to_top"].split()]
+            xs = [float(v) / 100 for v in row["x_cm"].split()]
+            zs = [float(v) / 100 for v in row["depth_cm"].split()]
+            boxes = [{"id": i, "x": x, "y": 0.0, "z": z, "turn_deg": 0.0} for i, x, z in zip(ids, xs, zs)]
+            stable, margin = static_check(boxes, catalog)
+            p, n = p_fall(boxes, catalog, args, rng)
+            fell = None if row["actual_fell"] == "" else bool(int(row["actual_fell"]))
+            results.append({"trial": int(row["trial"]), "source": "recheck", "boxes": boxes,
+                            "overhang": row["overhang"], "stable": stable, "margin": margin,
+                            "p": p, "zone": zone(p)[0], "n": n, "fell": fell})
+    print(f"Hitung ulang {args.recheck} dengan --pos-sd-cm {args.pos_sd_cm} --com-sd-cm {args.com_sd_cm}")
+    out_dir = os.path.join(os.path.dirname(os.path.abspath(args.recheck)),
+                           f"recheck_pos{args.pos_sd_cm:g}_com{args.com_sd_cm:g}")
+    os.makedirs(out_dir, exist_ok=True)
+    report(results, args, out_dir)
+
+
 CATALOG = {}
 
 
 def main():
     global CATALOG
     ap = argparse.ArgumentParser(description="Tes prediksi roboh vs kenyataan")
-    ap.add_argument("--calib", required=True, help="file kalibrasi, misalnya data/camera_laptop.yaml")
+    ap.add_argument("--calib", help="file kalibrasi, misalnya data/camera_laptop.yaml")
     ap.add_argument("--marker-mm", type=float, default=common.BOX_MARKER_MM, help="sisi hitam marker hasil cetak (mm)")
     ap.add_argument("--boxes", default=os.path.join(common.ROOT, "config", "boxes.json"), help="katalog kardus")
     ap.add_argument("--base-id", type=int, default=0, help="ID marker kardus paling bawah")
-    ap.add_argument("--pos-sd-cm", type=float, default=0.5, help="galat posisi kamera dari Tes 1 (cm)")
-    ap.add_argument("--com-sd-cm", type=float, default=1.0, help="ketidakpastian titik berat isi kardus (cm)")
+    ap.add_argument("--pos-sd-cm", type=float, default=1.0,
+                    help="galat posisi: kamera (Tes 1: 0,5) + penempatan & tepi kardus (Tes 2) (cm)")
+    ap.add_argument("--com-sd-cm", type=float, default=2.0, help="ketidakpastian titik berat isi kardus (cm)")
     ap.add_argument("--samples", type=int, default=150, help="jumlah simulasi per percobaan")
     ap.add_argument("--friction", type=float, default=0.5, help="koefisien gesek kardus")
     ap.add_argument("--images", help='pola file foto, misalnya "data/stack_hp/*.jpg"')
     ap.add_argument("--outcomes", help="hasil nyata berurutan tanpa ditanya, misalnya rbbr (r = roboh, b = berdiri)")
     ap.add_argument("--source", default="0", help="indeks webcam atau URL kamera")
     ap.add_argument("--seed", type=int, default=0)
+    ap.add_argument("--recheck", help="hitung ulang hasil.csv lama dengan pengaturan sekarang (tanpa kamera)")
     args = ap.parse_args()
     if args.marker_mm == common.BOX_MARKER_MM:
         print("Catatan: --marker-mm tidak diisi, dipakai 80.0 mm. Ukur hasil cetak supaya akurat.")
     CATALOG = load_catalog(args.boxes)
     if args.base_id not in CATALOG:
         sys.exit(f"ID kardus bawah {args.base_id} tidak ada di {args.boxes}.")
+    if args.recheck:
+        recheck(args, CATALOG)
+        return
+    if not args.calib:
+        sys.exit("Isi --calib, misalnya --calib data/camera_laptop.yaml")
     K, dist, calib_size = common.load_calibration(args.calib)
     obj = np.array([[-1, 1, 0], [1, 1, 0], [1, -1, 0], [-1, -1, 0]], dtype=np.float32) * (args.marker_mm / 2000.0)
     out_dir = os.path.join(common.DATA_DIR, f"tes2_{time.strftime('%Y%m%d_%H%M%S')}")
