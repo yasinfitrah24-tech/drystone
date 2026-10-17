@@ -92,17 +92,17 @@ Uji deteksi kardus tanpa marker adalah target tambahan, hanya dikerjakan kalau i
   Function URL tidak berubah karena rollback. Untuk kembali ke versi halaman web: perintah pertama dengan `drystone-service:7e9f416` sebagai pengganti `drystone-service@sha256:...`.
 - Image baru di-push dengan dua tag: `:latest` dan hash commit `main`. Lambda di-update ke tag hash, bukan `:latest`.
 - **Live sejak 17 Okt 23.25: `drystone-service:7e9f416`** (digest `sha256:ac87187c…`), Function URL tetap sama. ECR tanpa lifecycle policy, jadi image lama tidak terhapus otomatis.
-- Tes live (dari laptop, China → Singapura): `GET /` 200 (cold start 5,4 dtk) · foto contoh 200 · `POST` s2 +16 cm → RED 69%, usulan +10 cm 3% (round trip 7,7 dtk, server 5,9 dtk; kedua kali `cached` 1,7 dtk) · POST foto lama (`test_endpoint.py`, s2 +6 cm) → GREEN 0% (5,6 dtk) · `POST /log` → baris `web_supervisor_choice` muncul di CloudWatch. Tidak ada baris error. Tes dari HP (data seluler) belum.
+- Tes live (dari laptop, China → Singapura): `GET /` 200 (cold start 5,4 dtk) · foto contoh 200 · `POST` s2 +16 cm → RED 69%, usulan +10 cm 3% (round trip 7,7 dtk, server 5,9 dtk; kedua kali `cached` 1,7 dtk) · POST foto lama (`test_endpoint.py`, s2 +6 cm) → GREEN 0% (5,6 dtk) · `POST /log` → baris `web_supervisor_choice` muncul di CloudWatch. Tidak ada baris error.
+- **Tes dari HP lewat data seluler (Wi-Fi mati), 17 Okt 23.45 — lulus:** loading cold start muncul · s2 +16 cm → RED · "Use suggestion" → +10 cm GREEN · override tanpa nama/alasan ditolak · halaman tidak bisa digeser ke samping · s1 dan s3 tampil.
 
 ## Wajib sebelum submit
 - **Ganti 3 foto placeholder dengan foto asli** (`tools/capture_sample.py`, webcam laptop 1280×720, simpan dulu di `E:\drystone_samples\`, tanpa wajah/kamar), hitung ulang zona dari foto, perbarui `web/samples/samples.json` (`examples`, hapus `"placeholder": true`) dan tes, lalu pastikan label "placeholder image" hilang.
 - **Validasi setelan ketidakpastian** (posisi 1 cm, isi 2 cm) di percobaan baru (evaluasi 21 Okt, pipeline persepsi baru), target **0 roboh di zona GREEN**.
-- **Tes halaman dari HP** lewat data seluler (bukan Wi-Fi).
 - **Vincent masuk tim di Devpost.**
 - **Cek Official Rules** apakah repo wajib publik.
 
 ## Berikutnya
-- **18–19 Okt:** foto contoh asli · tes halaman dari HP (data seluler) · S3 + DynamoDB log · latihan adegan override → roboh · tempel ulang marker ID 2 · ukur tinggi asli kardus (terbaca ±20 cm, katalog 19).
+- **18–19 Okt:** foto contoh asli · S3 + DynamoDB log · latihan adegan override → roboh · tempel ulang marker ID 2 · ukur tinggi asli kardus (terbaca ±20 cm, katalog 19).
 - **20 Okt:** CloudWatch, rapikan, cadangan.
 - **21 Okt:** evaluasi 20–30 percobaan baru dengan pipeline persepsi baru (akurasi, Brier, roboh di zona GREEN, waktu keputusan, retake, fallback) + kasus gagal; sekaligus validasi setelan ketidakpastian Tes 2; malamnya fitur dikunci.
 
