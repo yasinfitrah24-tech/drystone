@@ -44,7 +44,7 @@ Baca file ini setelah `CLAUDE.md` dan `docs/STATUS.md`. Isinya cara kerja yang s
 - Kirim foto ke Lambda sebagai JPEG (PNG 1,4 MB butuh ±8 dtk upload). Overhead jaringan China→Singapura ±3–4 dtk per panggilan.
 
 ## Tugas berikutnya (urut)
-1. ✅ **Halaman web untuk juri** — live dengan foto asli s1–s3 (18 Okt, `drystone-service:f5b647b`, lihat STATUS; rollback ke `:7e9f416`). Function URL tidak pernah ditulis di repo (env `DRYSTONE_URL`) dan tidak boleh berubah sampai 10 Nov: jangan hapus/buat ulang fungsi, cukup update image. Kalau foto diganti lagi: hitung ulang zona, perbarui `examples` dan `photos_version` di `samples.json` (tes gagal kalau lupa), deploy dengan tag hash baru. Sisa kecil: cek di HP bahwa foto asli tampil.
+1. ✅ **Halaman web untuk juri** — live dengan foto asli s1–s3 (18 Okt, `drystone-service:f5b647b`, lihat STATUS; rollback ke `:7e9f416`). Function URL tidak pernah ditulis di repo (env `DRYSTONE_URL`) dan tidak boleh berubah sampai 10 Nov: jangan hapus/buat ulang fungsi, cukup update image. Kalau foto diganti lagi: hitung ulang zona, perbarui `examples` dan `photos_version` di `samples.json` (tes gagal kalau lupa), deploy dengan tag hash baru.
 2. **S3 + DynamoDB log** (bonus, menambah nilai observability & human control): simpan foto + isi `log.jsonl` per keputusan, termasuk approval/override.
 3. **Latihan adegan demo** dengan kardus asli: GREEN → YELLOW + usulan → meleset dibetulkan → RED + override → FELL terdeteksi (override → roboh belum pernah dicoba nyata).
 4. **Evaluasi (21 Okt)**: 20–30 percobaan baru lewat agent; skrip ringkasan dari `data/agent_*/log.jsonl` (akurasi, Brier, roboh di zona GREEN, waktu keputusan, jumlah retake, berapa kali fallback laptop) + kasus gagal. Malamnya fitur dikunci.
