@@ -2,7 +2,7 @@
 
 Salinan status untuk repo (dibaca Yasin, Vincent, dan Claude masing-masing). Update di commit yang sama setiap ada keputusan atau hasil tes baru. Semua jam = waktu China.
 
-Terakhir diperbarui: 18 Okt 2026, 01.00. Live: `drystone-service:7e9f416` (foto placeholder); foto asli siap di `main` lokal, belum deploy.
+Terakhir diperbarui: 18 Okt 2026, 01.00. Live: `drystone-service:f5b647b` (halaman web dengan foto asli).
 
 ## Ringkasan
 - **Lomba:** OpenCV AI Competition 2026 (https://opencv26.devpost.com/). Deadline **27 Okt, 14.45** (target submit 26 Okt malam). Penjurian 27 Okt–10 Nov, endpoint harus tetap hidup.
@@ -17,7 +17,7 @@ Terakhir diperbarui: 18 Okt 2026, 01.00. Live: `drystone-service:7e9f416` (foto 
 | 0 | Persiapan | 11 Okt | ✅ |
 | 1 | Uji kelayakan: kalibrasi, Tes 1, Tes 2, go/no-go | 17 Okt | ✅ **GO** |
 | 2+3 | Persepsi + fisika + agent | 19 Okt | ✅ inti jalan dengan kardus asli (17 Okt) |
-| 4 | AWS: Lambda foto → keputusan, S3, DynamoDB log, dashboard approve/override, CloudWatch | 21 Okt | ⏳ Lambda + Function URL + `agent.py --aws` ✅; halaman web juri ✅ live (foto asli siap, belum deploy); sisa S3, DynamoDB, CloudWatch |
+| 4 | AWS: Lambda foto → keputusan, S3, DynamoDB log, dashboard approve/override, CloudWatch | 21 Okt | ⏳ Lambda + Function URL + `agent.py --aws` ✅; halaman web juri ✅ live dengan foto asli (`f5b647b`); sisa S3, DynamoDB, CloudWatch |
 | 5 | Evaluasi 20–30 percobaan baru + kasus gagal. **Fitur dikunci** | 21 Okt malam (dimajukan) | — |
 | 6 | Gladi (23) + rekam video (24) | 24 Okt | — |
 | 7 | Laporan teknis, diagram, README | 25 Okt | — |
@@ -108,10 +108,12 @@ Uji deteksi kardus tanpa marker adalah target tambahan, hanya dikerjakan kalau i
   ```
   aws lambda get-function --function-name drystone --region ap-southeast-1 --query "{Uri:Code.ImageUri,Status:Configuration.LastUpdateStatus}"
   ```
-- Image baru: `drystone-service:f5b647b` (+ `:latest`). Commit dokumen sesudahnya tidak mengubah image (`docs/` tidak masuk build).
+- Image baru: `drystone-service:f5b647b` (+ `:latest`, digest `sha256:7f243d8f…`). Commit dokumen sesudahnya tidak mengubah image (`docs/` tidak masuk build).
+- **Live sejak 18 Okt 00.45: `drystone-service:f5b647b`**, Function URL tetap sama.
+- Tes live (dari laptop): `GET /` 200 (3,3 dtk) · `samples.json` `no-cache`, `photos_version` a7aba3ca6c, tidak ada tanda placeholder, contoh s2 KUNING +13 · foto `?v=a7aba3ca6c` s1–s3 identik (sha256) dengan foto asli di repo, bukan placeholder · `POST` s2 +16 cm → RED 69%, usulan +10 cm 3%, `placeholder: false`, ID 1 x +0,1 cm (7,7 dtk) · POST foto lama (`test_endpoint.py`, s2 +6 cm) → GREEN (4,1 dtk) · `POST /log` → baris `web_supervisor_choice` (`placeholder: false`) muncul di CloudWatch · 0 baris error.
 
 ## Wajib sebelum submit
-- **Deploy foto asli** (sudah di `main` lokal, 27 tes lulus): build, image tag `:latest` + hash commit baru, `update-function-code` ke tag hash, ulangi 4 tes live, lalu cek di HP bahwa foto asli tampil tanpa label "placeholder image".
+- **Cek di HP** bahwa foto asli tampil tanpa label "placeholder image" (HP yang kemarin membuka halaman menyimpan foto lama di cache; `?v=` seharusnya mengatasinya).
 - **Validasi setelan ketidakpastian** (posisi 1 cm, isi 2 cm) di percobaan baru (evaluasi 21 Okt, pipeline persepsi baru), target **0 roboh di zona GREEN**.
 - **Vincent masuk tim di Devpost.**
 - **Cek Official Rules** apakah repo wajib publik.
