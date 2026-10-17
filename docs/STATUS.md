@@ -127,7 +127,7 @@ Uji deteksi kardus tanpa marker adalah target tambahan, hanya dikerjakan kalau i
 - **Cek Official Rules** apakah repo wajib publik.
 
 ## Berikutnya
-- **18–19 Okt:** foto contoh asli · S3 + DynamoDB log · latihan adegan override → roboh.
+- **18–19 Okt:** S3 + DynamoDB log · latihan adegan override → roboh.
 - **20 Okt:** CloudWatch, rapikan, cadangan.
 - **21 Okt:** evaluasi 20–30 percobaan baru dengan pipeline persepsi baru (akurasi, Brier, roboh di zona GREEN, waktu keputusan, retake, fallback) + kasus gagal; sekaligus validasi setelan ketidakpastian Tes 2; malamnya fitur dikunci.
 
