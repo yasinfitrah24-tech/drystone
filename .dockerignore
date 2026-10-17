@@ -1,0 +1,10 @@
+# Keep the Lambda build context small: only aws/, tools/, config/ and the calibration file are needed
+.venv/
+.git/
+**/__pycache__/
+*.pyc
+.env
+.env.*
+data/*
+!data/camera_laptop.yaml
+docs/

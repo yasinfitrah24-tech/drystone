@@ -2,7 +2,10 @@
 # Build from the repo root:  docker build -f aws/Dockerfile -t drystone-service .
 FROM public.ecr.aws/lambda/python:3.12
 COPY aws/requirements-lambda.txt .
-RUN pip install --no-cache-dir -r requirements-lambda.txt
+# From China, PyPI can be very slow: build with
+#   docker build --build-arg PIP_INDEX_URL=https://pypi.tuna.tsinghua.edu.cn/simple -f aws/Dockerfile -t drystone-service .
+ARG PIP_INDEX_URL=https://pypi.org/simple
+RUN pip install --no-cache-dir --index-url ${PIP_INDEX_URL} -r requirements-lambda.txt
 COPY tools/ ${LAMBDA_TASK_ROOT}/
 COPY config/boxes.json ${LAMBDA_TASK_ROOT}/config/boxes.json
 COPY data/camera_laptop.yaml ${LAMBDA_TASK_ROOT}/data/camera_laptop.yaml
