@@ -17,13 +17,13 @@ Terakhir diperbarui: 18 Okt 2026. Live: `drystone-service:f5b647b` (halaman web 
 | 0 | Persiapan | 11 Okt | ✅ |
 | 1 | Uji kelayakan: kalibrasi, Tes 1, Tes 2, go/no-go | 17 Okt | ✅ **GO** |
 | 2+3 | Persepsi + fisika + agent | 19 Okt | ✅ inti jalan dengan kardus asli (17 Okt) |
-| 4 | AWS: Lambda foto → keputusan, S3, DynamoDB log, dashboard approve/override, CloudWatch | 21 Okt | ⏳ Lambda + Function URL + `agent.py --aws` ✅; halaman web juri ✅ live dengan foto asli (`f5b647b`); sisa S3, DynamoDB, CloudWatch |
+| 4 | AWS: Lambda foto → keputusan, halaman web juri dengan approve/override | 21 Okt | ✅ Lambda + Function URL + `agent.py --aws`; halaman web juri live dengan foto asli (`f5b647b`); log approve/override masuk CloudWatch Logs. S3, DynamoDB, dashboard/alarm CloudWatch → Bonus |
 | 5 | Evaluasi 20–30 percobaan baru + kasus gagal. **Fitur dikunci** | 21 Okt malam (dimajukan) | — |
 | 6 | Gladi (23) + rekam video (24) | 24 Okt | — |
 | 7 | Laporan teknis, diagram, README | 25 Okt | — |
 | 8 | Edit video, isi Devpost, submit | 26 Okt malam | — |
 
-Uji deteksi kardus tanpa marker adalah target tambahan, hanya dikerjakan kalau inti + AWS selesai.
+Target tambahan (S3, DynamoDB, dashboard/alarm CloudWatch, deteksi tanpa marker) ada di bagian Bonus, hanya dikerjakan kalau inti selesai.
 
 ## Pembagian tugas
 - **Yasin:** kamera/OpenCV, tes, simulasi, agent (juga pegang teknis Echolocate, freeze 22 Okt).
@@ -127,9 +127,15 @@ Uji deteksi kardus tanpa marker adalah target tambahan, hanya dikerjakan kalau i
 - **Cek Official Rules** apakah repo wajib publik.
 
 ## Berikutnya
-- **18–19 Okt:** S3 + DynamoDB log · latihan adegan override → roboh.
-- **20 Okt:** CloudWatch, rapikan, cadangan.
+- **18 Okt:** latihan adegan override → roboh · cek Official Rules soal repo publik.
+- **19 Okt:** README utama + rapikan repo.
+- **20 Okt:** cadangan.
 - **21 Okt:** evaluasi 20–30 percobaan baru dengan pipeline persepsi baru (akurasi, Brier, roboh di zona GREEN, waktu keputusan, retake, fallback) + kasus gagal; sekaligus validasi setelan ketidakpastian Tes 2; malamnya fitur dikunci.
+
+## Bonus (hanya kalau inti selesai)
+- S3 (foto bukti per keputusan) + DynamoDB (log keputusan, approval, override). Log approve/override dari halaman juri **sudah** tercatat di CloudWatch Logs (satu baris JSON `web_supervisor_choice`).
+- Dashboard + alarm CloudWatch (durasi, error, jumlah RETAKE).
+- Deteksi kardus tanpa marker.
 
 ## Kardus
 - 邮政纸箱 5号, 29 × 17 × 19,3–19,7 cm, dipakai berdiri: lebar 29 cm kiri-kanan (arah menjorok), tinggi terukur rata-rata ID 0 19,6 · ID 1 19,5 · ID 2 19,4 cm, dalam 17. Marker 80 mm (terukur) di tengah sisi depan; tengah marker dari dasar ID 0 9,4 · ID 1 9,7 · ID 2 9,7 cm. Isi 1,0 kg di tengah, semua sama. ID 0 selalu di bawah. Hanya kardus yang ditumpuk boleh terlihat kamera.
