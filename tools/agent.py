@@ -120,34 +120,38 @@ def mean_rotation(Rs):
     return R
 
 
-def common_rotation(frames, base_id):
+def common_rotation(frames, base_id, ids=None):
     """One facing direction for the whole reading, averaged over every marker in every frame.
 
     A single marker's orientation wobbles a few degrees per frame. Positions are measured relative to the base
     marker, so that wobble swings the upper boxes sideways: 3 degrees at 40 cm above the base is 2 cm.
-    Averaging ~10 frames x 2-3 markers makes the orientation steady. Markers stuck upside-down are flipped first."""
+    Averaging ~10 frames x 2-3 markers makes the orientation steady. Markers stuck upside-down are flipped first.
+    ids: only these markers (the stack, see stack_rotation); None = every marker."""
     R_ref = mean_rotation([f[base_id][0] for f in frames])
     Rs = []
     for f in frames:
-        for R, _, _ in f.values():
+        for i, (R, _, _) in f.items():
+            if ids is not None and i not in ids:
+                continue
             flipped = R @ FLIP_Z
             Rs.append(flipped if np.trace(R_ref.T @ flipped) > np.trace(R_ref.T @ R) else R)
     return mean_rotation(Rs)
 
 
 class LiveSmoother:
-    """Steady live overlay. Each frame: one facing direction from all visible markers, then an exponential
-    moving average over time. A box that really moves (> SNAP_M) snaps at once instead of sliding.
-    Display only: decisions still use read_stack (median of 10 fresh frames)."""
+    """Steady live overlay. Each frame: one facing direction from the stacked markers (stack_rotation), then an
+    exponential moving average over time. A box that really moves (> SNAP_M) snaps at once instead of sliding.
+    Display only: decisions still use read_stack (median of 10 fresh frames). Boxes off the stack: self.loose."""
     ALPHA = 0.15
     SNAP_M = 0.03
 
     def __init__(self):
         self.R = self.t = None
         self.boxes = {}
+        self.loose = []
 
     def update(self, poses, catalog, base_id):
-        Rc = common_rotation([poses], base_id)
+        Rc = stack_rotation([poses], catalog, base_id, sorted(poses))
         t0 = poses[base_id][1]
         if self.R is None or np.linalg.norm(t0 - self.t) > self.SNAP_M:
             self.R, self.t, self.boxes = Rc, t0.copy(), {}
@@ -165,29 +169,16 @@ class LiveSmoother:
                           "turn_deg": yaw_deg(poses, i, base_id)})
         for gone in set(self.boxes) - set(poses):
             del self.boxes[gone]
-        stack.sort(key=lambda b: b["y"])
+        stack, self.loose = build_stack(stack, catalog, base_id)
         return stack, self.R, self.t
 
 
-def read_stack(cap, detector, catalog, obj, K, dist, base_id, n=CAPTURE_FRAMES):
-    """Several frames -> median box positions + quality checks. Returns (stack, R0, t0, frame, problem)."""
-    frames, frame = [], None
-    for _ in range(n):
-        ok, frame = cap.read()
-        if not ok:
-            return None, None, None, frame, "camera is not sending frames"
-        poses = detect_poses(detector, frame, catalog, obj, K, dist, base_id)
-        if base_id in poses:
-            frames.append(poses)
-    if not frames:
-        return None, None, None, frame, f"bottom box marker (ID {base_id}) not visible"
-    id_sets = [tuple(sorted(f)) for f in frames]
-    ids = max(set(id_sets), key=id_sets.count)
-    if id_sets.count(ids) < (1 if len(frames) == 1 else max(2, len(frames) // 2 + 1)):
-        return None, None, None, frame, "visible markers change between frames"
-    frames = [f for f, s in zip(frames, id_sets) if s == ids]
-    Rc = common_rotation(frames, base_id)
-    stack = []
+STACK_GAP_M = 0.04         # a box rests on the one below if its bottom is within 4 cm of that box's top
+
+
+def _box_positions(frames, ids, Rc, base_id, catalog):
+    """Median position (base-marker frame), facing angle and jitter of each box over the frames."""
+    boxes = []
     for i in ids:
         rel = np.array([Rc.T @ (f[i][1] - f[base_id][1]) for f in frames])   # marker centre, base frame
         med = np.median(rel, axis=0)
@@ -195,44 +186,124 @@ def read_stack(cap, detector, catalog, obj, K, dist, base_id, n=CAPTURE_FRAMES):
         n_i = Rc.T @ Ri[:, 2]
         a = abs(float(np.degrees(np.arctan2(n_i[0], n_i[2]))))
         xs = rel[:, 0]
-        stack.append({"id": i, "x": float(med[0]), "y": float(med[1]), "z": float(med[2] - catalog[i]["D"] / 2.0),
+        boxes.append({"id": i, "x": float(med[0]), "y": float(med[1]), "z": float(med[2] - catalog[i]["D"] / 2.0),
                       "turn_deg": 180.0 - a if a > 90 else a,
                       "jitter_m": float(1.4826 * np.median(np.abs(xs - np.median(xs))))})
-    stack.sort(key=lambda b: b["y"])
+    return boxes
+
+
+def build_stack(boxes, catalog, base_id):
+    """The stack by physical contact, from the base box up: the next box is the one whose bottom is within
+    STACK_GAP_M of the current top box's top and which overlaps it in plan view. Every other visible box is
+    'loose' (fallen, set aside, held in the air), with where it is: "floor", "beside" or "gap" (above the top box
+    but not touching it). Image height alone is not enough: a box that fell next to the stack is at floor level."""
+    by_id = {b["id"]: b for b in boxes}
+    stack, rest = [by_id[base_id]], [b for b in boxes if b["id"] != base_id]
+    while rest:
+        top, ct = stack[-1], catalog[stack[-1]["id"]]
+        fits = []
+        for b in rest:
+            c = catalog[b["id"]]
+            gap = (b["y"] - c["H"] / 2) - (top["y"] + ct["H"] / 2)
+            if (abs(gap) <= STACK_GAP_M and abs(b["x"] - top["x"]) < (ct["L"] + c["L"]) / 2
+                    and abs(b["z"] - top["z"]) < (ct["D"] + c["D"]) / 2):
+                fits.append((abs(gap), b))
+        if not fits:
+            break
+        nxt = min(fits, key=lambda f: f[0])[1]
+        stack.append(nxt)
+        rest.remove(nxt)
+    base = stack[0]
+    base_top = base["y"] + catalog[base["id"]]["H"] / 2
+    loose = []
+    for b in sorted(rest, key=lambda b: b["id"]):
+        top, ct, c = stack[-1], catalog[stack[-1]["id"]], catalog[b["id"]]
+        over_top = abs(b["x"] - top["x"]) < (ct["L"] + c["L"]) / 2
+        if b["y"] < base_top:
+            where = "floor"                    # marker below the top of the base box: standing or lying on the floor
+        elif over_top and b["y"] > top["y"]:
+            where = "gap"                      # above the top box but not resting on it
+        else:
+            where = "beside"
+        loose.append(dict(b, where=where, gap_m=float((b["y"] - c["H"] / 2) - (top["y"] + ct["H"] / 2))))
+    return stack, loose
+
+
+def loose_problem(b, stack):
+    """Message for a visible box that is not part of the stack (decision readings must not have one)."""
+    if b["where"] == "gap":
+        return (f"height gap ID {stack[-1]['id']} -> ID {b['id']} is {b['gap_m'] * 100:+.0f} cm off "
+                "(marker covered / boxes not stacked?)")
+    place = "on the floor next to the stack" if b["where"] == "floor" else "beside the stack"
+    return f"box ID {b['id']} is {place}, not on it -> move it out of the camera view"
+
+
+def stack_rotation(frames, catalog, base_id, ids):
+    """Facing direction for the reading, from the stack only: first the base marker alone (averaged over the
+    frames) to find which boxes are on the stack, then every stacked marker x frame. A fallen or turned box
+    must not tilt the frame of the stack (a box turned 50 deg on the floor tilted it by 16 deg)."""
+    R_base = common_rotation(frames, base_id, [base_id])
+    stack, _ = build_stack(_box_positions(frames, ids, R_base, base_id, catalog), catalog, base_id)
+    return common_rotation(frames, base_id, [b["id"] for b in stack])
+
+
+def read_scene(cap, detector, catalog, obj, K, dist, base_id, n=CAPTURE_FRAMES):
+    """Several frames -> stack (by contact, bottom first), loose boxes, quality checks.
+    Returns (stack, loose, R0, t0, frame, problem). Loose boxes are not a problem here; read_stack makes them one."""
+    frames, frame = [], None
+    for _ in range(n):
+        ok, frame = cap.read()
+        if not ok:
+            return None, [], None, None, frame, "camera is not sending frames"
+        poses = detect_poses(detector, frame, catalog, obj, K, dist, base_id)
+        if base_id in poses:
+            frames.append(poses)
+    if not frames:
+        return None, [], None, None, frame, f"bottom box marker (ID {base_id}) not visible"
+    id_sets = [tuple(sorted(f)) for f in frames]
+    ids = max(set(id_sets), key=id_sets.count)
+    if id_sets.count(ids) < (1 if len(frames) == 1 else max(2, len(frames) // 2 + 1)):
+        return None, [], None, None, frame, "visible markers change between frames"
+    frames = [f for f, s in zip(frames, id_sets) if s == ids]
+    Rc = stack_rotation(frames, catalog, base_id, ids)
+    stack, loose = build_stack(_box_positions(frames, ids, Rc, base_id, catalog), catalog, base_id)
     R0, t0 = Rc, np.median([f[base_id][1] for f in frames], axis=0)
     shaky = [f"ID {b['id']} ({b['jitter_m'] * 100:.1f} cm)" for b in stack if b["jitter_m"] > MAX_JITTER_M]
     if shaky:
-        return stack, R0, t0, frame, ("position of box " + ", ".join(shaky)
-                                      + " jitters between frames (> 1 cm): do not touch the table or boxes")
-    if stack[0]["id"] != base_id:
-        return stack, R0, t0, frame, f"bottom box reads as ID {stack[0]['id']}, expected ID {base_id}"
+        return stack, loose, R0, t0, frame, ("position of box " + ", ".join(shaky)
+                                             + " jitters between frames (> 1 cm): do not touch the table or boxes")
     turned = [f"ID {b['id']} ({b['turn_deg']:.0f} deg)" for b in stack if b["turn_deg"] > MAX_TURN_DEG]
     if turned:
-        return stack, R0, t0, frame, "box " + ", ".join(turned) + " is turned -> straighten it"
-    for lo, up in zip(stack, stack[1:]):
-        gap = up["y"] - lo["y"] - (catalog[lo["id"]]["H"] + catalog[up["id"]]["H"]) / 2
-        if gap < -0.10:
-            return stack, R0, t0, frame, (f"box ID {up['id']} is not on the stack "
-                                          "(lying next to it?) -> move it out of the camera view")
-        if abs(gap) > 0.04:
-            return stack, R0, t0, frame, (f"height gap ID {lo['id']} -> ID {up['id']} is {gap * 100:+.0f} cm off "
-                                          "(marker covered / boxes not stacked?)")
-    return stack, R0, t0, frame, None
+        return stack, loose, R0, t0, frame, "box " + ", ".join(turned) + " is turned -> straighten it"
+    return stack, loose, R0, t0, frame, None
 
 
-def perceive(cap, detector, catalog, obj, K, dist, base_id, log, reason):
-    """The agent re-reads by itself when a reading looks bad; asks the worker only after several tries."""
+def read_stack(cap, detector, catalog, obj, K, dist, base_id, n=CAPTURE_FRAMES):
+    """Reading for a decision: like read_scene, but any visible box that is not on the stack is a problem
+    (idle boxes must be out of view). Returns (stack, R0, t0, frame, problem)."""
+    stack, loose, R0, t0, frame, problem = read_scene(cap, detector, catalog, obj, K, dist, base_id, n)
+    if problem is None and loose:
+        problem = loose_problem(loose[0], stack)
+    return stack, R0, t0, frame, problem
+
+
+def perceive(cap, detector, catalog, obj, K, dist, base_id, log, reason, allow_loose=False):
+    """The agent re-reads by itself when a reading looks bad; asks the worker only after several tries.
+    allow_loose (check after a placement): boxes off the stack are an outcome to report, not a bad reading.
+    Returns (stack, loose, R0, t0, frame, problem)."""
     for attempt in range(1, MAX_RETRIES + 1):
-        stack, R0, t0, frame, problem = read_stack(cap, detector, catalog, obj, K, dist, base_id)
+        stack, loose, R0, t0, frame, problem = read_scene(cap, detector, catalog, obj, K, dist, base_id)
+        if problem is None and loose and not allow_loose:
+            problem = loose_problem(loose[0], stack)
         if problem is None:
             if attempt > 1:
                 print(f"  [agent] reading {attempt} is clean")
-            return stack, R0, t0, frame, None
+            return stack, loose, R0, t0, frame, None
         print(f"  [agent] reading {attempt}/{MAX_RETRIES} for {reason}: {problem} -> retake")
         log.write("retake", frame, reason=reason, attempt=attempt, problem=problem)
         time.sleep(0.3)
     print(f"  [agent] still failing: {problem}. Fix the stack or camera, then press SPACE again.")
-    return None, None, None, frame, problem
+    return None, [], None, None, frame, problem
 
 
 AWS_FRAMES = 3            # photos sent per request (JPEG ~150 KB each; PNG was 1.4 MB and took ~8 s to upload)
@@ -290,7 +361,7 @@ def decide_aws(url, cap, shot, stack, nid, offset, catalog, settings):
         return d, None
 
 
-def verify_aws(url, cap, shot, plan, catalog, settings, stack):
+def verify_aws(url, cap, shot, plan, catalog, settings, stack, loose=None):
     """Check after placement via AWS; falls back to the laptop."""
     try:
         r, sec = aws_call(url, {"mode": "check", "plan": {"before": [_cm(b) for b in plan["before"]],
@@ -308,7 +379,7 @@ def verify_aws(url, cap, shot, plan, catalog, settings, stack):
         if stack is None:
             return ({"status": "FELL?", "message": f"AWS failed ({type(e).__name__}) and the stack is unreadable",
                      "deviation_m": None}, {}, "laptop (fallback)")
-        v = core.verify(plan["before"], stack, plan["box"], catalog)
+        v = core.verify(plan["before"], stack, plan["box"], catalog, loose=loose)
         v["message"] += f" [AWS failed: {type(e).__name__}, checked on the laptop]"
         extra = {}
         if v["status"] in ("OK", "OFF_PLAN"):
@@ -455,7 +526,8 @@ def main():
                         lines.append(f"candidate ID {nid}: {offset * 100:+.0f} cm ({core.overhang_pct(stack, cand, catalog):+.0f}%)"
                                      + (f" | {last['zone']} {last['p']:.0%}" if last else ""))
                         lines.append("A/D move 1 cm | SPACE decide | Q quit")
-                lines.insert(0, f"stack: {[b['id'] for b in stack]}")
+                lines.insert(0, f"stack: {[b['id'] for b in stack]}"
+                             + "".join(f" | ID {b['id']} off the stack ({b['where']})" for b in smoother.loose))
             else:
                 lines.append(f"bottom box marker (ID {args.base_id}) not visible")
             for row, text in enumerate(lines):
@@ -473,7 +545,8 @@ def main():
                 log.write("cancel", None, box_id=plan["box"]["id"], note="plan cancelled before placement")
                 plan = None
             elif key == ord(" ") and plan is None:
-                stack, R0, t0, shot, _ = perceive(cap, detector, catalog, obj, K, dist, args.base_id, log, "decision")
+                stack, _, R0, t0, shot, _ = perceive(cap, detector, catalog, obj, K, dist, args.base_id, log,
+                                                     "decision")
                 if stack is None:
                     continue
                 nid = next_box_id(stack, catalog)
@@ -510,18 +583,18 @@ def main():
                     offset = off
                 last = None if approved else d
             elif key == ord(" ") and plan is not None:
-                stack, R0, t0, shot, problem = perceive(cap, detector, catalog, obj, K, dist, args.base_id, log,
-                                                         "check")
+                stack, loose, R0, t0, shot, problem = perceive(cap, detector, catalog, obj, K, dist, args.base_id,
+                                                                log, "check", allow_loose=True)
                 if args.aws and (stack is not None or (problem and "not visible" in problem)):
                     print("  [agent] checking on AWS ...")
-                    v, extra, src = verify_aws(args.aws, cap, shot, plan, catalog, settings, stack)
+                    v, extra, src = verify_aws(args.aws, cap, shot, plan, catalog, settings, stack, loose)
                 elif stack is None and problem and "not visible" in problem:
                     # base marker gone right after a placement: the stack may have fallen onto it
                     v = {"status": "FELL?", "message": "bottom box not visible after the placement", "deviation_m": None}
                 elif stack is None:
                     continue                       # bad reading (box turned, shaky...): keep the plan, worker fixes it
                 else:
-                    v = core.verify(plan["before"], stack, plan["box"], catalog)
+                    v = core.verify(plan["before"], stack, plan["box"], catalog, loose=loose)
                 print(f"\n[agent] check: {v['status']} - {v['message']}")
                 if not args.aws:
                     extra, src = {}, "laptop"

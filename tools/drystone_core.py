@@ -200,17 +200,27 @@ def stack_risk(stack, catalog, s):
     return p, n, ci, zone_safe(p, ci, near)
 
 
-def verify(before, after, planned, catalog, tol_m=0.015):
+def verify(before, after, planned, catalog, tol_m=0.015, loose=None):
     """Compare the stack after placement with the approved plan.
 
-    before: stack before placement, after: stack seen now, planned: candidate box dict (or None).
-    Returns {"status", "message", "deviation_m"}; status is OK, OFF_PLAN, FELL, NOT_PLACED, or CHANGED."""
+    before: stack before placement, after: stack seen now (built by contact, bottom first), planned: candidate box
+    dict (or None), loose: visible boxes that are not on the stack, each with "where" (floor / beside / gap).
+    Returns {"status", "message", "deviation_m"}; status is OK, OFF_PLAN, FELL, NOT_PLACED, or CHANGED.
+    A planned box that is off the stack, or not visible at all while the rest is intact, counts as FELL: the check
+    runs after the worker has let go of the box."""
+    off_stack = {b["id"]: b["where"] for b in (loose or [])}
+    place = {"floor": "on the floor next to the stack", "beside": "beside the stack",
+             "gap": "above the stack but not resting on it"}
+
+    def where(i):
+        return place.get(off_stack.get(i), "not visible (off the stack)")
+
     ids_before = [b["id"] for b in before]
     ids_after = [b["id"] for b in after]
     lost = [i for i in ids_before if i not in ids_after]
     if lost:
-        return {"status": "FELL", "message": f"box ID {lost} is missing from the stack -> it probably fell",
-                "deviation_m": None}
+        return {"status": "FELL", "deviation_m": None,
+                "message": "; ".join(f"box ID {i} is {where(i)}" for i in lost) + " -> it fell"}
     for b0 in before:
         b1 = next(b for b in after if b["id"] == b0["id"])
         if b0["y"] - b1["y"] > 0.05 or math.hypot(b1["x"] - b0["x"], b1["z"] - b0["z"]) > 0.05:
@@ -220,7 +230,11 @@ def verify(before, after, planned, catalog, tol_m=0.015):
         return {"status": "CHANGED" if ids_after != ids_before else "OK", "message": "", "deviation_m": None}
     new = next((b for b in after if b["id"] == planned["id"]), None)
     if new is None:
-        return {"status": "NOT_PLACED", "message": f"box ID {planned['id']} is not visible yet", "deviation_m": None}
+        if planned["id"] in off_stack:
+            return {"status": "FELL", "deviation_m": None,
+                    "message": f"box ID {planned['id']} is {where(planned['id'])} -> it fell"}
+        return {"status": "FELL", "deviation_m": None,
+                "message": f"box ID {planned['id']} is not on the stack and not visible -> it likely fell out of view"}
     if after[-1]["id"] != planned["id"]:
         return {"status": "OFF_PLAN", "message": f"box ID {planned['id']} is not on top of the stack",
                 "deviation_m": None}

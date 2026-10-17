@@ -58,6 +58,13 @@ Target tambahan (S3, DynamoDB, dashboard/alarm CloudWatch, deteksi tanpa marker)
 ### Layanan AWS (17 Okt) — kode
 - `tools/service.py`: 1–5 foto → keputusan JSON (mode decide / check), `lambda_handler`. Uji dengan foto asli: +6 cm HIJAU 1% (1,7 dtk), +12 cm KUNING 41% + usulan (8,3 dtk), +16 cm MERAH 87% (8,2 dtk). Jalan di Python 3.12 bersih dengan paket Lambda (OpenCV headless).
 
+### Bug cek ulang setelah override MERAH (18 Okt) — diperbaiki, belum deploy
+- **Kejadian:** ID 2 di +18 cm, RED 95%, override Yasin. ID 2 jatuh dan mendarat tegak di lantai, kanan tumpukan. Layar `stack: [0, 2, 1]`; cek ulang 3× "box ID 1 is not on the stack (lying next to it?) -> move it out of the camera view" lalu "still failing". Jatuhnya tidak tercatat.
+- **Penyebab (direproduksi dengan foto sintetis):** (1) urutan tumpukan diambil dari tinggi di gambar, jadi kardus di lantai samping tumpukan (y ≈ 0) masuk ke urutan, dan pesan menyebut kardus yang salah; (2) arah hadap gabungan ikut merata-ratakan marker kardus yang jatuh: kardus di lantai yang berputar 20 / 35 / 50° memiringkan acuan seluruh tumpukan 6 / 11 / 16° (juga sebab kerangka merah miring di layar). Angka persis "ID 1" dari kejadian asli tidak tereproduksi; kedua penyebab ini tetap diperbaiki.
+- **Perbaikan** (`tools/agent.py`, dipakai laptop dan Lambda): tumpukan dibangun dari ID 0 ke atas lewat kontak (dasar kardus berikutnya ±4 cm dari atas kardus di bawahnya + tumpang-tindih horizontal); kardus lain = "di luar tumpukan" dengan lokasi (lantai / samping / melayang di atas). Arah hadap dihitung dari marker kardus dasar dulu, lalu dari anggota tumpukan saja. Tampilan live juga. Untuk keputusan, kardus di luar tumpukan tetap ditolak ("box ID 2 is on the floor next to the stack, not on it -> move it out of the camera view", ID benar). Untuk cek ulang (`drystone_core.verify`, laptop dan `service.py` mode check): kardus calon di lantai / di samping / melayang → **FELL**, tercatat di log, tanpa retake; kardus calon tidak terlihat sama sekali dan tumpukan lain utuh → **FELL** ("likely fell out of view"; dulu NOT_PLACED/WAIT).
+- **Tes** `tests/test_check.py` (foto sintetis lewat kalibrasi asli, jalur laptop + jalur Lambda): (a) jatuh tegak di samping → FELL · (b) jatuh rebah di samping → FELL · (c) jatuh keluar frame → FELL · (d) penempatan normal → OK · (e) tergeser 3 cm → OFF_PLAN (bukan FELL) · kardus jatuh berputar 35° tidak lagi menggeser bacaan tumpukan (ID 1 x < 0,5 cm) · kardus melayang di atas = gap. Total 40 tes lulus. Loop `agent.py` dengan kamera palsu (RED +18, override, jatuh di samping): `check: FELL - box ID 2 is on the floor next to the stack -> it fell`, `fell: 1` di ringkasan, tanpa retake.
+- **Image live `f5b647b` masih memakai logika lama** untuk `agent.py --aws` (cek ulang di Lambda). Halaman juri tidak terpengaruh (foto contoh hanya berisi tumpukan; zona contoh identik, dicek tes).
+
 ### Tinggi kardus terukur (18 Okt)
 - Penggaris (tengah / pojok): ID 0 19,7 / 19,5 · ID 1 19,6 / 19,4 · ID 2 19,4 / 19,3 cm → `config/boxes.json` (rata-rata, dibulatkan 0,1 cm): **ID 0 19,6 · ID 1 19,5 · ID 2 19,4 cm** (dulu 19). Panjang 29, tebal 17, massa tidak diubah.
 - Tengah marker dari dasar kardus: ID 0 9,4 · ID 1 9,7 · ID 2 9,7 cm. Sisi hitam marker terukur **80 mm** (sama dengan `DRYSTONE_MARKER_MM`).
@@ -122,6 +129,7 @@ Target tambahan (S3, DynamoDB, dashboard/alarm CloudWatch, deteksi tanpa marker)
 - **Tes dari HP lewat data seluler dengan foto asli (18 Okt, dari screenshot Yasin) — lulus:** foto asli tampil di ketiga contoh tanpa label "placeholder image" · contoh s2 sudah +13 cm (samples.json baru) · s2 +16 cm → RED 69%, usulan +10 cm 3% · "Use suggestion" → +10 cm GREEN 1% · trace 5 tahap tampil · halaman pas di layar HP.
 
 ## Wajib sebelum submit
+- **Deploy perbaikan cek ulang** (Lambda dipakai `agent.py --aws`) dengan tag hash baru, lalu ulangi 4 tes live.
 - **Validasi setelan ketidakpastian** (posisi 1 cm, isi 2 cm) di percobaan baru (evaluasi 21 Okt, pipeline persepsi baru), target **0 roboh di zona GREEN**.
 - **Vincent masuk tim di Devpost.**
 

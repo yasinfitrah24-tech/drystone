@@ -34,6 +34,11 @@ Baca file ini setelah `CLAUDE.md` dan `docs/STATUS.md`. Isinya cara kerja yang s
 - Uji dulu dengan kamera palsu (`test_agent.py` di sesi Claude: render kardus + ArUco dari kalibrasi asli, tombol & jawaban cmd di-script). Data sintetis terlalu bersih untuk goyangan, jadi untuk itu uji juga langsung di tingkat pose (rotasi diacak 1–5°).
 - Mengirim file ke laptop lewat device bridge: SendUserFile → commit pakai fileUuid → stage ulang → `cmp`. Jangan pakai stagedPath dari file yang di-`cp` (pernah menulis isi lama).
 
+## Pelajaran 18 Okt
+- **Tumpukan = kontak fisik, bukan urutan tinggi di gambar.** `agent.build_stack` mulai dari ID 0 ke atas; kardus lain "di luar tumpukan". Arah hadap hanya dari anggota tumpukan (`stack_rotation`): satu kardus jatuh yang berputar pernah memiringkan acuan 16°.
+- **Cek ulang:** kardus calon di luar tumpukan atau hilang dari pandangan = FELL, bukan retake. Untuk keputusan, kardus di luar tumpukan tetap ditolak (kardus nganggur harus di luar pandangan).
+- Uji dengan `tests/synth_scene.py` (kardus pose bebas: tegak, rebah, berputar, keluar frame) + `tests/test_check.py`. Kamera palsu untuk loop agent: setelah keputusan ada satu `cv2.waitKey(1)` ekstra, jadi beri satu tombol kosong di urutan tombol.
+
 ## Pelajaran 17 Okt malam
 - **Bahasa:** semua teks produk (pesan agent, overlay kamera, trace, JSON AWS, README publik) dalam **bahasa Inggris** karena lomba internasional. Obrolan dengan Yasin tetap bahasa Indonesia. Kode: `GREEN/YELLOW/RED`, `GUIDE/ASK_SUPERVISOR/REJECT`, cek `OK/OFF_PLAN/FELL/NOT_PLACED`, layanan `RETAKE/CONTINUE/FIX_PLACEMENT/STOP/WAIT/DONE`, plans `requested/suggested`. `predict_test.py`, `aws/README.md`, `docs/`, `CLAUDE.md` masih sebagian Indonesia → terjemahkan saat menyiapkan repo publik.
 - **Simulasi cepat:** `drystone_core.simulate_once` = fisika & undian acak sama dengan `predict_test.simulate_once`, tapi berhenti saat kardus jatuh atau semua diam. Diuji identik di 1.500 sampel, ±2,9× lebih cepat. Kalau mengubah fisika, ulangi uji sampel-per-sampel itu.

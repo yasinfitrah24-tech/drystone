@@ -37,7 +37,7 @@ import numpy as np
 
 import common
 import drystone_core as core
-from agent import COLORS, draw_box, outlined, project_box, read_stack
+from agent import COLORS, draw_box, loose_problem, outlined, project_box, read_scene, read_stack
 from predict_test import detect_poses, load_catalog
 
 ROOT = common.ROOT
@@ -99,11 +99,15 @@ def analyze(images, req):
         result["problem"] = (f"photo resolution {size[0]}x{size[1]} differs from the calibration "
                              f"{s['size'][0]}x{s['size'][1]}")
         return result, images[0]
-    stack, R0, t0, frame, problem = read_stack(_Frames(images), s["detector"], catalog, s["obj"],
-                                                s["K"], s["dist"], BASE_ID, n=len(images))
+    stack, loose, R0, t0, frame, problem = read_scene(_Frames(images), s["detector"], catalog, s["obj"],
+                                                       s["K"], s["dist"], BASE_ID, n=len(images))
+    if problem is None and loose and mode != "check":
+        problem = loose_problem(loose[0], stack)     # a decision needs only the stack in view
     view = images[-1].copy()
     if stack is not None:
         result["stack"] = [_box_out(b) for b in stack]
+    if loose:
+        result["off_stack"] = [dict(_box_out(b), where=b["where"]) for b in loose]
     if problem:
         result["problem"] = problem
         result["action"] = "RETAKE"
@@ -119,7 +123,7 @@ def analyze(images, req):
         plan = req.get("plan") or {}
         before = [_box_in(b) for b in plan.get("before", [])]
         box = _box_in(plan["box"]) if plan.get("box") else None
-        v = core.verify(before, stack, box, catalog)
+        v = core.verify(before, stack, box, catalog, loose=loose)     # off-stack candidate = FELL, not a retake
         result["verify"] = {k: (round(val * 100, 2) if k == "deviation_m" and val is not None else val)
                             for k, val in v.items()}
         result["verify"]["deviation_cm"] = result["verify"].pop("deviation_m")
