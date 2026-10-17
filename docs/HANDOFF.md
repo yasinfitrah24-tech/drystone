@@ -27,14 +27,22 @@ Baca file ini setelah `CLAUDE.md` dan `docs/STATUS.md`. Isinya cara kerja yang s
 - Tes 1: tempel tanda selotip tiap 5 cm, tepi benda yang sama selalu di garis, rel buku ditempel ke meja, kamera agak menunduk (marker di sepertiga atas gambar), rentang gerak di tengah gambar. SPASI sekali per posisi, jangan sentuh meja ±1 detik.
 - Ada bias skala ±3% yang belum terjelaskan → dicek ulang dengan kardus asli.
 
+## Pelajaran 17 Okt
+- Tes 2: ketidakpastian yang hanya berisi galat kamera (0,5 cm) terlalu yakin di dekat batas. Dua salah prediksi sama-sama "prediksi berdiri, ternyata roboh". Default sekarang posisi 1 cm + isi 2 cm. Metrik keselamatan utama: **roboh di zona HIJAU = 0**.
+- Persepsi: jangan pakai arah hadap satu marker untuk posisi (goyang 3–5° per frame = 1,5–3,6 cm untuk kardus 40 cm di atas). Pakai `common_rotation` (chordal mean semua marker × frame) + median. Bacaan yang goyang ditolak dengan pesan berisi angka goyangnya.
+- Yang terlihat kamera = yang dihitung. Kardus nganggur harus di luar pandangan; agent menolak kalau ada kardus di samping tumpukan.
+- Uji dulu dengan kamera palsu (`test_agent.py` di sesi Claude: render kardus + ArUco dari kalibrasi asli, tombol & jawaban cmd di-script). Data sintetis terlalu bersih untuk goyangan, jadi untuk itu uji juga langsung di tingkat pose (rotasi diacak 1–5°).
+- Mengirim file ke laptop lewat device bridge: SendUserFile → commit pakai fileUuid → stage ulang → `cmp`. Jangan pakai stagedPath dari file yang di-`cp` (pernah menulis isi lama).
+
 ## Tugas berikutnya (urut)
-1. **Uji deteksi kardus tanpa marker** (mulai 12 Okt): buat `tools/markerless_test.py`. Ide: deteksi kardus dengan engine DNN OpenCV 5 (atau segmentasi/kontur sebagai cadangan), estimasi pose/posisi dari tepi kardus + ukuran katalog, bandingkan dengan pose ArUco sebagai acuan (tingkat deteksi, galat posisi cm, galat sudut). Script harus bisa jalan dari foto (`--images`) dan kamera, dan diuji dulu di gambar sintetis.
-2. **Tes 2** (13 Okt, kardus datang): `python tools/predict_test.py --calib data/camera_laptop.yaml --marker-mm 80 --pos-sd-cm 0.5`. Sebelumnya isi `config/boxes.json` (ukur ulang ukuran luar, timbang berat). Target prediksi cocok ≥ 80%, laporkan juga Brier score.
-3. **Go/no-go** 13 Okt malam (paling lambat 14 Okt pagi). Gagal → ide C "Pemeriksa langkah perakitan".
-4. Lalu tahap 2–8 sesuai tabel di `docs/STATUS.md`.
+1. **Deploy Lambda** (18–19 Okt): ikuti `aws/README.md` (Docker Desktop → ECR → Lambda container 2048 MB / 60 dtk → Function URL AWS_IAM). Uji dengan foto dari `data/agent_*/langkah_*_cek_ulang.png` (foto mentah). Siapa yang deploy: Vincent kalau setuju (≤19 Okt), kalau tidak Yasin dengan IAM user sendiri.
+2. **Latihan adegan demo:** hijau → kuning + usulan → meleset dibetulkan → merah + override → roboh terdeteksi (belum dicoba nyata).
+3. **AWS lanjutan** (20–21 Okt): S3 foto bukti, DynamoDB log (isi = `log.jsonl`), dashboard statis approve/override, CloudWatch; `agent.py` opsi memanggil endpoint.
+4. **Evaluasi** (22 Okt): 20–30 percobaan baru lewat agent, catat hasil nyata; skrip ringkasan dari `log.jsonl` (akurasi, Brier, roboh di HIJAU, waktu, jumlah foto ulang) + kasus gagal. Malamnya fitur dikunci.
+5. Lalu video (24), dokumen (25), submit (26).
 
 ## Lingkungan
-- Laptop Yasin: repo di `E:\opencv-project`, webcam 1280×720 sudah dikalibrasi (`data/camera_laptop.yaml`).
+- Laptop Yasin: repo di `E:\opencv-project`, webcam 1280×720 sudah dikalibrasi (`data/camera_laptop.yaml`). Agent: `python tools/agent.py --calib data/camera_laptop.yaml --marker-mm 80 --supervisor Yasin`.
 - Laptop Vincent: repo di folder hasil `git clone` (misalnya `C:\Users\Xlyph\drystone`). Belum ada kalibrasi kamera Vincent.
 - Kalau Claude bisa mengakses folder repo di laptop user, kerjakan file langsung di sana; kalau tidak, kirim file dan perintah untuk dijalankan user.
 - AWS: region ap-southeast-1, Free plan. Jangan pakai Marketplace, jangan upgrade ke Paid plan. Tiap orang pakai IAM user sendiri.

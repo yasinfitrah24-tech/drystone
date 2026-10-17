@@ -13,7 +13,8 @@ Drystone: satu kamera + OpenCV 5 membaca posisi tiap kardus (marker ArUco + kata
 - P(roboh) < 10% = HIJAU: pandu penempatan.
 - 10-50% = KUNING: minta persetujuan supervisor.
 - > 50% = MERAH: tolak dan usulkan posisi lain. Lanjut hanya lewat override supervisor dengan alasan yang tercatat.
-- Peluang roboh selalu dari Monte Carlo dengan galat kamera hasil ukur sendiri (Tes 1), bukan satu simulasi.
+- Peluang roboh selalu dari Monte Carlo, bukan satu simulasi. Ketidakpastian default: posisi 1 cm (kamera 0,5 dari Tes 1 + penempatan/tepi kardus dari Tes 2) dan titik berat isi 2 cm.
+- Kode keputusan hanya di `tools/drystone_core.py`; agent laptop dan layanan AWS sama-sama memakainya. Jangan menulis ulang aturan zona di tempat lain.
 - Keputusan keselamatan tetap deterministik dan tercatat di log, tidak diserahkan ke LLM.
 
 ## Setup (Windows)
@@ -34,12 +35,17 @@ Pastikan muncul `(.venv)` di awal baris sebelum menjalankan pip atau python. Pyt
 - `tools/pose_test.py`: Tes 1, akurasi posisi kardus dari marker
 - `tools/predict_test.py`: Tes 2, prediksi roboh (statis + Monte Carlo MuJoCo) dibanding kenyataan
 - `tools/common.py`: pengaturan marker dan fungsi bersama
+- `tools/drystone_core.py`: keputusan (zona, Monte Carlo adaptif, usulan posisi, cek ulang). Tanpa kamera/GUI.
+- `tools/agent.py`: agent live di laptop (kamera, wireframe calon, persetujuan/override di cmd, log `data/agent_<waktu>/log.jsonl`)
+- `tools/service.py`: foto -> keputusan JSON (CLI + `lambda_handler` untuk AWS)
+- `aws/`: Dockerfile Lambda, `requirements-lambda.txt`, langkah deploy (`aws/README.md`)
 - `config/boxes.json`: katalog kardus per ID marker (ukuran cm, berat kg). ID 0 = kardus paling bawah.
-- `data/`: hasil kalibrasi (`camera_*.yaml`) dan hasil tes (`*.csv`). Foto mentah tidak di-commit.
+- `data/`: hasil kalibrasi (`camera_*.yaml`) dan hasil tes (`*.csv`). Foto mentah dan folder `agent_*` / `service_*` tidak di-commit (bisa memuat wajah/kamar).
 
 ## Marker
 - Papan kalibrasi: ChArUco 7x5, kotak 30 mm, marker 22 mm, DICT_5X5_100
-- Marker kardus: DICT_4X4_50, sisi hitam 80 mm, ID 0-11, ditempel di tengah sisi depan kardus
+- Marker kardus: DICT_4X4_50, sisi hitam 80 mm, ID 0-11, ditempel di tengah sisi depan kardus. `config/boxes.json` hanya berisi kardus yang benar-benar ada (sekarang ID 0-2).
+- Posisi kardus dihitung dengan arah hadap rata-rata semua marker x 10 frame (bukan arah tiap marker): arah satu marker goyang beberapa derajat dan dulu membuat posisi melompat 1,5-3,6 cm.
 - Selalu ukur hasil cetak dan isi ukuran aslinya (`--square-mm`, `--marker-mm`)
 
 ## Kalibrasi
