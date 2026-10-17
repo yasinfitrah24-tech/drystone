@@ -281,6 +281,9 @@ def run_camera(args, catalog, obj, K, dist, calib_size, rng, out_dir):
     detector = common.make_marker_detector()
     cap = common.open_camera(args.source, calib_size[0], calib_size[1])
     results = []
+    # resizable window: the fixed 1280x720 window does not fit small laptop screens
+    cv2.namedWindow("Tes 2 Drystone", cv2.WINDOW_NORMAL)
+    cv2.resizeWindow("Tes 2 Drystone", 960, 540)
     print("SPASI = prediksi tumpukan sekarang, Q = selesai")
     while True:
         ok, frame = cap.read()
@@ -296,9 +299,11 @@ def run_camera(args, catalog, obj, K, dist, calib_size, rng, out_dir):
         if args.base_id in poses and len(poses) >= 2:
             stable, margin = static_check(stack_from_poses(poses, catalog, args.base_id), catalog)
             info += f" | statis: {'berdiri' if stable else 'ROBOH'} ({margin * 100:+.1f} cm)"
-        cv2.putText(view, info, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.65, (255, 255, 255), 2)
-        cv2.putText(view, f"percobaan {len(results) + 1} | SPASI prediksi | Q selesai", (10, 60),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.65, (255, 255, 255), 2)
+        # black outline so the text stays readable on a bright background
+        for row, text in enumerate([info, f"percobaan {len(results) + 1} | SPASI prediksi | Q selesai"]):
+            org = (10, 30 + 30 * row)
+            cv2.putText(view, text, org, cv2.FONT_HERSHEY_SIMPLEX, 0.65, (0, 0, 0), 5, cv2.LINE_AA)
+            cv2.putText(view, text, org, cv2.FONT_HERSHEY_SIMPLEX, 0.65, (255, 255, 255), 2, cv2.LINE_AA)
         cv2.imshow("Tes 2 Drystone", view)
         key = cv2.waitKey(1) & 0xFF
         if key == ord(" "):
