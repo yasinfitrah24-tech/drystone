@@ -119,7 +119,7 @@ Target tambahan (S3, DynamoDB, dashboard/alarm CloudWatch, deteksi tanpa marker)
 - Image baru: `drystone-service:f5b647b` (+ `:latest`, digest `sha256:7f243d8f…`). Commit dokumen sesudahnya tidak mengubah image (`docs/` tidak masuk build).
 - **Live sejak 18 Okt 00.45: `drystone-service:f5b647b`**, Function URL tetap sama.
 - Tes live (dari laptop): `GET /` 200 (3,3 dtk) · `samples.json` `no-cache`, `photos_version` a7aba3ca6c, tidak ada tanda placeholder, contoh s2 KUNING +13 · foto `?v=a7aba3ca6c` s1–s3 identik (sha256) dengan foto asli di repo, bukan placeholder · `POST` s2 +16 cm → RED 69%, usulan +10 cm 3%, `placeholder: false`, ID 1 x +0,1 cm (7,7 dtk) · POST foto lama (`test_endpoint.py`, s2 +6 cm) → GREEN (4,1 dtk) · `POST /log` → baris `web_supervisor_choice` (`placeholder: false`) muncul di CloudWatch · 0 baris error.
-- **Tes dari HP dengan foto asli (18 Okt, dari screenshot Yasin) — lulus:** foto asli tampil di ketiga contoh tanpa label "placeholder image" · contoh s2 sudah +13 cm (samples.json baru) · s2 +16 cm → RED 69%, usulan +10 cm 3% · "Use suggestion" → +10 cm GREEN 1% · trace 5 tahap tampil · halaman pas di layar HP. Jenis jaringan (data seluler/Wi-Fi) tidak terlihat di screenshot.
+- **Tes dari HP lewat data seluler dengan foto asli (18 Okt, dari screenshot Yasin) — lulus:** foto asli tampil di ketiga contoh tanpa label "placeholder image" · contoh s2 sudah +13 cm (samples.json baru) · s2 +16 cm → RED 69%, usulan +10 cm 3% · "Use suggestion" → +10 cm GREEN 1% · trace 5 tahap tampil · halaman pas di layar HP.
 
 ## Wajib sebelum submit
 - **Validasi setelan ketidakpastian** (posisi 1 cm, isi 2 cm) di percobaan baru (evaluasi 21 Okt, pipeline persepsi baru), target **0 roboh di zona GREEN**.
@@ -130,7 +130,6 @@ Target tambahan (S3, DynamoDB, dashboard/alarm CloudWatch, deteksi tanpa marker)
 - **19 Okt:** README utama + rapikan repo.
 - **20 Okt:** cadangan.
 - **21 Okt:** evaluasi 20–30 percobaan baru dengan pipeline persepsi baru (akurasi, Brier, roboh di zona GREEN, waktu keputusan, retake, fallback) + kasus gagal; sekaligus validasi setelan ketidakpastian Tes 2; malamnya fitur dikunci.
-
 - **25–26 Okt:** jadikan repo publik + cek ulang tidak ada secret, nomor akun AWS, atau Function URL di seluruh riwayat git (bukan hanya commit terakhir).
 
 ## Bonus (hanya kalau inti selesai)
