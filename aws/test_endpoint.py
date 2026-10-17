@@ -1,14 +1,14 @@
-r"""Kirim satu foto ke layanan Drystone dan tampilkan keputusannya.
+r"""Send photo(s) to the Drystone service and print its decision.
 
-Tes image Docker di laptop (setelah `docker run -p 9000:8080 drystone-service`):
+Test the Docker image on the laptop (after `docker run -p 9000:8080 drystone-service`):
     python aws/test_endpoint.py --image data/agent_20261017_142634/langkah_003_cek_ulang.png --offset-cm 12
-Tes Lambda di AWS (Function URL, auth NONE saat demo):
+Test the Lambda on AWS (Function URL):
     python aws/test_endpoint.py --url https://xxxx.lambda-url.ap-southeast-1.on.aws/ --image ... --offset-cm 12
-Tes Lambda lewat AWS CLI (tanpa URL publik): buat file event, lalu `aws lambda invoke`:
+Test the Lambda through the AWS CLI (no public URL): write an event file, then `aws lambda invoke`:
     python aws/test_endpoint.py --image ... --offset-cm 12 --write-event event.json
     aws lambda invoke --function-name drystone --cli-binary-format raw-in-base64-out --payload fileb://event.json out.json --region ap-southeast-1
     python aws/test_endpoint.py --read-response out.json
-Hanya pakai pustaka bawaan Python.
+Standard library only.
 """
 import argparse
 import base64
@@ -22,13 +22,13 @@ LOCAL = "http://localhost:9000/2015-03-31/functions/function/invocations"   # La
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--image", nargs="+", help="1-5 foto dari webcam laptop (1280x720)")
-    ap.add_argument("--write-event", help="hanya tulis event Lambda ke file ini (untuk aws lambda invoke)")
-    ap.add_argument("--read-response", help="baca file jawaban dari aws lambda invoke dan tampilkan")
+    ap.add_argument("--image", nargs="+", help="1-5 photos from the calibrated laptop webcam (1280x720)")
+    ap.add_argument("--write-event", help="only write a Lambda event to this file (for aws lambda invoke)")
+    ap.add_argument("--read-response", help="read and print an aws lambda invoke response file")
     ap.add_argument("--offset-cm", type=float, default=0.0)
     ap.add_argument("--box-id", type=int)
-    ap.add_argument("--url", default=LOCAL, help="kosong = image Docker di laptop")
-    ap.add_argument("--save", default="hasil_endpoint.jpg", help="simpan foto beranotasi dari jawaban")
+    ap.add_argument("--url", default=LOCAL, help="default = Docker image on the laptop")
+    ap.add_argument("--save", default="endpoint_result.jpg", help="where to save the annotated photo from the answer")
     args = ap.parse_args()
 
     if args.read_response:
@@ -36,7 +36,7 @@ def main():
             show(json.load(f), args.save, None)
         return
     if not args.image:
-        ap.error("--image wajib diisi")
+        ap.error("--image is required")
     body = {"mode": "decide", "offset_cm": args.offset_cm,
             "images": [base64.b64encode(open(p, "rb").read()).decode() for p in args.image]}
     if args.box_id is not None:
@@ -45,7 +45,7 @@ def main():
     if args.write_event:
         with open(args.write_event, "w", encoding="utf-8") as f:
             json.dump({"body": json.dumps(body)}, f)
-        print(f"Event tertulis: {os.path.abspath(args.write_event)} ({os.path.getsize(args.write_event) // 1024} KB)")
+        print(f"Event written: {os.path.abspath(args.write_event)} ({os.path.getsize(args.write_event) // 1024} KB)")
         return
     req = urllib.request.Request(args.url, data=json.dumps(payload).encode(),
                                  headers={"Content-Type": "application/json"}, method="POST")
@@ -63,8 +63,8 @@ def show(out, save, seconds):
         with open(save, "wb") as f:
             f.write(base64.b64decode(img))
     print(json.dumps(out, ensure_ascii=False, indent=2))
-    print(("" if seconds is None else f"\nTotal {seconds:.1f} dtk (termasuk kirim foto).")
-          + (f" Foto beranotasi: {os.path.abspath(save)}" if img else ""))
+    print(("" if seconds is None else f"\nTotal {seconds:.1f} s (including upload).")
+          + (f" Annotated photo: {os.path.abspath(save)}" if img else ""))
 
 
 if __name__ == "__main__":

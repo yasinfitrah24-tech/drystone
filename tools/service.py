@@ -1,15 +1,15 @@
-r"""Layanan Drystone: foto tumpukan -> keputusan (JSON). Dipakai di laptop dan di AWS Lambda.
+r"""Drystone service: stack photo(s) -> decision (JSON). Runs on the laptop and on AWS Lambda.
 
-Dua mode:
-- decide: foto (1-5 foto berturut-turut, lebih banyak = lebih stabil) + calon posisi kardus berikutnya
-  -> zona HIJAU/KUNING/MERAH, P(roboh), alasan, usulan posisi aman, dan "plan" untuk dicek nanti.
-- check : foto setelah kardus ditaruh + "plan" dari hasil decide -> OK / MELESET / ROBOH / BELUM.
-Keputusan keselamatan deterministik (drystone_core), bukan LLM.
+Two modes:
+- decide: 1-5 consecutive photos (more = steadier) + candidate position of the next box
+  -> zone GREEN/YELLOW/RED, P(fall), reasoning trace, nearest safe suggestion, and "plans" to check later.
+- check : photo(s) after the box is placed + one plan from decide -> OK / OFF_PLAN / FELL / NOT_PLACED.
+Safety decisions are deterministic (drystone_core), not made by an LLM.
 
 Laptop:
-    python tools/service.py --images "data/agent_x/langkah_003_cek_ulang.png" --offset-cm 12
-    python tools/service.py --images "foto_setelah.png" --check data/service_x/plan.json
-AWS Lambda: handler = service.lambda_handler, body JSON:
+    python tools/service.py --images "data/agent_x/step_003_check.png" --offset-cm 12
+    python tools/service.py --images "after.png" --check data/service_x/plan.json --plan suggested
+AWS Lambda: handler = service.lambda_handler, JSON body:
     {"mode": "decide", "images": ["<base64 jpg/png>", ...], "offset_cm": 12, "box_id": 2}
     {"mode": "check",  "images": [...], "plan": {...}}
 """
@@ -79,12 +79,12 @@ def analyze(images, req):
     mode = req.get("mode", "decide")
     result = {"ok": False, "mode": mode, "problem": None}
     if not images:
-        result["problem"] = "tidak ada foto"
+        result["problem"] = "no photos"
         return result, None
     images = images[:MAX_IMAGES]
     size = (images[0].shape[1], images[0].shape[0])
     if size != tuple(s["size"]):
-        result["problem"] = (f"resolusi foto {size[0]}x{size[1]} beda dengan kalibrasi "
+        result["problem"] = (f"photo resolution {size[0]}x{size[1]} differs from the calibration "
                              f"{s['size'][0]}x{s['size'][1]}")
         return result, images[0]
     stack, R0, t0, frame, problem = read_stack(_Frames(images), s["detector"], catalog, s["obj"],
@@ -94,10 +94,10 @@ def analyze(images, req):
         result["stack"] = [_box_out(b) for b in stack]
     if problem:
         result["problem"] = problem
-        result["action"] = "FOTO_ULANG"
-        if mode == "check" and "tidak terlihat" in problem:
-            result["verify"] = {"status": "ROBOH?", "message": "kardus bawah tidak terlihat setelah penempatan"}
-        outlined(view, f"FOTO ULANG: {problem}"[:110], (10, 30), 0.6, (0, 200, 255))
+        result["action"] = "RETAKE"
+        if mode == "check" and "not visible" in problem:
+            result["verify"] = {"status": "FELL?", "message": "bottom box not visible after the placement"}
+        outlined(view, f"RETAKE: {problem}"[:110], (10, 30), 0.6, (0, 200, 255))
         result["seconds"] = round(time.time() - t_start, 2)
         return result, view
     settings = core.Settings(req.get("pos_sd_cm", 1.0), req.get("com_sd_cm", 2.0), req.get("friction", 0.5),
@@ -111,15 +111,15 @@ def analyze(images, req):
         result["verify"] = {k: (round(val * 100, 2) if k == "deviation_m" and val is not None else val)
                             for k, val in v.items()}
         result["verify"]["deviation_cm"] = result["verify"].pop("deviation_m")
-        if v["status"] in ("OK", "MELESET"):
+        if v["status"] in ("OK", "OFF_PLAN"):
             p, n, ci, z = core.stack_risk(stack, catalog, settings)
             result["risk_now"] = {"p": round(p, 3), "ci": round(ci, 3), "n": n, "zone": z}
-            result["action"] = "LANJUT" if z == "HIJAU" else "BETULKAN"
+            result["action"] = "CONTINUE" if z == "GREEN" else "FIX_PLACEMENT"
         else:
-            result["action"] = {"ROBOH": "BERHENTI", "BELUM": "TUNGGU"}.get(v["status"], "PERIKSA")
+            result["action"] = {"FELL": "STOP", "NOT_PLACED": "WAIT"}.get(v["status"], "CHECK")
         if box is not None:
-            draw_box(view, box, catalog, R0, t0, s["K"], s["dist"], COLORS["HIJAU"], 2)
-        outlined(view, f"cek ulang: {v['status']} {v['message']}"[:110], (10, 30))
+            draw_box(view, box, catalog, R0, t0, s["K"], s["dist"], COLORS["GREEN"], 2)
+        outlined(view, f"check: {v['status']} {v['message']}"[:110], (10, 30))
         result["ok"] = True
         result["seconds"] = round(time.time() - t_start, 2)
         return result, view
@@ -131,9 +131,9 @@ def analyze(images, req):
         box_id = free[0] if free else None
     if box_id is None or box_id not in catalog:
         p, n, ci, z = core.stack_risk(stack, catalog, settings)
-        result.update(ok=True, action="SELESAI", problem=None,
+        result.update(ok=True, action="DONE", problem=None,
                       risk_now={"p": round(p, 3), "ci": round(ci, 3), "n": n, "zone": z},
-                      note="tidak ada kardus lain di katalog")
+                      note="no other box in the catalogue")
         result["seconds"] = round(time.time() - t_start, 2)
         return result, view
     offset = float(req.get("offset_cm", 0.0)) / 100.0
@@ -143,21 +143,21 @@ def analyze(images, req):
                           "overhang_pct": round(d["overhang_pct"], 1), "zone": d["zone"], "action": d["action"],
                           "p": round(d["p"], 3), "ci": round(d["ci"], 3), "n": d["n"],
                           "static_margin_cm": round(d["static_margin_m"] * 100, 2), "trace": d["trace"]}
-    plans = {"diminta": {"before": result["stack"], "box": _box_out(cand), "zone": d["zone"], "p": round(d["p"], 3)}}
+    plans = {"requested": {"before": result["stack"], "box": _box_out(cand), "zone": d["zone"], "p": round(d["p"], 3)}}
     if d["alternative"]:
         a = d["alternative"]
         alt = core.candidate_box(stack, int(box_id), a["offset_m"], catalog)
         result["decision"]["alternative"] = {"offset_cm": round(a["offset_m"] * 100, 1),
                                              "overhang_pct": round(a["overhang_pct"], 1), "p": round(a["p"], 3)}
-        plans["usulan"] = {"before": result["stack"], "box": _box_out(alt), "zone": "HIJAU", "p": round(a["p"], 3)}
-        draw_box(view, alt, catalog, R0, t0, s["K"], s["dist"], COLORS["HIJAU"], 1)
+        plans["suggested"] = {"before": result["stack"], "box": _box_out(alt), "zone": "GREEN", "p": round(a["p"], 3)}
+        draw_box(view, alt, catalog, R0, t0, s["K"], s["dist"], COLORS["GREEN"], 1)
     result["plans"] = plans
     result["action"] = d["action"]
     draw_box(view, cand, catalog, R0, t0, s["K"], s["dist"], COLORS[d["zone"]], 3)
-    outlined(view, f"ID {box_id} {d['overhang_pct']:+.0f}%: P(roboh) {d['p']:.0%} {d['zone']} -> {d['action']}", (10, 30))
+    outlined(view, f"ID {box_id} {d['overhang_pct']:+.0f}%: P(fall) {d['p']:.0%} {d['zone']} -> {d['action']}", (10, 30))
     if d["alternative"]:
-        outlined(view, f"usulan: {d['alternative']['offset_m'] * 100:+.0f} cm, P(roboh) {d['alternative']['p']:.0%}",
-                 (10, 60), 0.6, COLORS["HIJAU"])
+        outlined(view, f"suggestion: {d['alternative']['offset_m'] * 100:+.0f} cm, P(fall) {d['alternative']['p']:.0%}",
+                 (10, 60), 0.6, COLORS["GREEN"])
     result["ok"] = True
     result["seconds"] = round(time.time() - t_start, 2)
     return result, view
@@ -167,7 +167,7 @@ def _decode(b64):
     data = base64.b64decode(b64.split(",", 1)[-1])
     img = cv2.imdecode(np.frombuffer(data, np.uint8), cv2.IMREAD_COLOR)
     if img is None:
-        raise ValueError("foto tidak bisa dibaca")
+        raise ValueError("photo cannot be decoded")
     return img
 
 
@@ -190,19 +190,19 @@ def lambda_handler(event, context=None):
 
 
 def main():
-    ap = argparse.ArgumentParser(description="Foto tumpukan -> keputusan Drystone (JSON)")
-    ap.add_argument("--images", required=True, help='file foto, boleh pola, misalnya "data/x/*.png" (maks 5)')
-    ap.add_argument("--offset-cm", type=float, default=0.0, help="geser calon ke kanan dari kardus teratas (cm)")
-    ap.add_argument("--box-id", type=int, help="ID kardus berikutnya (kosong = ID terkecil yang belum dipakai)")
-    ap.add_argument("--check", help="file plan.json dari hasil decide -> mode cek ulang")
-    ap.add_argument("--plan", default="diminta", choices=["diminta", "usulan"],
-                    help="untuk --check: rencana mana yang dipakai dari plan.json")
+    ap = argparse.ArgumentParser(description="Stack photo(s) -> Drystone decision (JSON)")
+    ap.add_argument("--images", required=True, help='photo file(s), a pattern is fine, e.g. "data/x/*.png" (max 5)')
+    ap.add_argument("--offset-cm", type=float, default=0.0, help="candidate shift to the right of the top box (cm)")
+    ap.add_argument("--box-id", type=int, help="next box ID (empty = smallest unused ID)")
+    ap.add_argument("--check", help="plan.json from a decide run -> check mode")
+    ap.add_argument("--plan", default="requested", choices=["requested", "suggested"],
+                    help="for --check: which plan in plan.json to use")
     ap.add_argument("--seed", type=int, default=0)
     args = ap.parse_args()
 
     paths = sorted(glob.glob(args.images))[:MAX_IMAGES]
     if not paths:
-        sys.exit(f"Tidak ada file yang cocok dengan: {args.images}")
+        sys.exit(f"No file matches: {args.images}")
     images = [common.read_image(p) for p in paths]
     req = {"mode": "decide", "offset_cm": args.offset_cm, "box_id": args.box_id, "seed": args.seed}
     if args.check:
@@ -213,14 +213,14 @@ def main():
     out_dir = os.path.join(common.DATA_DIR, f"service_{time.strftime('%Y%m%d_%H%M%S')}")
     os.makedirs(out_dir, exist_ok=True)
     if view is not None:
-        cv2.imwrite(os.path.join(out_dir, "hasil.jpg"), view)
-    with open(os.path.join(out_dir, "hasil.json"), "w", encoding="utf-8") as f:
+        cv2.imwrite(os.path.join(out_dir, "result.jpg"), view)
+    with open(os.path.join(out_dir, "result.json"), "w", encoding="utf-8") as f:
         json.dump(result, f, ensure_ascii=False, indent=2)
     if result.get("plans"):
         with open(os.path.join(out_dir, "plan.json"), "w", encoding="utf-8") as f:
             json.dump(result["plans"], f, ensure_ascii=False, indent=2)
     print(json.dumps(result, ensure_ascii=False, indent=2))
-    print(f"\nTersimpan di {out_dir} (hasil.json, hasil.jpg" + (", plan.json)" if result.get("plans") else ")"))
+    print(f"\nSaved in {out_dir} (result.json, result.jpg" + (", plan.json)" if result.get("plans") else ")"))
 
 
 if __name__ == "__main__":

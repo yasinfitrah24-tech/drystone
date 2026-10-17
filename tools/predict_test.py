@@ -39,10 +39,10 @@ FLIP_Z = np.diag([-1.0, -1.0, 1.0])
 
 def zone(p):
     if p < 0.10:
-        return "HIJAU", (0, 170, 0)
+        return "GREEN", (0, 170, 0)
     if p <= 0.50:
-        return "KUNING", (0, 200, 255)
-    return "MERAH", (0, 0, 255)
+        return "YELLOW", (0, 200, 255)
+    return "RED", (0, 0, 255)
 
 
 def load_catalog(path):
@@ -217,8 +217,6 @@ def evaluate(img, poses, catalog, args, rng, trial, out_dir):
     cv2.putText(view, f"#{trial}  P(roboh) {p:.0%}  {name}  | statis: {'berdiri' if stable else 'roboh'}",
                 (10, 32), cv2.FONT_HERSHEY_SIMPLEX, 0.9, color, 2)
     cv2.imwrite(os.path.join(out_dir, f"percobaan_{trial:02d}.png"), view)
-    # raw frame too: the annotated one has outlines over the markers and cannot be re-detected reliably
-    cv2.imwrite(os.path.join(out_dir, f"percobaan_{trial:02d}_mentah.png"), img)
     return {"boxes": boxes, "stable": stable, "margin": margin, "p": p, "zone": name, "n": n, "view": view}
 
 
@@ -250,9 +248,9 @@ def report(results, args, out_dir):
               f"{'LULUS' if sim_acc >= 0.8 else 'BELUM'}")
         print(f"Akurasi hitungan statis: {st_acc:.0%}")
         print(f"Brier score            : {brier:.3f} (0 = sempurna, 0.25 = sama dengan menebak 50%)")
-        green = [r for r in done if r["zone"] == "HIJAU"]
+        green = [r for r in done if r["zone"] == "GREEN"]
         green_fell = [r["trial"] for r in green if r["fell"]]
-        print(f"Roboh di zona HIJAU    : {len(green_fell)} dari {len(green)} (target 0)"
+        print(f"Roboh di zona GREEN    : {len(green_fell)} dari {len(green)} (target 0)"
               + (f" -> percobaan {green_fell}" if green_fell else ""))
     path = os.path.join(out_dir, "hasil.csv")
     with open(path, "w", newline="") as f:

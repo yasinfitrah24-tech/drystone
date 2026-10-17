@@ -1,22 +1,27 @@
-r"""Agent Drystone: pandu penumpukan kardus satu per satu.
+r"""Drystone agent: guides stacking one box at a time.
 
-Alur tiap kardus:
-1. Kamera membaca tumpukan (marker ArUco) -> kembaran digital. Kotak garis = calon posisi kardus berikutnya.
-2. Geser calon dengan A / D (1 cm), lalu SPASI = minta keputusan agent.
-3. Agent: HIJAU -> pandu. KUNING -> minta persetujuan supervisor (di cmd).
-   MERAH -> tolak + usul posisi aman terdekat; lanjut hanya lewat override dengan alasan tercatat.
-4. Taruh kardus sesuai kotak, lepas tangan, tekan SPASI -> agent cek ulang (sesuai rencana / meleset / roboh).
-Semua keputusan tercatat di data/agent_<waktu>/log.jsonl (+ foto tiap langkah).
+For each box:
+1. The camera reads the stack (ArUco markers) -> digital twin. The wireframe = candidate spot for the next box.
+2. Move the candidate with A / D (1 cm), then SPACE = ask the agent for a decision.
+3. Agent: GREEN -> guide. YELLOW -> ask the supervisor for approval (in the terminal).
+   RED -> reject + suggest the nearest safe spot; only a supervisor override with a logged reason goes ahead.
+4. Place the box in the wireframe, let go, press SPACE -> the agent checks again (as planned / off plan / fell).
+Every decision is logged in data/agent_<time>/log.jsonl (+ a photo per step).
 
-Tombol di jendela kamera: A / D geser calon, SPASI keputusan / cek ulang, X batal, Q selesai.
+Keys in the camera window: A / D move candidate, SPACE decide / check, X cancel, Q quit.
 
     python tools/agent.py --calib data/camera_laptop.yaml --marker-mm 80
+Decisions computed on AWS Lambda (the laptop only does camera + display; if AWS fails, the laptop computes):
+    python tools/agent.py --calib data/camera_laptop.yaml --marker-mm 80 --aws https://<function-url>/
 """
 import argparse
+import base64
 import json
 import os
 import sys
 import time
+import urllib.error
+import urllib.request
 
 import cv2
 import numpy as np
@@ -30,7 +35,7 @@ CAPTURE_FRAMES = 10        # frames per reading; the median is used
 MAX_JITTER_M = 0.01        # left-right spread between frames above 1 cm -> read again
 MAX_TURN_DEG = 12.0        # a box turned more than this cannot be simulated as straight -> ask to straighten
 MAX_RETRIES = 3
-COLORS = {"HIJAU": (0, 170, 0), "KUNING": (0, 200, 255), "MERAH": (0, 0, 255), "CALON": (200, 200, 200)}
+COLORS = {"GREEN": (0, 170, 0), "YELLOW": (0, 200, 255), "RED": (0, 0, 255), "CANDIDATE": (200, 200, 200)}
 
 
 class Log:
@@ -43,7 +48,7 @@ class Log:
         self.step += 1
         entry = {"step": self.step, "time": time.strftime("%Y-%m-%d %H:%M:%S"), "event": event, **data}
         if frame is not None:
-            name = f"langkah_{self.step:03d}_{event}.png"
+            name = f"step_{self.step:03d}_{event}.png"
             cv2.imwrite(os.path.join(self.dir, name), frame)
             entry["image"] = name
         with open(self.path, "a", encoding="utf-8") as f:
@@ -122,22 +127,56 @@ def common_rotation(frames, base_id):
     return mean_rotation(Rs)
 
 
+class LiveSmoother:
+    """Steady live overlay. Each frame: one facing direction from all visible markers, then an exponential
+    moving average over time. A box that really moves (> SNAP_M) snaps at once instead of sliding.
+    Display only: decisions still use read_stack (median of 10 fresh frames)."""
+    ALPHA = 0.15
+    SNAP_M = 0.03
+
+    def __init__(self):
+        self.R = self.t = None
+        self.boxes = {}
+
+    def update(self, poses, catalog, base_id):
+        Rc = common_rotation([poses], base_id)
+        t0 = poses[base_id][1]
+        if self.R is None or np.linalg.norm(t0 - self.t) > self.SNAP_M:
+            self.R, self.t, self.boxes = Rc, t0.copy(), {}
+        else:
+            self.R = mean_rotation([self.ALPHA * Rc + (1 - self.ALPHA) * self.R])
+            self.t = self.ALPHA * t0 + (1 - self.ALPHA) * self.t
+        stack = []
+        for i, (R, t, _) in poses.items():
+            p = self.R.T @ (t - t0)
+            now = np.array([p[0], p[1], p[2] - catalog[i]["D"] / 2.0])
+            old = self.boxes.get(i)
+            pos = now if old is None or np.linalg.norm(now - old) > self.SNAP_M else self.ALPHA * now + (1 - self.ALPHA) * old
+            self.boxes[i] = pos
+            stack.append({"id": i, "x": float(pos[0]), "y": float(pos[1]), "z": float(pos[2]),
+                          "turn_deg": yaw_deg(poses, i, base_id)})
+        for gone in set(self.boxes) - set(poses):
+            del self.boxes[gone]
+        stack.sort(key=lambda b: b["y"])
+        return stack, self.R, self.t
+
+
 def read_stack(cap, detector, catalog, obj, K, dist, base_id, n=CAPTURE_FRAMES):
     """Several frames -> median box positions + quality checks. Returns (stack, R0, t0, frame, problem)."""
     frames, frame = [], None
     for _ in range(n):
         ok, frame = cap.read()
         if not ok:
-            return None, None, None, frame, "kamera tidak mengirim gambar"
+            return None, None, None, frame, "camera is not sending frames"
         poses = detect_poses(detector, frame, catalog, obj, K, dist, base_id)
         if base_id in poses:
             frames.append(poses)
     if not frames:
-        return None, None, None, frame, f"marker kardus bawah (ID {base_id}) tidak terlihat"
+        return None, None, None, frame, f"bottom box marker (ID {base_id}) not visible"
     id_sets = [tuple(sorted(f)) for f in frames]
     ids = max(set(id_sets), key=id_sets.count)
     if id_sets.count(ids) < (1 if len(frames) == 1 else max(2, len(frames) // 2 + 1)):
-        return None, None, None, frame, "marker yang terlihat berubah-ubah antar-frame"
+        return None, None, None, frame, "visible markers change between frames"
     frames = [f for f, s in zip(frames, id_sets) if s == ids]
     Rc = common_rotation(frames, base_id)
     stack = []
@@ -155,21 +194,21 @@ def read_stack(cap, detector, catalog, obj, K, dist, base_id, n=CAPTURE_FRAMES):
     R0, t0 = Rc, np.median([f[base_id][1] for f in frames], axis=0)
     shaky = [f"ID {b['id']} ({b['jitter_m'] * 100:.1f} cm)" for b in stack if b["jitter_m"] > MAX_JITTER_M]
     if shaky:
-        return stack, R0, t0, frame, ("posisi kardus " + ", ".join(shaky)
-                                      + " goyang antar-frame (> 1 cm): jangan sentuh meja/kardus")
+        return stack, R0, t0, frame, ("position of box " + ", ".join(shaky)
+                                      + " jitters between frames (> 1 cm): do not touch the table or boxes")
     if stack[0]["id"] != base_id:
-        return stack, R0, t0, frame, f"kardus paling bawah terbaca ID {stack[0]['id']}, harusnya ID {base_id}"
+        return stack, R0, t0, frame, f"bottom box reads as ID {stack[0]['id']}, expected ID {base_id}"
     turned = [f"ID {b['id']} ({b['turn_deg']:.0f} deg)" for b in stack if b["turn_deg"] > MAX_TURN_DEG]
     if turned:
-        return stack, R0, t0, frame, "kardus " + ", ".join(turned) + " miring/berputar -> luruskan"
+        return stack, R0, t0, frame, "box " + ", ".join(turned) + " is turned -> straighten it"
     for lo, up in zip(stack, stack[1:]):
         gap = up["y"] - lo["y"] - (catalog[lo["id"]]["H"] + catalog[up["id"]]["H"]) / 2
         if gap < -0.10:
-            return stack, R0, t0, frame, (f"kardus ID {up['id']} tidak berada di atas tumpukan "
-                                          "(tergeletak di samping?) -> singkirkan dari pandangan kamera")
+            return stack, R0, t0, frame, (f"box ID {up['id']} is not on the stack "
+                                          "(lying next to it?) -> move it out of the camera view")
         if abs(gap) > 0.04:
-            return stack, R0, t0, frame, (f"jarak tinggi ID {lo['id']} -> ID {up['id']} {gap * 100:+.0f} cm dari "
-                                          "seharusnya (marker tertutup / kardus tidak menumpuk?)")
+            return stack, R0, t0, frame, (f"height gap ID {lo['id']} -> ID {up['id']} is {gap * 100:+.0f} cm off "
+                                          "(marker covered / boxes not stacked?)")
     return stack, R0, t0, frame, None
 
 
@@ -179,13 +218,95 @@ def perceive(cap, detector, catalog, obj, K, dist, base_id, log, reason):
         stack, R0, t0, frame, problem = read_stack(cap, detector, catalog, obj, K, dist, base_id)
         if problem is None:
             if attempt > 1:
-                print(f"  [agent] bacaan ke-{attempt} bersih")
+                print(f"  [agent] reading {attempt} is clean")
             return stack, R0, t0, frame, None
-        print(f"  [agent] bacaan {attempt}/{MAX_RETRIES} untuk {reason}: {problem} -> foto ulang")
-        log.write("foto_ulang", frame, reason=reason, attempt=attempt, problem=problem)
+        print(f"  [agent] reading {attempt}/{MAX_RETRIES} for {reason}: {problem} -> retake")
+        log.write("retake", frame, reason=reason, attempt=attempt, problem=problem)
         time.sleep(0.3)
-    print(f"  [agent] tetap gagal: {problem}. Perbaiki susunan/kamera, lalu tekan SPASI lagi.")
+    print(f"  [agent] still failing: {problem}. Fix the stack or camera, then press SPACE again.")
     return None, None, None, frame, problem
+
+
+AWS_FRAMES = 3            # photos sent per request (JPEG ~150 KB each; PNG was 1.4 MB and took ~8 s to upload)
+AWS_TIMEOUT_S = 60
+
+
+def _cm(b):
+    return {"id": int(b["id"]), "x_cm": round(b["x"] * 100, 2), "y_cm": round(b["y"] * 100, 2),
+            "z_cm": round(b["z"] * 100, 2)}
+
+
+def aws_call(url, body, cap, first):
+    """POST photos + request to the Lambda Function URL. Returns (response dict, seconds) or raises."""
+    frames = [first] + [f for ok, f in (cap.read() for _ in range(AWS_FRAMES - 1)) if ok]
+    body = dict(body, return_image=False,
+                images=[base64.b64encode(cv2.imencode(".jpg", f, [cv2.IMWRITE_JPEG_QUALITY, 92])[1].tobytes()).decode()
+                        for f in frames])
+    req = urllib.request.Request(url, data=json.dumps(body).encode(), method="POST",
+                                 headers={"Content-Type": "application/json"})
+    t = time.time()
+    try:
+        with urllib.request.urlopen(req, timeout=AWS_TIMEOUT_S) as r:
+            out = json.loads(r.read())
+    except urllib.error.HTTPError as e:            # the service answers 400 with a JSON problem
+        out = json.loads(e.read() or b"{}")
+        if not out:
+            raise
+    if isinstance(out.get("body"), str):           # raw Lambda proxy response (emulator / direct invoke)
+        out = json.loads(out["body"])
+    return out, time.time() - t
+
+
+def decide_aws(url, cap, shot, stack, nid, offset, catalog, settings):
+    """Decision from AWS Lambda. Falls back to the laptop if AWS is unreachable or fails (logged in the trace)."""
+    try:
+        r, sec = aws_call(url, {"mode": "decide", "box_id": nid, "offset_cm": round(offset * 100, 1)}, cap, shot)
+        if r.get("action") == "RETAKE":
+            return None, f"AWS asks for a retake: {r.get('problem')}"
+        if not r.get("ok") or "decision" not in r:
+            raise RuntimeError(r.get("problem") or "incomplete answer from AWS")
+        dec = r["decision"]
+        alt = dec.get("alternative")
+        d = {"box_id": dec["box_id"], "offset_m": dec["offset_cm"] / 100, "overhang_pct": dec["overhang_pct"],
+             "static_margin_m": dec["static_margin_cm"] / 100, "p": dec["p"], "ci": dec["ci"], "n": dec["n"],
+             "zone": dec["zone"], "action": dec["action"],
+             "alternative": None if not alt else {"offset_m": alt["offset_cm"] / 100,
+                                                   "overhang_pct": alt["overhang_pct"], "p": alt["p"]},
+             "trace": [f"computed on AWS Lambda ({sec:.1f} s round trip, {r.get('seconds', 0):.1f} s on the server)"] + dec["trace"],
+             "source": "aws", "aws_seconds": round(sec, 2)}
+        return d, None
+    except Exception as e:                          # network, timeout, bad answer: keep working on the laptop
+        d = core.decide(stack, nid, offset, catalog, settings)
+        d["trace"].insert(0, f"AWS failed ({type(e).__name__}: {str(e)[:80]}) -> computed on the laptop")
+        d["source"] = "laptop (fallback)"
+        return d, None
+
+
+def verify_aws(url, cap, shot, plan, catalog, settings, stack):
+    """Check after placement via AWS; falls back to the laptop."""
+    try:
+        r, sec = aws_call(url, {"mode": "check", "plan": {"before": [_cm(b) for b in plan["before"]],
+                                                          "box": _cm(plan["box"])}}, cap, shot)
+        v = r.get("verify")
+        if not v:
+            raise RuntimeError(r.get("problem") or "incomplete answer from AWS")
+        dev = v.get("deviation_cm")
+        v = {"status": v["status"], "message": v["message"] + f" [AWS {sec:.1f} s]",
+             "deviation_m": None if dev is None else dev / 100}
+        risk = r.get("risk_now")
+        extra = {} if not risk else {"p_now": risk["p"], "zone_now": risk["zone"], "n": risk["n"]}
+        return v, extra, "aws"
+    except Exception as e:
+        if stack is None:
+            return ({"status": "FELL?", "message": f"AWS failed ({type(e).__name__}) and the stack is unreadable",
+                     "deviation_m": None}, {}, "laptop (fallback)")
+        v = core.verify(plan["before"], stack, plan["box"], catalog)
+        v["message"] += f" [AWS failed: {type(e).__name__}, checked on the laptop]"
+        extra = {}
+        if v["status"] in ("OK", "OFF_PLAN"):
+            p, n, ci, z = core.stack_risk(stack, catalog, settings)
+            extra = {"p_now": p, "zone_now": z, "n": n}
+        return v, extra, "laptop (fallback)"
 
 
 def ask(prompt, valid):
@@ -193,7 +314,7 @@ def ask(prompt, valid):
         ans = input(prompt).strip().lower()
         if ans[:1] in valid:
             return ans[:1]
-        print(f"  ketik salah satu: {', '.join(valid)}")
+        print(f"  type one of: {', '.join(valid)}")
 
 
 def ask_text(prompt, min_len=1):
@@ -201,7 +322,7 @@ def ask_text(prompt, min_len=1):
         ans = input(prompt).strip()
         if len(ans) >= min_len:
             return ans
-        print(f"  wajib diisi (minimal {min_len} huruf)")
+        print(f"  required (at least {min_len} characters)")
 
 
 def next_box_id(stack, catalog):
@@ -211,54 +332,54 @@ def next_box_id(stack, catalog):
 
 
 def print_decision(d):
-    print(f"\n[agent] keputusan untuk kardus ID {d['box_id']} menjorok {d['overhang_pct']:+.0f}%:")
+    print(f"\n[agent] decision for box ID {d['box_id']} overhanging {d['overhang_pct']:+.0f}%:")
     for line in d["trace"]:
         print(f"  - {line}")
-    print(f"  => P(roboh) {d['p']:.0%} (+-{d['ci']:.0%}, {d['n']} simulasi) -> {d['zone']}: {d['action']}")
+    print(f"  => P(fall) {d['p']:.0%} (+-{d['ci']:.0%}, {d['n']} simulations) -> {d['zone']}: {d['action']}")
     if d["alternative"]:
         a = d["alternative"]
-        print(f"  => usulan: geser ke {a['offset_m'] * 100:+.0f} cm ({a['overhang_pct']:+.0f}%), P(roboh) {a['p']:.0%}")
+        print(f"  => suggestion: move to {a['offset_m'] * 100:+.0f} cm ({a['overhang_pct']:+.0f}%), P(fall) {a['p']:.0%}")
 
 
 def handle_decision(d, frame, log, supervisor):
     """Human control. Returns (approved, offset_m, how)."""
     entry = {k: v for k, v in d.items() if k != "trace"}
-    log.write("keputusan", frame, **entry, trace=d["trace"])
-    if d["zone"] == "HIJAU":
-        print("  [agent] HIJAU: silakan taruh kardus di kotak hijau.")
-        return True, d["offset_m"], "otomatis"
-    if d["zone"] == "KUNING":
-        print("  [agent] KUNING: butuh persetujuan supervisor.")
-        choice = ask("  Supervisor: s = setuju, u = pakai usulan agent, t = tolak: ", "sut")
-        if choice == "s":
-            name = supervisor or ask_text("  Nama supervisor: ")
-            log.write("persetujuan", None, box_id=d["box_id"], offset_m=d["offset_m"], p=d["p"], supervisor=name)
-            return True, d["offset_m"], f"disetujui {name}"
+    log.write("decision", frame, **entry, trace=d["trace"])
+    if d["zone"] == "GREEN":
+        print("  [agent] GREEN: place the box in the green wireframe.")
+        return True, d["offset_m"], "automatic"
+    if d["zone"] == "YELLOW":
+        print("  [agent] YELLOW: supervisor approval needed.")
+        choice = ask("  Supervisor: a = approve, s = use the agent's suggestion, r = reject: ", "asr")
+        if choice == "a":
+            name = supervisor or ask_text("  Supervisor name: ")
+            log.write("approval", None, box_id=d["box_id"], offset_m=d["offset_m"], p=d["p"], supervisor=name)
+            return True, d["offset_m"], f"approved by {name}"
     else:
-        print("  [agent] MERAH: DITOLAK. Posisi ini kemungkinan besar roboh.")
-        choice = ask("  u = pakai usulan agent, o = override (wajib alasan), t = batal: ", "uot")
+        print("  [agent] RED: REJECTED. This position will most likely fall.")
+        choice = ask("  s = use the agent's suggestion, o = override (reason required), c = cancel: ", "soc")
         if choice == "o":
-            name = supervisor or ask_text("  Nama supervisor: ")
-            reason = ask_text("  Alasan override (dicatat): ", min_len=5)
+            name = supervisor or ask_text("  Supervisor name: ")
+            reason = ask_text("  Override reason (logged): ", min_len=5)
             log.write("override", None, box_id=d["box_id"], offset_m=d["offset_m"], p=d["p"],
                       supervisor=name, reason=reason)
-            print("  [agent] override tercatat. Risiko ditanggung supervisor.")
+            print("  [agent] override logged. The supervisor takes responsibility for the risk.")
             return True, d["offset_m"], f"override {name}: {reason}"
-    if choice == "u":
+    if choice == "s":
         if d["alternative"] is None:
-            print("  [agent] tidak ada usulan hijau. Batal.")
+            print("  [agent] no green suggestion. Cancelled.")
         else:
             a = d["alternative"]
-            log.write("pakai_usulan", None, box_id=d["box_id"], offset_m=a["offset_m"], p=a["p"])
-            print(f"  [agent] usulan dipakai: taruh di kotak hijau ({a['offset_m'] * 100:+.0f} cm).")
-            return True, a["offset_m"], "usulan agent"
-    log.write("batal", None, box_id=d["box_id"], offset_m=d["offset_m"])
-    print("  [agent] dibatalkan. Geser calon lalu SPASI lagi.")
-    return False, d["offset_m"], "batal"
+            log.write("use_suggestion", None, box_id=d["box_id"], offset_m=a["offset_m"], p=a["p"])
+            print(f"  [agent] suggestion accepted: place the box in the green wireframe ({a['offset_m'] * 100:+.0f} cm).")
+            return True, a["offset_m"], "agent suggestion"
+    log.write("cancel", None, box_id=d["box_id"], offset_m=d["offset_m"])
+    print("  [agent] cancelled. Move the candidate, then press SPACE again.")
+    return False, d["offset_m"], "cancel"
 
 
 def main():
-    ap = argparse.ArgumentParser(description="Agent Drystone: pandu, minta persetujuan, atau tolak tiap penempatan")
+    ap = argparse.ArgumentParser(description="Drystone agent: guide, ask for approval, or reject each placement")
     ap.add_argument("--calib", required=True)
     ap.add_argument("--marker-mm", type=float, default=common.BOX_MARKER_MM)
     ap.add_argument("--boxes", default=os.path.join(common.ROOT, "config", "boxes.json"))
@@ -266,9 +387,11 @@ def main():
     ap.add_argument("--pos-sd-cm", type=float, default=1.0)
     ap.add_argument("--com-sd-cm", type=float, default=2.0)
     ap.add_argument("--friction", type=float, default=0.5)
-    ap.add_argument("--supervisor", default="", help="nama supervisor (kalau kosong, ditanya saat dibutuhkan)")
+    ap.add_argument("--supervisor", default="", help="supervisor name (asked when needed if empty)")
     ap.add_argument("--source", default="0")
     ap.add_argument("--seed", type=int, default=0)
+    ap.add_argument("--aws", default=os.environ.get("DRYSTONE_URL", ""),
+                    help="Drystone Lambda Function URL; empty = everything runs on the laptop")
     args = ap.parse_args()
 
     catalog = load_catalog(args.boxes)
@@ -278,24 +401,28 @@ def main():
     out_dir = os.path.join(common.DATA_DIR, f"agent_{time.strftime('%Y%m%d_%H%M%S')}")
     os.makedirs(out_dir, exist_ok=True)
     log = Log(out_dir)
-    log.write("mulai", None, settings={"pos_sd_cm": args.pos_sd_cm, "com_sd_cm": args.com_sd_cm,
+    log.write("start", None, settings={"pos_sd_cm": args.pos_sd_cm, "com_sd_cm": args.com_sd_cm,
                                         "friction": args.friction, "marker_mm": args.marker_mm,
-                                        "p_green": core.P_GREEN, "p_red": core.P_RED})
+                                        "p_green": core.P_GREEN, "p_red": core.P_RED},
+              decisions_on="aws" if args.aws else "laptop")
+    if args.aws:
+        print("Decisions are computed on AWS Lambda (fallback: laptop).")
     detector = common.make_marker_detector()
     cap = common.open_camera(args.source, calib_size[0], calib_size[1])
     cv2.namedWindow(WIN, cv2.WINDOW_NORMAL)
     cv2.resizeWindow(WIN, 960, 540)
     print(__doc__.split("\n    python")[0])
 
+    smoother = LiveSmoother()
     offset = 0.0          # candidate shift (m) relative to the current top box
     plan = None           # approved placement waiting to be checked: {"before", "box", "how", "zone", "p"}
     last = None           # last decision, drawn until the candidate moves
-    stats = {"keputusan": 0, "HIJAU": 0, "KUNING": 0, "MERAH": 0, "override": 0, "roboh": 0}
+    stats = {"decisions": 0, "GREEN": 0, "YELLOW": 0, "RED": 0, "override": 0, "fell": 0}
     try:
         while True:
             ok, frame = cap.read()
             if not ok:
-                print("Kamera berhenti mengirim gambar.")
+                print("The camera stopped sending frames.")
                 break
             poses = detect_poses(detector, frame, catalog, obj, K, dist, args.base_id)
             view = frame.copy()
@@ -304,26 +431,25 @@ def main():
                 outlined(view, f"ID {i}", tuple(int(v) for v in c4[0]), 0.6, (0, 255, 0))
             lines = []
             if args.base_id in poses:
-                R0, t0 = poses[args.base_id][0], poses[args.base_id][1]
-                stack = stack_aligned(poses, catalog, args.base_id)
+                stack, R0, t0 = smoother.update(poses, catalog, args.base_id)
                 if plan:
                     draw_box(view, plan["box"], catalog, R0, t0, K, dist, COLORS[plan["zone"]], 3)
-                    lines.append(f"taruh kardus ID {plan['box']['id']} di kotak, lepas tangan, lalu SPASI = cek ulang")
+                    lines.append(f"place box ID {plan['box']['id']} in the wireframe, let go, then SPACE = check")
                 else:
                     nid = next_box_id(stack, catalog)
                     if nid is not None:
                         cand = core.candidate_box(stack, nid, offset, catalog)
-                        color = COLORS[last["zone"]] if last else COLORS["CALON"]
+                        color = COLORS[last["zone"]] if last else COLORS["CANDIDATE"]
                         draw_box(view, cand, catalog, R0, t0, K, dist, color, 2)
                         if last and last["alternative"]:
                             alt = core.candidate_box(stack, nid, last["alternative"]["offset_m"], catalog)
-                            draw_box(view, alt, catalog, R0, t0, K, dist, COLORS["HIJAU"], 1)
-                        lines.append(f"calon ID {nid}: {offset * 100:+.0f} cm ({core.overhang_pct(stack, cand, catalog):+.0f}%)"
+                            draw_box(view, alt, catalog, R0, t0, K, dist, COLORS["GREEN"], 1)
+                        lines.append(f"candidate ID {nid}: {offset * 100:+.0f} cm ({core.overhang_pct(stack, cand, catalog):+.0f}%)"
                                      + (f" | {last['zone']} {last['p']:.0%}" if last else ""))
-                        lines.append("A/D geser 1 cm | SPASI keputusan | Q selesai")
-                lines.insert(0, f"tumpukan: {[b['id'] for b in stack]}")
+                        lines.append("A/D move 1 cm | SPACE decide | Q quit")
+                lines.insert(0, f"stack: {[b['id'] for b in stack]}")
             else:
-                lines.append(f"marker kardus bawah (ID {args.base_id}) tidak terlihat")
+                lines.append(f"bottom box marker (ID {args.base_id}) not visible")
             for row, text in enumerate(lines):
                 outlined(view, text, (10, 30 + 30 * row))
             cv2.imshow(WIN, view)
@@ -336,24 +462,33 @@ def main():
                 offset = round(offset, 3)
                 last = None
             elif plan is not None and key in (ord("x"), ord("X")):
-                log.write("batal", None, box_id=plan["box"]["id"], note="rencana dibatalkan sebelum ditaruh")
+                log.write("cancel", None, box_id=plan["box"]["id"], note="plan cancelled before placement")
                 plan = None
             elif key == ord(" ") and plan is None:
-                stack, R0, t0, shot, _ = perceive(cap, detector, catalog, obj, K, dist, args.base_id, log, "keputusan")
+                stack, R0, t0, shot, _ = perceive(cap, detector, catalog, obj, K, dist, args.base_id, log, "decision")
                 if stack is None:
                     continue
                 nid = next_box_id(stack, catalog)
                 if nid is None:
-                    print("  [agent] semua kardus di katalog sudah ada di tumpukan.")
+                    print("  [agent] every box in the catalogue is already on the stack.")
                     continue
-                d = core.decide(stack, nid, offset, catalog, settings)
-                stats["keputusan"] += 1
+                if args.aws:
+                    print("  [agent] sending photos to AWS ...")
+                    d, problem = decide_aws(args.aws, cap, shot, stack, nid, offset, catalog, settings)
+                    if d is None:
+                        print(f"  [agent] {problem}. Fix the stack or camera, then press SPACE again.")
+                        log.write("retake", shot, reason="decision (AWS)", problem=problem)
+                        continue
+                else:
+                    d = core.decide(stack, nid, offset, catalog, settings)
+                    d["source"] = "laptop"
+                stats["decisions"] += 1
                 stats[d["zone"]] += 1
                 print_decision(d)
                 last = d
                 snap = shot.copy()
                 draw_box(snap, core.candidate_box(stack, nid, offset, catalog), catalog, R0, t0, K, dist, COLORS[d["zone"]], 3)
-                outlined(snap, f"ID {nid} {d['overhang_pct']:+.0f}%: P(roboh) {d['p']:.0%} {d['zone']} -> {d['action']}", (10, 30))
+                outlined(snap, f"ID {nid} {d['overhang_pct']:+.0f}%: P(fall) {d['p']:.0%} {d['zone']} -> {d['action']}", (10, 30))
                 cv2.imshow(WIN, snap)
                 cv2.waitKey(1)
                 approved, off, how = handle_decision(d, snap, log, args.supervisor)
@@ -361,47 +496,55 @@ def main():
                     stats["override"] += 1
                 if approved:
                     box = core.candidate_box(stack, nid, off, catalog)
-                    zone_now = d["zone"] if off == d["offset_m"] else "HIJAU"
+                    zone_now = d["zone"] if off == d["offset_m"] else "GREEN"
                     p_now = d["p"] if off == d["offset_m"] else d["alternative"]["p"]
                     plan = {"before": stack, "box": box, "how": how, "zone": zone_now, "p": p_now}
                     offset = off
                 last = None if approved else d
             elif key == ord(" ") and plan is not None:
                 stack, R0, t0, shot, problem = perceive(cap, detector, catalog, obj, K, dist, args.base_id, log,
-                                                         "cek ulang")
-                if stack is None and problem and "tidak terlihat" in problem:
+                                                         "check")
+                if args.aws and (stack is not None or (problem and "not visible" in problem)):
+                    print("  [agent] checking on AWS ...")
+                    v, extra, src = verify_aws(args.aws, cap, shot, plan, catalog, settings, stack)
+                elif stack is None and problem and "not visible" in problem:
                     # base marker gone right after a placement: the stack may have fallen onto it
-                    v = {"status": "ROBOH?", "message": "kardus bawah tidak terlihat setelah penempatan", "deviation_m": None}
+                    v = {"status": "FELL?", "message": "bottom box not visible after the placement", "deviation_m": None}
                 elif stack is None:
                     continue                       # bad reading (box turned, shaky...): keep the plan, worker fixes it
                 else:
                     v = core.verify(plan["before"], stack, plan["box"], catalog)
-                print(f"\n[agent] cek ulang: {v['status']} - {v['message']}")
-                extra = {}
-                if v["status"] in ("OK", "MELESET") and stack is not None:
-                    p, n, ci, z = core.stack_risk(stack, catalog, settings)
-                    extra = {"p_now": p, "zone_now": z, "n": n}
-                    print(f"  tumpukan sekarang: P(roboh) {p:.0%} -> {z}")
-                    if z != "HIJAU":
-                        print("  [agent] PERINGATAN: tumpukan sekarang tidak aman. Jangan tambah kardus; "
-                              "betulkan posisi kardus atas lalu SPASI lagi.")
-                if v["status"].startswith("ROBOH"):
-                    stats["roboh"] += 1
-                log.write("cek_ulang", shot, **v, planned_by=plan["how"], planned_zone=plan["zone"],
-                          planned_p=plan["p"], **extra)
-                if v["status"] == "BELUM":
+                print(f"\n[agent] check: {v['status']} - {v['message']}")
+                if not args.aws:
+                    extra, src = {}, "laptop"
+                    if v["status"] in ("OK", "OFF_PLAN") and stack is not None:
+                        p, n, ci, z = core.stack_risk(stack, catalog, settings)
+                        extra = {"p_now": p, "zone_now": z, "n": n}
+                if extra:
+                    print(f"  stack now: P(fall) {extra['p_now']:.0%} -> {extra['zone_now']}")
+                    if extra["zone_now"] == "RED" or (v["status"] == "OFF_PLAN" and extra["zone_now"] != "GREEN"):
+                        print("  [agent] WARNING: the stack is not safe now. Do not add boxes; "
+                              "move the top box back into the wireframe, then press SPACE again.")
+                    elif extra["zone_now"] == "YELLOW":
+                        print(f"  [agent] CAUTION: the stack is borderline now (P(fall) {extra['p_now']:.0%}). "
+                              "Ask the supervisor before adding another box.")
+                if v["status"].startswith("FELL"):
+                    stats["fell"] += 1
+                log.write("check", shot, **v, planned_by=plan["how"], planned_zone=plan["zone"],
+                          planned_p=plan["p"], checked_on=src, **extra)
+                if v["status"] == "NOT_PLACED":
                     continue                       # box not placed yet: keep the plan
-                if v["status"] == "MELESET" and extra.get("zone_now", "HIJAU") != "HIJAU":
+                if v["status"] == "OFF_PLAN" and extra.get("zone_now", "GREEN") != "GREEN":
                     continue                       # wait for the worker to fix it, then check again
                 plan = None
                 offset = 0.0
                 last = None
     except KeyboardInterrupt:
-        print("\nDihentikan dengan Ctrl+C.")
+        print("\nStopped with Ctrl+C.")
     cap.release()
     cv2.destroyAllWindows()
-    log.write("selesai", None, stats=stats)
-    print(f"\nRingkasan: {stats}")
+    log.write("end", None, stats=stats)
+    print(f"\nSummary: {stats}")
     print(f"Log: {log.path}")
 
 
