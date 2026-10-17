@@ -97,6 +97,19 @@ Uji deteksi kardus tanpa marker adalah target tambahan, hanya dikerjakan kalau i
 - Tes live (dari laptop, China → Singapura): `GET /` 200 (cold start 5,4 dtk) · foto contoh 200 · `POST` s2 +16 cm → RED 69%, usulan +10 cm 3% (round trip 7,7 dtk, server 5,9 dtk; kedua kali `cached` 1,7 dtk) · POST foto lama (`test_endpoint.py`, s2 +6 cm) → GREEN 0% (5,6 dtk) · `POST /log` → baris `web_supervisor_choice` muncul di CloudWatch. Tidak ada baris error.
 - **Tes dari HP lewat data seluler (Wi-Fi mati), 17 Okt 23.45 — lulus:** loading cold start muncul · s2 +16 cm → RED · "Use suggestion" → +10 cm GREEN · override tanpa nama/alasan ditolak · halaman tidak bisa digeser ke samping · s1 dan s3 tampil.
 
+### Deploy foto asli (18 Okt)
+- **Rollback target** (yang jalan sebelum deploy ini): `drystone-service:7e9f416` (digest `sha256:ac87187cb0ff494ddf5742c5e08841cd0f3360a8b709b54734c97707fd783c2d`, halaman web dengan foto placeholder). Tag `7e9f416` tetap ada di ECR. Rollback (cmd; ganti `<account>`):
+  ```
+  aws lambda update-function-code --function-name drystone --image-uri <account>.dkr.ecr.ap-southeast-1.amazonaws.com/drystone-service:7e9f416 --region ap-southeast-1 --query LastUpdateStatus
+  ```
+  ```
+  aws lambda wait function-updated --function-name drystone --region ap-southeast-1
+  ```
+  ```
+  aws lambda get-function --function-name drystone --region ap-southeast-1 --query "{Uri:Code.ImageUri,Status:Configuration.LastUpdateStatus}"
+  ```
+- Image baru: `drystone-service:f5b647b` (+ `:latest`). Commit dokumen sesudahnya tidak mengubah image (`docs/` tidak masuk build).
+
 ## Wajib sebelum submit
 - **Deploy foto asli** (sudah di `main` lokal, 27 tes lulus): build, image tag `:latest` + hash commit baru, `update-function-code` ke tag hash, ulangi 4 tes live, lalu cek di HP bahwa foto asli tampil tanpa label "placeholder image".
 - **Validasi setelan ketidakpastian** (posisi 1 cm, isi 2 cm) di percobaan baru (evaluasi 21 Okt, pipeline persepsi baru), target **0 roboh di zona GREEN**.
