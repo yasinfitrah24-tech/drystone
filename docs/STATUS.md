@@ -2,7 +2,7 @@
 
 Salinan status untuk repo (dibaca Yasin, Vincent, dan Claude masing-masing). Update di commit yang sama setiap ada keputusan atau hasil tes baru. Semua jam = waktu China.
 
-Terakhir diperbarui: 17 Okt 2026 malam.
+Terakhir diperbarui: 17 Okt 2026, 23.30 (branch `web-judges`, belum di-deploy).
 
 ## Ringkasan
 - **Lomba:** OpenCV AI Competition 2026 (https://opencv26.devpost.com/). Deadline **27 Okt, 14.45** (target submit 26 Okt malam). Penjurian 27 Okt–10 Nov, endpoint harus tetap hidup.
@@ -17,7 +17,7 @@ Terakhir diperbarui: 17 Okt 2026 malam.
 | 0 | Persiapan | 11 Okt | ✅ |
 | 1 | Uji kelayakan: kalibrasi, Tes 1, Tes 2, go/no-go | 17 Okt | ✅ **GO** |
 | 2+3 | Persepsi + fisika + agent | 19 Okt | ✅ inti jalan dengan kardus asli (17 Okt) |
-| 4 | AWS: Lambda foto → keputusan, S3, DynamoDB log, dashboard approve/override, CloudWatch | 21 Okt | ⏳ Lambda + Function URL + `agent.py --aws` ✅; sisa halaman web juri, S3, DynamoDB, CloudWatch |
+| 4 | AWS: Lambda foto → keputusan, S3, DynamoDB log, dashboard approve/override, CloudWatch | 21 Okt | ⏳ Lambda + Function URL + `agent.py --aws` ✅; halaman web juri ✅ kode + tes (branch `web-judges`, belum deploy, foto masih placeholder); sisa S3, DynamoDB, CloudWatch |
 | 5 | Evaluasi 20–30 percobaan baru + kasus gagal. **Fitur dikunci** | 21 Okt malam (dimajukan) | — |
 | 6 | Gladi (23) + rekam video (24) | 24 Okt | — |
 | 7 | Laporan teknis, diagram, README | 25 Okt | — |
@@ -58,8 +58,28 @@ Uji deteksi kardus tanpa marker adalah target tambahan, hanya dikerjakan kalau i
 ### Layanan AWS (17 Okt) — kode
 - `tools/service.py`: 1–5 foto → keputusan JSON (mode decide / check), `lambda_handler`. Uji dengan foto asli: +6 cm HIJAU 1% (1,7 dtk), +12 cm KUNING 41% + usulan (8,3 dtk), +16 cm MERAH 87% (8,2 dtk). Jalan di Python 3.12 bersih dengan paket Lambda (OpenCV headless). Image Docker belum pernah dibangun.
 
+### Halaman web juri (17 Okt malam) — kode + tes, belum deploy
+- Function URL yang sama (tidak dibuat ulang, cukup update image): `GET /` halaman (`web/index.html`), `GET /samples/<id>.jpg`, `POST {"sample","offset_cm"}` keputusan, `POST /log` approve/override. POST foto lama (`images`) tidak berubah → `agent.py --aws` tetap jalan. Function URL tidak ditulis di repo; README publik merujuk ke halaman Devpost.
+- Acuan geseran: **dari kardus tepat di bawah** (sama dengan `drystone_core.candidate_box`), bulat 1 cm, rentang −16…+16 cm. Tertulis di halaman.
+- Halaman: canvas foto + marker + kerangka kardus, P(fall) + zona berwarna, tindakan + usulan, trace bernomor 5 tahap (deteksi marker → kembaran digital → simulasi → keputusan → tindakan) dengan ms per tahap dan tanda cached. KUNING approve / use suggestion / reject; MERAH use suggestion / override / cancel. "Use suggestion" menggeser slider ke usulan lalu menganalisis ulang (loop saran → cek ulang → HIJAU). Override wajib nama + alasan, hanya dicatat (satu baris JSON `web_supervisor_choice` di CloudWatch, tanpa IP), keputusan tidak berubah. Loading "Analyzing… first run can take ~10 s". Disclaimer purwarupa. Tanpa upload foto. Halaman/foto pakai `Cache-Control`.
+- Adegan (hitungan `drystone_core` dari foto placeholder, seed 0, 150 simulasi):
+
+  | Contoh | Susunan | Kardus berikutnya | HIJAU | KUNING (usulan) | MERAH (usulan) |
+  |---|---|---|---|---|---|
+  | s1 | ID 0 saja | ID 1 | +6 cm, 0% | +14 cm, 35% (+11 cm, 5%) | +16 cm, 73% (+11 cm, 5%) |
+  | s2 | ID 0 + ID 1 lurus | ID 2 | +6 cm, 0% | +14 cm, 41% (+10 cm, 3%) | +16 cm, 69% (+10 cm, 3%) |
+  | s3 | ID 0 + ID 1 digeser +6 cm | ID 2 | +4 cm, 0% | +12 cm, 21% (+10 cm, 7%) | +16 cm, 77% (+10 cm, 6%) |
+
+  +12 cm di s1/s2 (12–14%) dan +14 cm di s3 (49%) sengaja tidak dipakai: terlalu dekat garis zona.
+- Tes: `tests/test_web.py` 25 lulus (200, zona semua contoh, loop usulan → HIJAU, cache + pembulatan, 400 override tanpa nama/alasan, tombol sesuai zona, 413 web/foto, 429 GET/POST, POST foto lama + direct invoke tidak berubah). `pytest` hanya di `requirements-dev.txt`, tidak masuk image Lambda.
+- Alat: `tools/web_local.py` (server lokal, event Function URL palsu), `tools/capture_sample.py` (foto contoh mentah tanpa anotasi; tolak kalau ada marker hilang di salah satu dari 10 frame; cetak geseran antar kardus dalam cm), `tools/make_placeholder_samples.py` (render sintetis lewat kalibrasi asli).
+- **Batasan perlindungan:** reserved concurrency **tidak bisa dipasang** (limit concurrency akun = 10, AWS mewajibkan 10 tetap unreserved; cek 17 Okt). Batas 60 GET + 20 POST per menit per IP dan cache **berlaku per container** (in-memory), jadi dengan banyak container batas efektif bisa lebih tinggi. Biaya tetap terbatas: cache maksimal 3 × 33 = **99 entri per container** (hasil deterministik), body JSON web ≤ 16 KB, POST foto ≤ 2 MB, dan akun Free plan.
+
+## Wajib sebelum submit
+- **Ganti 3 foto placeholder dengan foto asli** (`tools/capture_sample.py`, webcam laptop 1280×720, simpan dulu di `E:\drystone_samples\`, tanpa wajah/kamar), hitung ulang zona dari foto, perbarui `web/samples/samples.json` (`examples`, hapus `"placeholder": true`) dan tes, lalu pastikan label "placeholder image" hilang.
+
 ## Berikutnya
-- **18–19 Okt:** halaman web untuk juri + contoh foto bersih · S3 + DynamoDB log · latihan adegan override → roboh · tempel ulang marker ID 2 · ukur tinggi asli kardus (terbaca ±20 cm, katalog 19).
+- **18–19 Okt:** deploy halaman web (update image saja) + foto contoh asli · S3 + DynamoDB log · latihan adegan override → roboh · tempel ulang marker ID 2 · ukur tinggi asli kardus (terbaca ±20 cm, katalog 19).
 - **20 Okt:** CloudWatch, rapikan, cadangan.
 - **21 Okt:** evaluasi 20–30 percobaan baru (akurasi, Brier, roboh di zona GREEN, waktu keputusan, retake, fallback) + kasus gagal; malamnya fitur dikunci.
 

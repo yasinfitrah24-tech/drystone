@@ -8,6 +8,7 @@ x = right along the front face, y = up, z = toward the camera. A box is a dict {
 where (x, z) is the box centre in plan view and y is the height of its marker centre.
 """
 import math
+import time
 
 import numpy as np
 
@@ -165,21 +166,29 @@ def search_alternative(stack, box_id, offset_m, catalog, s, trace):
 
 def decide(stack, box_id, offset_m, catalog, s):
     """Full decision for placing box_id at offset_m on top of the stack."""
-    trace = []
+    trace, seconds = [], {}
+    t = time.perf_counter()
     cand = candidate_box(stack, box_id, offset_m, catalog)
     boxes = stack + [cand]
     stable, margin = static_check(boxes, catalog)
     trace.append(f"digital twin: {len(stack)} box(es) + candidate ID {box_id} overhanging "
                  f"{overhang_pct(stack, cand, catalog):+.0f}% ({offset_m * 100:+.1f} cm)")
     trace.append(f"static check: {'stands' if stable else 'falls'} (centre-of-mass margin {margin * 100:+.1f} cm)")
+    seconds["twin"], t = time.perf_counter() - t, time.perf_counter()
+    stages = {"twin": len(trace)}
     p, n, ci, near = p_fall_adaptive(boxes, catalog, s, trace=trace)
     z = zone_safe(p, ci, near)
+    seconds["simulation"], t = time.perf_counter() - t, time.perf_counter()
+    stages["simulation"] = len(trace)
     out = {"box_id": box_id, "offset_m": offset_m, "overhang_pct": overhang_pct(stack, cand, catalog),
            "static_stable": bool(stable), "static_margin_m": float(margin), "p": p, "ci": ci, "n": n,
            "zone": z, "action": ACTIONS[z], "alternative": None, "trace": trace}
     if z != "GREEN":
         trace.append("not green -> searching the nearest safe position")
         out["alternative"] = search_alternative(stack, box_id, offset_m, catalog, s, trace)
+    seconds["search"] = time.perf_counter() - t
+    # where each stage ends in the trace, and how long it took (for the web page's numbered trace)
+    out["stages"], out["seconds"] = stages, seconds
     return out
 
 

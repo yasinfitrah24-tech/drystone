@@ -61,17 +61,25 @@ def outlined(img, text, org, scale=0.65, color=(255, 255, 255)):
     cv2.putText(img, text, org, cv2.FONT_HERSHEY_SIMPLEX, scale, color, 2, cv2.LINE_AA)
 
 
-def draw_box(img, box, catalog, R0, t0, K, dist, color, thick=2):
-    """Wireframe of a box given in the base-marker frame."""
+def project_box(box, catalog, R0, t0, K, dist):
+    """8 image corners (float, index = 4*x + 2*y + z bit) of a box given in the base-marker frame, or None."""
     c = catalog[box["id"]]
     hx, hy, hz = c["L"] / 2, c["H"] / 2, c["D"] / 2
     corners = np.array([[box["x"] + sx * hx, box["y"] + sy * hy, box["z"] + sz * hz]
                         for sx in (-1, 1) for sy in (-1, 1) for sz in (-1, 1)])
     cam = (R0 @ corners.T).T + t0
     if np.any(cam[:, 2] <= 0.05):
-        return
+        return None
     pts, _ = cv2.projectPoints(cam, np.zeros(3), np.zeros(3), K, dist)
-    pts = pts.reshape(-1, 2).astype(np.int32)
+    return pts.reshape(-1, 2)
+
+
+def draw_box(img, box, catalog, R0, t0, K, dist, color, thick=2):
+    """Wireframe of a box given in the base-marker frame."""
+    pts = project_box(box, catalog, R0, t0, K, dist)
+    if pts is None:
+        return
+    pts = pts.astype(np.int32)
     for a in range(8):
         for b in range(a + 1, 8):
             if bin(a ^ b).count("1") == 1:          # corners differing in one axis share an edge

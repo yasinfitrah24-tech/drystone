@@ -44,7 +44,7 @@ Baca file ini setelah `CLAUDE.md` dan `docs/STATUS.md`. Isinya cara kerja yang s
 - Kirim foto ke Lambda sebagai JPEG (PNG 1,4 MB butuh ±8 dtk upload). Overhead jaringan China→Singapura ±3–4 dtk per panggilan.
 
 ## Tugas berikutnya (urut)
-1. **Halaman web untuk juri** (wajib "endpoint web"): halaman statis (S3 atau Function URL yang sama) — pilih contoh foto / unggah foto 1280×720 dari webcam yang sama, pilih geseran calon, tampilkan zona, P(fall), trace, usulan, foto beranotasi. Butuh 3–5 **contoh foto bersih** (tanpa wajah/kamar; ambil ulang dengan latar rapi). Function URL **jangan** di-commit ke repo sebelum diputuskan; simpan di env `DRYSTONE_URL`.
+1. **Halaman web untuk juri**: kode + tes selesai di branch `web-judges` (17 Okt malam, lihat STATUS). Sisa: deploy (update image saja, **jangan** hapus/buat ulang fungsi; Function URL tidak boleh berubah sampai 10 Nov), lalu ganti 3 foto placeholder dengan foto asli (`tools/capture_sample.py`) dan hitung ulang `samples.json` + tes. Function URL tidak pernah ditulis di repo; simpan di env `DRYSTONE_URL`.
 2. **S3 + DynamoDB log** (bonus, menambah nilai observability & human control): simpan foto + isi `log.jsonl` per keputusan, termasuk approval/override.
 3. **Latihan adegan demo** dengan kardus asli: GREEN → YELLOW + usulan → meleset dibetulkan → RED + override → FELL terdeteksi (override → roboh belum pernah dicoba nyata).
 4. **Evaluasi (21 Okt)**: 20–30 percobaan baru lewat agent; skrip ringkasan dari `data/agent_*/log.jsonl` (akurasi, Brier, roboh di zona GREEN, waktu keputusan, jumlah retake, berapa kali fallback laptop) + kasus gagal. Malamnya fitur dikunci.

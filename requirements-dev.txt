@@ -1,0 +1,3 @@
+# Laptop only (tests). Never used by the Lambda image (aws/requirements-lambda.txt).
+-r requirements.txt
+pytest==9.1.1

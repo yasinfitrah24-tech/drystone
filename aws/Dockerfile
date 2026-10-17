@@ -9,8 +9,11 @@ RUN pip install --no-cache-dir --index-url ${PIP_INDEX_URL} -r requirements-lamb
 COPY tools/ ${LAMBDA_TASK_ROOT}/
 COPY config/boxes.json ${LAMBDA_TASK_ROOT}/config/boxes.json
 COPY data/camera_laptop.yaml ${LAMBDA_TASK_ROOT}/data/camera_laptop.yaml
+# Judges' web page + sample photos, served by the same function (GET /, GET /samples/<id>.jpg)
+COPY web/ ${LAMBDA_TASK_ROOT}/web/
 ENV DRYSTONE_CALIB=${LAMBDA_TASK_ROOT}/data/camera_laptop.yaml \
     DRYSTONE_BOXES=${LAMBDA_TASK_ROOT}/config/boxes.json \
     DRYSTONE_MARKER_MM=80 \
+    DRYSTONE_WEB=${LAMBDA_TASK_ROOT}/web \
     MPLCONFIGDIR=/tmp
 CMD ["service.lambda_handler"]
