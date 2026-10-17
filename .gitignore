@@ -12,3 +12,9 @@ __pycache__/
 data/**/*.png
 data/**/*.jpg
 data/**/*.jpeg
+data/agent_*/
+data/service_*/
+event.json
+out.json
+*_result.jpg
+hasil_endpoint.jpg
