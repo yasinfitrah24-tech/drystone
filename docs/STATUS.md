@@ -59,7 +59,7 @@ Uji deteksi kardus tanpa marker adalah target tambahan, hanya dikerjakan kalau i
 - `tools/service.py`: 1–5 foto → keputusan JSON (mode decide / check), `lambda_handler`. Uji dengan foto asli: +6 cm HIJAU 1% (1,7 dtk), +12 cm KUNING 41% + usulan (8,3 dtk), +16 cm MERAH 87% (8,2 dtk). Jalan di Python 3.12 bersih dengan paket Lambda (OpenCV headless).
 
 ### Tinggi kardus terukur (18 Okt)
-- Penggaris (tengah / pojok): ID 0 19,7 / 19,5 · ID 1 19,6 / 19,4 · ID 2 19,4 / 19,3 cm → `config/boxes.json` (rata-rata, dibulatkan 0,1 cm): **ID 0 19,6 · ID 1 19,5 · ID 2 19,4 cm** (dulu 19). ID 3 dan ID 4 = 19,5 cm **perkiraan** sampai diukur. Panjang 29, tebal 17, massa tidak diubah.
+- Penggaris (tengah / pojok): ID 0 19,7 / 19,5 · ID 1 19,6 / 19,4 · ID 2 19,4 / 19,3 cm → `config/boxes.json` (rata-rata, dibulatkan 0,1 cm): **ID 0 19,6 · ID 1 19,5 · ID 2 19,4 cm** (dulu 19). Panjang 29, tebal 17, massa tidak diubah.
 - Tengah marker dari dasar kardus: ID 0 9,4 · ID 1 9,7 · ID 2 9,7 cm. Sisi hitam marker terukur **80 mm** (sama dengan `DRYSTONE_MARKER_MM`).
 - **Jarak antar-marker ID 0 → ID 1 terbaca 20,2 cm** (foto s2/s3), padahal katalog dulu 19. Penjelasan: tinggi asli ID 0 (19,6) − tengah marker ID 0 (9,4) + tengah marker ID 1 (9,7) = **19,9 cm**; marker ID 0 ditempel 0,3 cm lebih rendah dari ID 1. Sisa 0,3 cm (±1,5%) masuk dalam bias skala ±3% dari Tes 1.
 - **Tes 2 tidak berubah** dengan tinggi terukur (`--recheck` di salinan CSV, hasil yang di-commit tidak ditimpa): setelan 0,5/1 → 82%, Brier 0,177, 1 roboh di HIJAU; setelan 1/2 → 82%, Brier 0,145, 0 roboh di HIJAU; P(fall) ke-11 percobaan identik dengan 19 cm. **Zona contoh halaman juga identik** (tabel di bawah tetap berlaku).
@@ -132,7 +132,7 @@ Uji deteksi kardus tanpa marker adalah target tambahan, hanya dikerjakan kalau i
 - **21 Okt:** evaluasi 20–30 percobaan baru dengan pipeline persepsi baru (akurasi, Brier, roboh di zona GREEN, waktu keputusan, retake, fallback) + kasus gagal; sekaligus validasi setelan ketidakpastian Tes 2; malamnya fitur dikunci.
 
 ## Kardus
-- 邮政纸箱 5号, 29 × 17 × 19,3–19,7 cm, dipakai berdiri: lebar 29 cm kiri-kanan (arah menjorok), tinggi terukur rata-rata ID 0 19,6 · ID 1 19,5 · ID 2 19,4 cm (ID 3–4 19,5 perkiraan), dalam 17. Marker 80 mm (terukur) di tengah sisi depan; tengah marker dari dasar ID 0 9,4 · ID 1 9,7 · ID 2 9,7 cm. Isi 1,0 kg di tengah, semua sama. ID 0 selalu di bawah. Hanya kardus yang ditumpuk boleh terlihat kamera.
+- 邮政纸箱 5号, 29 × 17 × 19,3–19,7 cm, dipakai berdiri: lebar 29 cm kiri-kanan (arah menjorok), tinggi terukur rata-rata ID 0 19,6 · ID 1 19,5 · ID 2 19,4 cm, dalam 17. Marker 80 mm (terukur) di tengah sisi depan; tengah marker dari dasar ID 0 9,4 · ID 1 9,7 · ID 2 9,7 cm. Isi 1,0 kg di tengah, semua sama. ID 0 selalu di bawah. Hanya kardus yang ditumpuk boleh terlihat kamera.
 - Kamera ±0,95–1,0 m. Saat uji roboh, laptop jangan di arah jatuhnya.
 
 ## Aturan kerja
