@@ -401,7 +401,8 @@ def _http(event, http):
             return _response(200, _web_file("index.html").decode("utf-8"), "text/html; charset=utf-8",
                              "public, max-age=300")
         if path == "/samples/samples.json":
-            return _response(200, _web_file("samples/samples.json").decode("utf-8"), cache="public, max-age=300")
+            # small, and it carries photos_version: always revalidated so a replaced photo shows at once
+            return _response(200, _web_file("samples/samples.json").decode("utf-8"), cache="no-cache")
         m = re.fullmatch(r"/samples/([a-z0-9_-]{1,20})\.jpg", path)
         if m and m.group(1) in _web_setup()["samples"]:
             return _response(200, _web_file(f"samples/{m.group(1)}.jpg"), "image/jpeg", "public, max-age=86400",

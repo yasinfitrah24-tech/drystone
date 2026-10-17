@@ -1,15 +1,14 @@
 {
-  "_note": "Sample photos for the judges' page. 'render' = [box id, x of the box centre in cm relative to the bottom box], used only by tools/make_placeholder_samples.py. 'examples' = shifts (cm, relative to the box directly below) whose zone was computed with drystone_core from the photo; tests/test_web.py checks them. Recompute both after replacing a placeholder with a real photo.",
+  "_note": "Sample photos for the judges' page: real photos from the calibrated laptop webcam (1280x720, about 1 m, plain wall), taken with tools/capture_sample.py on 18 Oct. 'examples' = shifts (cm, relative to the box directly below) whose zone was computed with drystone_core from the photo, kept away from the 10% and 50% lines; tests/test_web.py checks them. Recompute both after replacing a photo, and set 'photos_version' to the first 10 hex of sha256 over the photos in list order (browsers cache photos for a day; tests/test_web.py checks it).",
+  "photos_version": "a7aba3ca6c",
   "box_length_cm": 29,
   "offset_range_cm": [-16, 16],
   "samples": [
     {
       "id": "s1",
       "title": "One box",
-      "stack": "Box ID 0 on the table",
+      "stack": "Box ID 0 on the floor",
       "next_box": 1,
-      "placeholder": true,
-      "render": [[0, 0]],
       "examples": {"GREEN": 6, "YELLOW": 14, "RED": 16}
     },
     {
@@ -17,17 +16,13 @@
       "title": "Two boxes, aligned",
       "stack": "Box ID 1 straight on top of box ID 0",
       "next_box": 2,
-      "placeholder": true,
-      "render": [[0, 0], [1, 0]],
-      "examples": {"GREEN": 6, "YELLOW": 14, "RED": 16}
+      "examples": {"GREEN": 6, "YELLOW": 13, "RED": 16}
     },
     {
       "id": "s3",
       "title": "Two boxes, top one shifted",
-      "stack": "Box ID 1 sits 6 cm to the right of box ID 0",
+      "stack": "Box ID 1 sits about 6 cm to the right of box ID 0",
       "next_box": 2,
-      "placeholder": true,
-      "render": [[0, 0], [1, 6]],
       "examples": {"GREEN": 4, "YELLOW": 12, "RED": 16}
     }
   ]

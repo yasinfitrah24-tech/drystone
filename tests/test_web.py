@@ -15,6 +15,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 with open(os.path.join(ROOT, "web", "samples", "samples.json"), encoding="utf-8") as f:
     META = json.load(f)
 EXAMPLES = [(s["id"], zone, off) for s in META["samples"] for zone, off in s["examples"].items()]
+S2 = next(s for s in META["samples"] if s["id"] == "s2")["examples"]
 
 
 def event(method, path="/", body=None, ip="198.51.100.1"):
@@ -56,7 +57,8 @@ def test_sample_photo_200_and_unknown_404():
     assert "max-age" in out["headers"]["Cache-Control"]
     assert call("GET", "/samples/nope.jpg")[0] == 404
     assert call("GET", "/samples/../config/boxes.json")[0] == 404
-    assert call("GET", "/samples/samples.json")[0] == 200
+    status, _, out = call("GET", "/samples/samples.json")
+    assert status == 200 and out["headers"]["Cache-Control"] == "no-cache"
 
 
 @pytest.mark.parametrize("sample,zone,offset", EXAMPLES)
@@ -73,6 +75,23 @@ def test_example_zones(sample, zone, offset):
         assert {p["role"] for p in r["polygons"]} == {"stack", "candidate", "suggestion"}
     assert [s["name"].split(" (")[0] for s in r["stages"]] == [
         "Marker detection", "Digital twin", "Monte Carlo simulation", "Decision", "Action"]
+
+
+def test_real_photos_no_placeholder():
+    """Judges must see real photos: no sample may still be marked as a placeholder."""
+    assert not [s["id"] for s in META["samples"] if s.get("placeholder")]
+
+
+def test_photos_version_matches_photos():
+    """The page adds ?v=<photos_version> to photo URLs, so a replaced photo is never shown from a browser cache."""
+    import hashlib
+    h = hashlib.sha256()
+    for s in META["samples"]:
+        with open(os.path.join(ROOT, "web", "samples", f"{s['id']}.jpg"), "rb") as f:
+            h.update(f.read())
+    assert META["photos_version"] == h.hexdigest()[:10]
+    status, _, _ = call("GET", "/samples/s1.jpg")      # rawPath has no query string; the version is ignored
+    assert status == 200
 
 
 def test_suggestion_rechecks_green():
@@ -112,14 +131,15 @@ def test_log_override_needs_name_and_reason(capsys):
 
 
 def test_log_choices_follow_the_zone():
-    assert call("POST", "/log", {"sample": "s2", "offset_cm": 16, "choice": "approve"})[0] == 400   # RED
-    assert call("POST", "/log", {"sample": "s2", "offset_cm": 14, "choice": "override",
-                                 "name": "Judge A", "reason": "not allowed here"})[0] == 400       # YELLOW
-    assert call("POST", "/log", {"sample": "s2", "offset_cm": 6, "choice": "approve"})[0] == 400    # GREEN
+    green, yellow, red = S2["GREEN"], S2["YELLOW"], S2["RED"]
+    assert call("POST", "/log", {"sample": "s2", "offset_cm": red, "choice": "approve"})[0] == 400
+    assert call("POST", "/log", {"sample": "s2", "offset_cm": yellow, "choice": "override",
+                                 "name": "Judge A", "reason": "not allowed here"})[0] == 400
+    assert call("POST", "/log", {"sample": "s2", "offset_cm": green, "choice": "approve"})[0] == 400
     for choice in ("approve", "use_suggestion", "reject"):
-        assert call("POST", "/log", {"sample": "s2", "offset_cm": 14, "choice": choice})[0] == 200
+        assert call("POST", "/log", {"sample": "s2", "offset_cm": yellow, "choice": choice})[0] == 200
     for choice in ("use_suggestion", "cancel"):
-        assert call("POST", "/log", {"sample": "s2", "offset_cm": 16, "choice": choice})[0] == 200
+        assert call("POST", "/log", {"sample": "s2", "offset_cm": red, "choice": choice})[0] == 200
 
 
 def test_413_web_json_over_16kb():

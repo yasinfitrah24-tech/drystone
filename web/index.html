@@ -162,6 +162,10 @@
       return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
     });
   }
+  // photos are cached for a day; the version changes whenever a photo is replaced
+  function photoUrl(s) {
+    return "samples/" + encodeURIComponent(s.id) + ".jpg?v=" + encodeURIComponent(state.meta.photos_version || "");
+  }
   function pct(p) { return Math.round(p * 100) + "%"; }
   function signed(v) { return (v > 0 ? "+" : "") + v; }
 
@@ -235,7 +239,7 @@
     el("trace").innerHTML = '<p class="empty">Each step of the agent appears here, with its time.</p>';
     var img = new Image();
     img.onload = function () { if (state.sample === s) { state.img = img; draw(); } };
-    img.src = "samples/" + encodeURIComponent(s.id) + ".jpg";
+    img.src = photoUrl(s);
   }
 
   function setBusy(on, text) {
@@ -369,14 +373,14 @@
   el("shift").addEventListener("input", function () { shiftLabel(); state.note = null; });
   el("analyze").addEventListener("click", function () { state.note = null; analyze(); });
 
-  fetch("samples/samples.json").then(function (r) { return r.json(); }).then(function (meta) {
+  fetch("samples/samples.json", { cache: "no-cache" }).then(function (r) { return r.json(); }).then(function (meta) {
     state.meta = meta;
     var sh = el("shift");
     sh.min = meta.offset_range_cm[0]; sh.max = meta.offset_range_cm[1];
     meta.samples.forEach(function (s) {
       var b = document.createElement("button");
       b.type = "button"; b.className = "sample"; b.dataset.id = s.id;
-      b.innerHTML = '<img alt="" src="samples/' + encodeURIComponent(s.id) + '.jpg"><span>' + esc(s.title) + "</span>";
+      b.innerHTML = '<img alt="" src="' + esc(photoUrl(s)) + '"><span>' + esc(s.title) + "</span>";
       b.addEventListener("click", function () { if (!state.busy) selectSample(s); });
       el("samples").appendChild(b);
     });

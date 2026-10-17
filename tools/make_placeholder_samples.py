@@ -89,6 +89,9 @@ def main():
     with open(os.path.join(OUT_DIR, "samples.json"), encoding="utf-8") as f:
         samples = json.load(f)["samples"]
     for s in samples:
+        if not s.get("placeholder"):
+            print(f"{s['id']}: real photo, not overwritten")
+            continue
         stack = [{"id": i, "x": x_cm / 100.0} for i, x_cm in s["render"]]
         img = render(stack, catalog, K, dist, size, "PLACEHOLDER IMAGE (synthetic render)")
         path = os.path.join(OUT_DIR, f"{s['id']}.jpg")
