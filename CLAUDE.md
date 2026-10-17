@@ -48,7 +48,7 @@ Pastikan muncul `(.venv)` di awal baris sebelum menjalankan pip atau python. Pyt
 
 ## Marker
 - Papan kalibrasi: ChArUco 7x5, kotak 30 mm, marker 22 mm, DICT_5X5_100
-- Marker kardus: DICT_4X4_50, sisi hitam 80 mm, ID 0-11, ditempel di tengah sisi depan kardus. `config/boxes.json` hanya berisi kardus yang benar-benar ada (sekarang ID 0-2).
+- Marker kardus: DICT_4X4_50, sisi hitam 80 mm, ID 0-11, ditempel di tengah sisi depan kardus. `config/boxes.json` hanya berisi kardus yang benar-benar ada (sekarang ID 0-4). Kardus 29 × 17 × 19,3–19,7 cm: tinggi terukur ID 0 19,6 · ID 1 19,5 · ID 2 19,4 cm; ID 3–4 19,5 perkiraan sampai diukur.
 - Posisi kardus dihitung dengan arah hadap rata-rata semua marker x 10 frame (bukan arah tiap marker): arah satu marker goyang beberapa derajat dan dulu membuat posisi melompat 1,5-3,6 cm.
 - Selalu ukur hasil cetak dan isi ukuran aslinya (`--square-mm`, `--marker-mm`)
 
