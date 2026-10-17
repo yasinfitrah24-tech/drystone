@@ -75,6 +75,12 @@ Uji deteksi kardus tanpa marker adalah target tambahan, hanya dikerjakan kalau i
 - Alat: `tools/web_local.py` (server lokal, event Function URL palsu), `tools/capture_sample.py` (foto contoh mentah tanpa anotasi; tolak kalau ada marker hilang di salah satu dari 10 frame; cetak geseran antar kardus dalam cm), `tools/make_placeholder_samples.py` (render sintetis lewat kalibrasi asli).
 - **Batasan perlindungan:** reserved concurrency **tidak bisa dipasang** (limit concurrency akun = 10, AWS mewajibkan 10 tetap unreserved; cek 17 Okt). Batas 60 GET + 20 POST per menit per IP dan cache **berlaku per container** (in-memory), jadi dengan banyak container batas efektif bisa lebih tinggi. Biaya tetap terbatas: cache maksimal 3 × 33 = **99 entri per container** (hasil deterministik), body JSON web ≤ 16 KB, POST foto ≤ 2 MB, dan akun Free plan.
 
+### Deploy halaman web (17 Okt malam)
+- **Rollback image** (yang jalan sebelum deploy halaman web; dulu ber-tag `:latest`, tag itu sekarang tertimpa, jadi pakai digest):
+  `<account>.dkr.ecr.ap-southeast-1.amazonaws.com/drystone-service@sha256:9afba661f36d7f3582315ecef1d3777d2eb06c584f38c7fc3e8bd9e87be27261`
+  (`<account>` = nomor akun AWS, sengaja tidak ditulis di repo.)
+- Image baru di-push dengan dua tag: `:latest` dan hash commit `main`. Lambda di-update ke tag hash, bukan `:latest`.
+
 ## Wajib sebelum submit
 - **Ganti 3 foto placeholder dengan foto asli** (`tools/capture_sample.py`, webcam laptop 1280×720, simpan dulu di `E:\drystone_samples\`, tanpa wajah/kamar), hitung ulang zona dari foto, perbarui `web/samples/samples.json` (`examples`, hapus `"placeholder": true`) dan tes, lalu pastikan label "placeholder image" hilang.
 
