@@ -2,7 +2,7 @@
 
 Salinan status untuk repo (dibaca Yasin, Vincent, dan Claude masing-masing). Update di commit yang sama setiap ada keputusan atau hasil tes baru. Semua jam = waktu China.
 
-Terakhir diperbarui: 17 Okt 2026, 23.30 (branch `web-judges`, belum di-deploy).
+Terakhir diperbarui: 17 Okt 2026, 23.30, halaman web live di `drystone-service:7e9f416`.
 
 ## Ringkasan
 - **Lomba:** OpenCV AI Competition 2026 (https://opencv26.devpost.com/). Deadline **27 Okt, 14.45** (target submit 26 Okt malam). Penjurian 27 Okt–10 Nov, endpoint harus tetap hidup.
@@ -17,7 +17,7 @@ Terakhir diperbarui: 17 Okt 2026, 23.30 (branch `web-judges`, belum di-deploy).
 | 0 | Persiapan | 11 Okt | ✅ |
 | 1 | Uji kelayakan: kalibrasi, Tes 1, Tes 2, go/no-go | 17 Okt | ✅ **GO** |
 | 2+3 | Persepsi + fisika + agent | 19 Okt | ✅ inti jalan dengan kardus asli (17 Okt) |
-| 4 | AWS: Lambda foto → keputusan, S3, DynamoDB log, dashboard approve/override, CloudWatch | 21 Okt | ⏳ Lambda + Function URL + `agent.py --aws` ✅; halaman web juri ✅ kode + tes (branch `web-judges`, belum deploy, foto masih placeholder); sisa S3, DynamoDB, CloudWatch |
+| 4 | AWS: Lambda foto → keputusan, S3, DynamoDB log, dashboard approve/override, CloudWatch | 21 Okt | ⏳ Lambda + Function URL + `agent.py --aws` ✅; halaman web juri ✅ live (foto masih placeholder); sisa S3, DynamoDB, CloudWatch |
 | 5 | Evaluasi 20–30 percobaan baru + kasus gagal. **Fitur dikunci** | 21 Okt malam (dimajukan) | — |
 | 6 | Gladi (23) + rekam video (24) | 24 Okt | — |
 | 7 | Laporan teknis, diagram, README | 25 Okt | — |
@@ -41,7 +41,7 @@ Uji deteksi kardus tanpa marker adalah target tambahan, hanya dikerjakan kalau i
 ### Tes 2: prediksi vs kenyataan (17 Okt) — lulus
 - 12 percobaan (2–3 kardus, menjorok 20–65%), 11 dihitung. Data: `data/tes2_20261017_125209/hasil.csv`.
 - **Pengaturan awal (posisi 0,5 cm, isi 1 cm): cocok 9/11 = 82%, Brier 0,177, 1 roboh di zona HIJAU** (3 kardus +23%/+38%, P 1%). Dua salah prediksi sama-sama ke arah berbahaya, dekat batas (margin pusat massa 1,3 dan 2,5 cm).
-- **Ketidakpastian dinaikkan (posisi 1 cm, isi 2 cm), lalu hitung ulang (`--recheck`): 82%, Brier 0,145, 0 roboh di zona HIJAU** (kasus dekat batas jadi KUNING). Data: `recheck_pos1_com2/hasil.csv`. Karena disetel pada data yang sama, **wajib divalidasi di percobaan baru (22 Okt).** Menjorok 30–35% (2 kardus) belum teruji.
+- **Ketidakpastian dinaikkan (posisi 1 cm, isi 2 cm), lalu hitung ulang (`--recheck`): 82%, Brier 0,145, 0 roboh di zona HIJAU** (kasus dekat batas jadi KUNING). Data: `recheck_pos1_com2/hasil.csv`. Karena disetel pada data yang sama, **wajib divalidasi di percobaan baru pada evaluasi tahap 5 (21 Okt)**, dan evaluasi itu wajib memakai pipeline persepsi baru (arah rata-rata semua marker × 10 frame), karena Tes 2 masih memakai cara lama. Menjorok 30–35% (2 kardus) belum teruji.
 
 ### Agent (17 Okt) — jalan dengan kardus asli
 - `tools/agent.py` + `tools/drystone_core.py`. Monte Carlo adaptif (150 → 600 sampel di dekat garis 10%/50%; kalau masih ambigu, dipilih zona yang lebih aman). Agent mengusulkan posisi hijau terdekat (grid 1 cm), foto ulang otomatis kalau bacaan jelek, override wajib nama + alasan, cek ulang setelah penempatan, log JSONL + foto.
@@ -56,9 +56,9 @@ Uji deteksi kardus tanpa marker adalah target tambahan, hanya dikerjakan kalau i
 - Semua teks produk sekarang bahasa Inggris (GREEN/YELLOW/RED, GUIDE/ASK_SUPERVISOR/REJECT, OK/OFF_PLAN/FELL).
 
 ### Layanan AWS (17 Okt) — kode
-- `tools/service.py`: 1–5 foto → keputusan JSON (mode decide / check), `lambda_handler`. Uji dengan foto asli: +6 cm HIJAU 1% (1,7 dtk), +12 cm KUNING 41% + usulan (8,3 dtk), +16 cm MERAH 87% (8,2 dtk). Jalan di Python 3.12 bersih dengan paket Lambda (OpenCV headless). Image Docker belum pernah dibangun.
+- `tools/service.py`: 1–5 foto → keputusan JSON (mode decide / check), `lambda_handler`. Uji dengan foto asli: +6 cm HIJAU 1% (1,7 dtk), +12 cm KUNING 41% + usulan (8,3 dtk), +16 cm MERAH 87% (8,2 dtk). Jalan di Python 3.12 bersih dengan paket Lambda (OpenCV headless).
 
-### Halaman web juri (17 Okt malam) — kode + tes, belum deploy
+### Halaman web juri (17 Okt malam) — kode + tes
 - Function URL yang sama (tidak dibuat ulang, cukup update image): `GET /` halaman (`web/index.html`), `GET /samples/<id>.jpg`, `POST {"sample","offset_cm"}` keputusan, `POST /log` approve/override. POST foto lama (`images`) tidak berubah → `agent.py --aws` tetap jalan. Function URL tidak ditulis di repo; README publik merujuk ke halaman Devpost.
 - Acuan geseran: **dari kardus tepat di bawah** (sama dengan `drystone_core.candidate_box`), bulat 1 cm, rentang −16…+16 cm. Tertulis di halaman.
 - Halaman: canvas foto + marker + kerangka kardus, P(fall) + zona berwarna, tindakan + usulan, trace bernomor 5 tahap (deteksi marker → kembaran digital → simulasi → keputusan → tindakan) dengan ms per tahap dan tanda cached. KUNING approve / use suggestion / reject; MERAH use suggestion / override / cancel. "Use suggestion" menggeser slider ke usulan lalu menganalisis ulang (loop saran → cek ulang → HIJAU). Override wajib nama + alasan, hanya dicatat (satu baris JSON `web_supervisor_choice` di CloudWatch, tanpa IP), keputusan tidak berubah. Loading "Analyzing… first run can take ~10 s". Disclaimer purwarupa. Tanpa upload foto. Halaman/foto pakai `Cache-Control`.
@@ -96,11 +96,15 @@ Uji deteksi kardus tanpa marker adalah target tambahan, hanya dikerjakan kalau i
 
 ## Wajib sebelum submit
 - **Ganti 3 foto placeholder dengan foto asli** (`tools/capture_sample.py`, webcam laptop 1280×720, simpan dulu di `E:\drystone_samples\`, tanpa wajah/kamar), hitung ulang zona dari foto, perbarui `web/samples/samples.json` (`examples`, hapus `"placeholder": true`) dan tes, lalu pastikan label "placeholder image" hilang.
+- **Validasi setelan ketidakpastian** (posisi 1 cm, isi 2 cm) di percobaan baru (evaluasi 21 Okt, pipeline persepsi baru), target **0 roboh di zona GREEN**.
+- **Tes halaman dari HP** lewat data seluler (bukan Wi-Fi).
+- **Vincent masuk tim di Devpost.**
+- **Cek Official Rules** apakah repo wajib publik.
 
 ## Berikutnya
-- **18–19 Okt:** deploy halaman web (update image saja) + foto contoh asli · S3 + DynamoDB log · latihan adegan override → roboh · tempel ulang marker ID 2 · ukur tinggi asli kardus (terbaca ±20 cm, katalog 19).
+- **18–19 Okt:** foto contoh asli · tes halaman dari HP (data seluler) · S3 + DynamoDB log · latihan adegan override → roboh · tempel ulang marker ID 2 · ukur tinggi asli kardus (terbaca ±20 cm, katalog 19).
 - **20 Okt:** CloudWatch, rapikan, cadangan.
-- **21 Okt:** evaluasi 20–30 percobaan baru (akurasi, Brier, roboh di zona GREEN, waktu keputusan, retake, fallback) + kasus gagal; malamnya fitur dikunci.
+- **21 Okt:** evaluasi 20–30 percobaan baru dengan pipeline persepsi baru (akurasi, Brier, roboh di zona GREEN, waktu keputusan, retake, fallback) + kasus gagal; sekaligus validasi setelan ketidakpastian Tes 2; malamnya fitur dikunci.
 
 ## Kardus
 - 邮政纸箱 5号, 29 × 17 × 19 cm, dipakai berdiri: lebar 29 cm kiri-kanan (arah menjorok), tinggi 19, dalam 17. Marker 80 mm di tengah sisi depan. Isi 1,0 kg di tengah, semua sama. ID 0 selalu di bawah. Hanya kardus yang ditumpuk boleh terlihat kamera.
