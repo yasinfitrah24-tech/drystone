@@ -136,7 +136,7 @@ def read_stack(cap, detector, catalog, obj, K, dist, base_id, n=CAPTURE_FRAMES):
         return None, None, None, frame, f"marker kardus bawah (ID {base_id}) tidak terlihat"
     id_sets = [tuple(sorted(f)) for f in frames]
     ids = max(set(id_sets), key=id_sets.count)
-    if id_sets.count(ids) < max(2, len(frames) // 2 + 1):
+    if id_sets.count(ids) < (1 if len(frames) == 1 else max(2, len(frames) // 2 + 1)):
         return None, None, None, frame, "marker yang terlihat berubah-ubah antar-frame"
     frames = [f for f, s in zip(frames, id_sets) if s == ids]
     Rc = common_rotation(frames, base_id)
