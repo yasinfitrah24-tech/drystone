@@ -128,6 +128,19 @@ Target tambahan (S3, DynamoDB, dashboard/alarm CloudWatch, deteksi tanpa marker)
 - Tes live (dari laptop): `GET /` 200 (3,3 dtk) · `samples.json` `no-cache`, `photos_version` a7aba3ca6c, tidak ada tanda placeholder, contoh s2 KUNING +13 · foto `?v=a7aba3ca6c` s1–s3 identik (sha256) dengan foto asli di repo, bukan placeholder · `POST` s2 +16 cm → RED 69%, usulan +10 cm 3%, `placeholder: false`, ID 1 x +0,1 cm (7,7 dtk) · POST foto lama (`test_endpoint.py`, s2 +6 cm) → GREEN (4,1 dtk) · `POST /log` → baris `web_supervisor_choice` (`placeholder: false`) muncul di CloudWatch · 0 baris error.
 - **Tes dari HP lewat data seluler dengan foto asli (18 Okt, dari screenshot Yasin) — lulus:** foto asli tampil di ketiga contoh tanpa label "placeholder image" · contoh s2 sudah +13 cm (samples.json baru) · s2 +16 cm → RED 69%, usulan +10 cm 3% · "Use suggestion" → +10 cm GREEN 1% · trace 5 tahap tampil · halaman pas di layar HP.
 
+### Deploy perbaikan cek ulang + tinggi terukur (18 Okt)
+- **Rollback target** (yang jalan sebelum deploy ini): `drystone-service:f5b647b` (digest `sha256:7f243d8f54b5d621737fa1aead4d96b051f0b9a65c574ab5fb52637ae77236e8`, foto asli, logika cek ulang lama, tinggi 19 cm). Tag `f5b647b` tetap ada di ECR. Rollback (cmd; ganti `<account>`):
+  ```
+  aws lambda update-function-code --function-name drystone --image-uri <account>.dkr.ecr.ap-southeast-1.amazonaws.com/drystone-service:f5b647b --region ap-southeast-1 --query LastUpdateStatus
+  ```
+  ```
+  aws lambda wait function-updated --function-name drystone --region ap-southeast-1
+  ```
+  ```
+  aws lambda get-function --function-name drystone --region ap-southeast-1 --query "{Uri:Code.ImageUri,Status:Configuration.LastUpdateStatus}"
+  ```
+- Image baru: `drystone-service:9523213` (+ `:latest`). Commit dokumen sesudahnya tidak mengubah image (`docs/` tidak masuk build).
+
 ## Wajib sebelum submit
 - **Deploy perbaikan cek ulang** (Lambda dipakai `agent.py --aws`) dengan tag hash baru, lalu ulangi 4 tes live.
 - **Validasi setelan ketidakpastian** (posisi 1 cm, isi 2 cm) di percobaan baru (evaluasi 21 Okt, pipeline persepsi baru), target **0 roboh di zona GREEN**.
