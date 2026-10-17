@@ -2,7 +2,7 @@
 
 Salinan status untuk repo (dibaca Yasin, Vincent, dan Claude masing-masing). Update di commit yang sama setiap ada keputusan atau hasil tes baru. Semua jam = waktu China.
 
-Terakhir diperbarui: 18 Okt 2026. Live: `drystone-service:f5b647b` (halaman web dengan foto asli; image ini masih memakai tinggi kardus 19 cm, lihat Tinggi kardus terukur).
+Terakhir diperbarui: 18 Okt 2026, 02.40. Live: `drystone-service:9523213` (halaman web dengan foto asli, cek ulang berbasis kontak, tinggi kardus terukur).
 
 ## Ringkasan
 - **Lomba:** OpenCV AI Competition 2026 (https://opencv26.devpost.com/). Deadline **27 Okt, 14.45** (target submit 26 Okt malam). Penjurian 27 Okt–10 Nov, endpoint harus tetap hidup.
@@ -17,7 +17,7 @@ Terakhir diperbarui: 18 Okt 2026. Live: `drystone-service:f5b647b` (halaman web 
 | 0 | Persiapan | 11 Okt | ✅ |
 | 1 | Uji kelayakan: kalibrasi, Tes 1, Tes 2, go/no-go | 17 Okt | ✅ **GO** |
 | 2+3 | Persepsi + fisika + agent | 19 Okt | ✅ inti jalan dengan kardus asli (17 Okt) |
-| 4 | AWS: Lambda foto → keputusan, halaman web juri dengan approve/override | 21 Okt | ✅ Lambda + Function URL + `agent.py --aws`; halaman web juri live dengan foto asli (`f5b647b`); log approve/override masuk CloudWatch Logs. S3, DynamoDB, dashboard/alarm CloudWatch → Bonus |
+| 4 | AWS: Lambda foto → keputusan, halaman web juri dengan approve/override | 21 Okt | ✅ Lambda + Function URL + `agent.py --aws`; halaman web juri live dengan foto asli (`9523213`); log approve/override masuk CloudWatch Logs. S3, DynamoDB, dashboard/alarm CloudWatch → Bonus |
 | 5 | Evaluasi 20–30 percobaan baru + kasus gagal. **Fitur dikunci** | 21 Okt malam (dimajukan) | — |
 | 6 | Gladi (23) + rekam video (24) | 24 Okt | — |
 | 7 | Laporan teknis, diagram, README | 25 Okt | — |
@@ -58,12 +58,12 @@ Target tambahan (S3, DynamoDB, dashboard/alarm CloudWatch, deteksi tanpa marker)
 ### Layanan AWS (17 Okt) — kode
 - `tools/service.py`: 1–5 foto → keputusan JSON (mode decide / check), `lambda_handler`. Uji dengan foto asli: +6 cm HIJAU 1% (1,7 dtk), +12 cm KUNING 41% + usulan (8,3 dtk), +16 cm MERAH 87% (8,2 dtk). Jalan di Python 3.12 bersih dengan paket Lambda (OpenCV headless).
 
-### Bug cek ulang setelah override MERAH (18 Okt) — diperbaiki, belum deploy
+### Bug cek ulang setelah override MERAH (18 Okt) — diperbaiki, live di `9523213`
 - **Kejadian:** ID 2 di +18 cm, RED 95%, override Yasin. ID 2 jatuh dan mendarat tegak di lantai, kanan tumpukan. Layar `stack: [0, 2, 1]`; cek ulang 3× "box ID 1 is not on the stack (lying next to it?) -> move it out of the camera view" lalu "still failing". Jatuhnya tidak tercatat.
 - **Penyebab (direproduksi dengan foto sintetis):** (1) urutan tumpukan diambil dari tinggi di gambar, jadi kardus di lantai samping tumpukan (y ≈ 0) masuk ke urutan, dan pesan menyebut kardus yang salah; (2) arah hadap gabungan ikut merata-ratakan marker kardus yang jatuh: kardus di lantai yang berputar 20 / 35 / 50° memiringkan acuan seluruh tumpukan 6 / 11 / 16° (juga sebab kerangka merah miring di layar). Angka persis "ID 1" dari kejadian asli tidak tereproduksi; kedua penyebab ini tetap diperbaiki.
 - **Perbaikan** (`tools/agent.py`, dipakai laptop dan Lambda): tumpukan dibangun dari ID 0 ke atas lewat kontak (dasar kardus berikutnya ±4 cm dari atas kardus di bawahnya + tumpang-tindih horizontal); kardus lain = "di luar tumpukan" dengan lokasi (lantai / samping / melayang di atas). Arah hadap dihitung dari marker kardus dasar dulu, lalu dari anggota tumpukan saja. Tampilan live juga. Untuk keputusan, kardus di luar tumpukan tetap ditolak ("box ID 2 is on the floor next to the stack, not on it -> move it out of the camera view", ID benar). Untuk cek ulang (`drystone_core.verify`, laptop dan `service.py` mode check): kardus calon di lantai / di samping / melayang → **FELL**, tercatat di log, tanpa retake; kardus calon tidak terlihat sama sekali dan tumpukan lain utuh → **FELL** ("likely fell out of view"; dulu NOT_PLACED/WAIT).
 - **Tes** `tests/test_check.py` (foto sintetis lewat kalibrasi asli, jalur laptop + jalur Lambda): (a) jatuh tegak di samping → FELL · (b) jatuh rebah di samping → FELL · (c) jatuh keluar frame → FELL · (d) penempatan normal → OK · (e) tergeser 3 cm → OFF_PLAN (bukan FELL) · kardus jatuh berputar 35° tidak lagi menggeser bacaan tumpukan (ID 1 x < 0,5 cm) · kardus melayang di atas = gap. Total 40 tes lulus. Loop `agent.py` dengan kamera palsu (RED +18, override, jatuh di samping): `check: FELL - box ID 2 is on the floor next to the stack -> it fell`, `fell: 1` di ringkasan, tanpa retake.
-- **Image live `f5b647b` masih memakai logika lama** untuk `agent.py --aws` (cek ulang di Lambda). Halaman juri tidak terpengaruh (foto contoh hanya berisi tumpukan; zona contoh identik, dicek tes).
+- **Live sejak 18 Okt 02.30 di `drystone-service:9523213`**, juga untuk `agent.py --aws` (cek ulang di Lambda). Halaman juri tidak terpengaruh: zona ketiga contoh identik (dicek live).
 
 ### Tinggi kardus terukur (18 Okt)
 - Penggaris (tengah / pojok): ID 0 19,7 / 19,5 · ID 1 19,6 / 19,4 · ID 2 19,4 / 19,3 cm → `config/boxes.json` (rata-rata, dibulatkan 0,1 cm): **ID 0 19,6 · ID 1 19,5 · ID 2 19,4 cm** (dulu 19). Panjang 29, tebal 17, massa tidak diubah.
@@ -71,7 +71,7 @@ Target tambahan (S3, DynamoDB, dashboard/alarm CloudWatch, deteksi tanpa marker)
 - **Jarak antar-marker ID 0 → ID 1 terbaca 20,2 cm** (foto s2/s3), padahal katalog dulu 19. Penjelasan: tinggi asli ID 0 (19,6) − tengah marker ID 0 (9,4) + tengah marker ID 1 (9,7) = **19,9 cm**; marker ID 0 ditempel 0,3 cm lebih rendah dari ID 1. Sisa 0,3 cm (±1,5%) masuk dalam bias skala ±3% dari Tes 1.
 - **Tes 2 tidak berubah** dengan tinggi terukur (`--recheck` di salinan CSV, hasil yang di-commit tidak ditimpa): setelan 0,5/1 → 82%, Brier 0,177, 1 roboh di HIJAU; setelan 1/2 → 82%, Brier 0,145, 0 roboh di HIJAU; P(fall) ke-11 percobaan identik dengan 19 cm. **Zona contoh halaman juga identik** (tabel di bawah tetap berlaku).
 - **Tes kontrol** (s2, geser +12/+13/+14 cm, tinggi semua kardus diubah): 19 cm 14,2% / 26,7% / 41,3% · 19,5 cm sama persis · 25 cm 14,3% / 27,3% / 42,0% · 40 cm 15,3% / 28,0% / 42,0%. Tinggi hampir tidak memengaruhi P(fall); yang menentukan adalah posisi horizontal titik berat terhadap tepi kardus di bawahnya.
-- **Image live `f5b647b` masih memakai tinggi 19 cm.** Hasilnya identik (dicek di atas); `boxes.json` baru ikut di deploy berikutnya.
+- **Tinggi terukur sudah live** di `drystone-service:9523213` (`boxes.json` di dalam image dicek: 19,6 / 19,5 / 19,4 cm). Hasil identik dengan 19 cm (dicek di atas dan live).
 
 ### Halaman web juri (17 Okt malam) — kode + tes
 - Function URL yang sama (tidak dibuat ulang, cukup update image): `GET /` halaman (`web/index.html`), `GET /samples/<id>.jpg`, `POST {"sample","offset_cm"}` keputusan, `POST /log` approve/override. POST foto lama (`images`) tidak berubah → `agent.py --aws` tetap jalan. Function URL tidak ditulis di repo; README publik merujuk ke halaman Devpost.
@@ -139,10 +139,11 @@ Target tambahan (S3, DynamoDB, dashboard/alarm CloudWatch, deteksi tanpa marker)
   ```
   aws lambda get-function --function-name drystone --region ap-southeast-1 --query "{Uri:Code.ImageUri,Status:Configuration.LastUpdateStatus}"
   ```
-- Image baru: `drystone-service:9523213` (+ `:latest`). Commit dokumen sesudahnya tidak mengubah image (`docs/` tidak masuk build).
+- Image baru: `drystone-service:9523213` (+ `:latest`, digest `sha256:04b6f06b…`). Commit dokumen sesudahnya tidak mengubah image (`docs/` tidak masuk build).
+- **Live sejak 18 Okt 02.30: `drystone-service:9523213`**, Function URL tetap sama. Berisi perbaikan cek ulang (kardus jatuh = FELL) dan `boxes.json` dengan tinggi terukur (dicek di dalam image).
+- Tes live (dari laptop): `GET /` 200 (3,4 dtk), `samples.json` versi foto a7aba3ca6c tanpa placeholder · **9 keputusan contoh identik dengan tabel** (s1 +6 GREEN 0% · +14 YELLOW 35% · +16 RED 73%; s2 +6 GREEN 0% · +13 YELLOW 27% · +16 RED 69%; s3 +4 GREEN 0% · +12 YELLOW 25% · +16 RED 77%; usulan sama) · POST foto lama (s2 +6 cm, box 2) → GREEN GUIDE (3,3 dtk) · `POST /log` → baris `web_supervisor_choice` di CloudWatch · **check lewat Lambda, foto sintetis ID 2 tegak di lantai samping tumpukan (berputar 25°) → FELL, action STOP**, "box ID 2 is on the floor next to the stack -> it fell", stack [0, 1], off_stack ID 2 (floor), tanpa retake (2,4 dtk) · pembanding penempatan sesuai rencana → OK, CONTINUE (+0,1 cm) · 0 baris error di CloudWatch.
 
 ## Wajib sebelum submit
-- **Deploy perbaikan cek ulang** (Lambda dipakai `agent.py --aws`) dengan tag hash baru, lalu ulangi 4 tes live.
 - **Validasi setelan ketidakpastian** (posisi 1 cm, isi 2 cm) di percobaan baru (evaluasi 21 Okt, pipeline persepsi baru), target **0 roboh di zona GREEN**.
 - **Vincent masuk tim di Devpost.**
 
