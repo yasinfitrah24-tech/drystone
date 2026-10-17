@@ -79,7 +79,20 @@ Uji deteksi kardus tanpa marker adalah target tambahan, hanya dikerjakan kalau i
 - **Rollback image** (yang jalan sebelum deploy halaman web; dulu ber-tag `:latest`, tag itu sekarang tertimpa, jadi pakai digest):
   `<account>.dkr.ecr.ap-southeast-1.amazonaws.com/drystone-service@sha256:9afba661f36d7f3582315ecef1d3777d2eb06c584f38c7fc3e8bd9e87be27261`
   (`<account>` = nomor akun AWS, sengaja tidak ditulis di repo.)
+- **Rollback ke image lama** (cmd, dari folder repo; ganti `<account>` dengan nomor akun, lihat dengan `aws sts get-caller-identity --query Account --output text`):
+  ```
+  aws lambda update-function-code --function-name drystone --image-uri <account>.dkr.ecr.ap-southeast-1.amazonaws.com/drystone-service@sha256:9afba661f36d7f3582315ecef1d3777d2eb06c584f38c7fc3e8bd9e87be27261 --region ap-southeast-1 --query LastUpdateStatus
+  ```
+  ```
+  aws lambda wait function-updated --function-name drystone --region ap-southeast-1
+  ```
+  ```
+  aws lambda get-function --function-name drystone --region ap-southeast-1 --query "{Uri:Code.ImageUri,Status:Configuration.LastUpdateStatus}"
+  ```
+  Function URL tidak berubah karena rollback. Untuk kembali ke versi halaman web: perintah pertama dengan `drystone-service:7e9f416` sebagai pengganti `drystone-service@sha256:...`.
 - Image baru di-push dengan dua tag: `:latest` dan hash commit `main`. Lambda di-update ke tag hash, bukan `:latest`.
+- **Live sejak 17 Okt 23.25: `drystone-service:7e9f416`** (digest `sha256:ac87187c…`), Function URL tetap sama. ECR tanpa lifecycle policy, jadi image lama tidak terhapus otomatis.
+- Tes live (dari laptop, China → Singapura): `GET /` 200 (cold start 5,4 dtk) · foto contoh 200 · `POST` s2 +16 cm → RED 69%, usulan +10 cm 3% (round trip 7,7 dtk, server 5,9 dtk; kedua kali `cached` 1,7 dtk) · POST foto lama (`test_endpoint.py`, s2 +6 cm) → GREEN 0% (5,6 dtk) · `POST /log` → baris `web_supervisor_choice` muncul di CloudWatch. Tidak ada baris error. Tes dari HP (data seluler) belum.
 
 ## Wajib sebelum submit
 - **Ganti 3 foto placeholder dengan foto asli** (`tools/capture_sample.py`, webcam laptop 1280×720, simpan dulu di `E:\drystone_samples\`, tanpa wajah/kamar), hitung ulang zona dari foto, perbarui `web/samples/samples.json` (`examples`, hapus `"placeholder": true`) dan tes, lalu pastikan label "placeholder image" hilang.
