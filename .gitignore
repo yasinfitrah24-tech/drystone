@@ -2,6 +2,7 @@
 .venv/
 __pycache__/
 *.pyc
+.pytest_cache/
 
 # Secrets (AWS keys, API keys): never commit
 .env
@@ -12,6 +13,7 @@ __pycache__/
 data/**/*.png
 data/**/*.jpg
 data/**/*.jpeg
+# agent logs and service runs hold photos of people and rooms: never commit
 data/agent_*/
 data/service_*/
 event.json
