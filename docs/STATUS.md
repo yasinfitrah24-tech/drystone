@@ -2,7 +2,7 @@
 
 Salinan status untuk repo (dibaca Yasin, Vincent, dan Claude masing-masing). Update di commit yang sama setiap ada keputusan atau hasil tes baru. Semua jam = waktu China.
 
-Terakhir diperbarui: 18 Okt 2026, 13.40. Live: `drystone-service:3b023a4` (halaman web dengan foto asli, cek ulang berbasis kontak, tinggi kardus terukur, usulan dengan margin 1 cm).
+Terakhir diperbarui: 18 Okt 2026, sore. Live: `drystone-service:3b023a4`. **Evaluasi 25 percobaan baru selesai: FAIL (C2b, kelebihan 1 roboh); C1, C2a, C3, C4 lulus.**
 
 ## Ringkasan
 - **Lomba:** OpenCV AI Competition 2026 (https://opencv26.devpost.com/). Deadline **27 Okt, 14.45** (target submit 26 Okt malam). Penjurian 27 Okt–10 Nov, endpoint harus tetap hidup.
@@ -18,7 +18,7 @@ Terakhir diperbarui: 18 Okt 2026, 13.40. Live: `drystone-service:3b023a4` (halam
 | 1 | Uji kelayakan: kalibrasi, Tes 1, Tes 2, go/no-go | 17 Okt | ✅ **GO** |
 | 2+3 | Persepsi + fisika + agent | 19 Okt | ✅ inti jalan dengan kardus asli (17 Okt) |
 | 4 | AWS: Lambda foto → keputusan, halaman web juri dengan approve/override | 21 Okt | ✅ Lambda + Function URL + `agent.py --aws`; halaman web juri live dengan foto asli (`3b023a4`); log approve/override masuk CloudWatch Logs. S3, DynamoDB, dashboard/alarm CloudWatch → Bonus |
-| 5 | Evaluasi 20–30 percobaan baru + kasus gagal. **Fitur dikunci** | 21 Okt malam (dimajukan) | — |
+| 5 | Evaluasi 20–30 percobaan baru + kasus gagal. **Fitur dikunci** | 21 Okt malam (dimajukan) | ✅ dijalankan 18 Okt (25/25, protokol dikunci `8a953e4`): **FAIL di C2b** (12 roboh, interval 6–11); C1, C2a, C3, C4 lulus. Fitur dikunci. |
 | 6 | Gladi (23) + rekam video (24) | 24 Okt | — |
 | 7 | Laporan teknis, diagram, README | 25 Okt | — |
 | 8 | Edit video, isi Devpost, submit | 26 Okt malam | — |
@@ -239,7 +239,18 @@ Latihan final 18 Okt 13.36–13.41, `agent.py --aws`, Lambda `drystone-service:3
 - **Live sejak 18 Okt 13.30: `drystone-service:3b023a4`**, Function URL tetap sama. Detektor marker tetap setelan lama.
 - Tes live (dari laptop): `GET /` 200 (3,2 dtk) · 9 keputusan contoh: zona identik dengan tabel, usulan sesuai `suggestion_cm` (s1 +10 cm 3%, 1 cm lebih jauh 5% · s2 +9 cm 1%, +10 cm 2,7% · s3 +9 cm 1–2%, +10 cm 6,2–6,7%) · **s2 +16 cm → RED 69%, usulan +9 cm** (8,7 dtk) · POST foto lama (s2 +6 cm, box 2) → GREEN GUIDE (3,4 dtk) · `POST /log` → baris di CloudWatch · check lewat Lambda, ID 2 tegak di lantai samping tumpukan → FELL, STOP, tanpa retake (2,3 dtk); pembanding sesuai rencana → OK · 0 baris error.
 
-### Evaluasi percobaan baru — protokol DIKUNCI (18 Okt), belum dijalankan
+### Evaluasi percobaan baru — HASIL (18 Okt 15.26–15.53): FAIL di C2b
+- Semua 25 percobaan dalam satu sesi (log `data/agent_20261018_152640/log.jsonl`, `agent.py --aws`), 26 menit (median ±56 dtk per percobaan, jauh lebih cepat dari perkiraan 75–80 menit). Log 15.23 (0 keputusan) diabaikan. Koreksi administratif di protokol: sesi 2 tidak dipakai. Integritas: sha256 daftar percobaan tetap `e69deb9d…e114`, tidak ada diff di `tools/`, `tests/`, `config/` sejak `8a953e4`; agent mencatat sha yang sama di `eval_start`.
+- Laporan: `python tools/eval_report.py --logs data/agent_20261018_152640/log.jsonl` → `data/eval_report/trials.csv`, `summary.md` (di-commit, tanpa foto dan nama).
+- **C1** 0 roboh di 8 percobaan GREEN → LULUS · **C2a** 14/14 (100%) percobaan jelas → LULUS · **C2b** 12 roboh; Σp = 8,537, sd 1,772, interval 90% 5,623–11,451 → 6–11 → **GAGAL** (z = 1,96; model terkalibrasi dengan P ini hanya 4,7% kemungkinan ≥ 12 roboh) · **C3** Brier 0,1254 → LULUS · **C4** 25/25 → LULUS. **Vonis: FAIL** menurut kriteria yang dikunci. Setelan, kriteria, dan kode tidak diubah.
+- Akurasi keseluruhan (bukan kriteria) 84% (21/25), Tes 2 82%. Per zona: GREEN 0/8 roboh (P rata-rata 3%), YELLOW 4/9 (P rata-rata 25%), RED 8/8 (P rata-rata 75%). Kalibrasi: 0–10% → 0/9 · 10–30% → 40% (P 20%) · 30–50% → 67% (P 39%) · 50–70% → 100% (P 60%) · 70–90% → 100% (P 80%) · 90–100% → 100% (P 92%).
+- Operasional: galat penempatan kardus yang berdiri rata-rata 0,6 cm, median 0,6, maks 1,7 cm (T06, OFF_PLAN, tetap berdiri), 10/13 ≤ 1 cm · Lambda median 7,6 dtk, maks 11,1 dtk, 25/25 di AWS · retake 0, f/p 0, fallback 0, koreksi pekerja 0 · persiapan ditolak 4× (T03: ID 1 di +10 cm bukan +5, 2×; T09: ID 1 belum ditaruh, 2×).
+- **Kasus gagal** (semua KUNING yang roboh): T16 (3 kardus, +12, margin +2,5 cm, P 14%), T17 (3 kardus, −12, +2,5 cm, 17%), T01 (2 kardus, +14, +0,5 cm, 35%), T25 (3 kardus, +14, +0,5 cm, 43%). MERAH dekat garis (T18 62%, T20 58%, T21 60%) semuanya roboh.
+- **Pola menurut margin statis pusat massa:** ≤ −0,5 cm → 8/8 roboh (semua RED) · ≥ +3,5 cm → 9/9 berdiri · **+0,5…+2,5 cm → 4/8 roboh, P 12–43%**: model terlalu optimis di pita tengah, GREEN tetap aman. Di pita itu 3 kardus 3/4 roboh, 2 kardus 1/4 (sampel kecil).
+- Hipotesis (bukan kesimpulan): gesekan simulasi tidak cocok, ketidakpastian isi/pusat massa terlalu kecil, lantai licin/kardus dasar goyang, cara melepas kardus (terutama dari 40 cm), kardus lentur.
+- **Post-hoc, tidak dipakai sistem, tidak di-deploy:** P dihitung ulang di 25 tumpukan yang tercatat (setelan terkunci mereproduksi P di log persis). 9 setelan (posisi 1–2 cm, isi 2–4 cm, gesekan 0,3–0,8): Brier 0,121–0,132, tidak ada yang jelas lebih baik; ketidakpastian lebih besar menaikkan Σp (sampai 10,4) tapi log-likelihood memburuk; **gesekan 0,3 malah menurunkan Σp (8,48)**, jadi hipotesis "gesekan terlalu tinggi" tidak didukung. Semua setelan tetap 0 roboh di GREEN. Kesimpulan sementara: celahnya struktural, bukan parameter. Pekerjaan lanjutan: percobaan khusus di pita margin +0,5…+2,5 cm (2 vs 3 kardus), ukur gesekan dengan tes miring, modelkan gangguan saat melepas, kunci setelan baru, uji lagi di percobaan baru.
+
+### Evaluasi percobaan baru — protokol DIKUNCI (18 Okt)
 - Protokol `docs/EVAL_PROTOCOL.md` (bahasa Inggris), dikunci di commit **`8a953e4`** sebelum data diambil. Koreksi tercatat sesudah kunci (18 Okt): tanggal di judul 21–22 → 20–21 Okt, administratif saja. Daftar percobaan `config/eval_plan.json` (dari `tools/make_eval_plan.py`, seed 20261021), sha256 `e69deb9dc325212b3ccd455f3266a83af389b7951fd8d6a412bbb8b27993e114` (file dijaga LF lewat `.gitattributes`; agent mencatat sha256 ini di log `eval_start`).
 - Setelan dikunci: posisi 1 cm, isi 2 cm, ambang 10%/50%, margin usulan A, detektor lama, katalog terukur, Lambda `3b023a4`.
 - 25 percobaan acak: 10 × 2 kardus, 15 × 3 kardus, 15 geseran positif dan 10 negatif; rencana 8 GREEN, 9 YELLOW, 8 RED; 11 sengaja dekat garis zona; perkiraan total roboh 8,6.
@@ -256,14 +267,13 @@ Latihan final 18 Okt 13.36–13.41, `agent.py --aws`, Lambda `drystone-service:3
 - Usulan (belum diterapkan): lifecycle policy ECR `drystone-service`: hapus image tanpa tag yang lebih tua dari 14 hari, simpan 2 image bertag terbaru (sekarang `3b023a4`/`latest` dan target rollback `9523213`; `f5b647b` dan `7e9f416` akan terhapus). Cek dulu dengan `start-lifecycle-policy-preview`.
 
 ## Wajib sebelum submit
-- **Validasi setelan ketidakpastian** (posisi 1 cm, isi 2 cm) di percobaan baru: evaluasi 20–21 Okt menurut protokol yang dikunci (`8a953e4`), kriteria C1–C4, laporkan apa adanya.
 - **Vincent masuk tim di Devpost.**
 
 ## Berikutnya
 - **18 Okt:** ~~latihan adegan override → roboh~~ (selesai: alur video final teruji dengan kardus asli, 13.41) · ~~alur jatuh → angkat → keputusan ulang → s → OK~~ · ~~margin usulan~~ (aturan A) · ~~setelan deteksi marker~~ (ditolak) · opsional: uji dengan kardus asli SPASI sebelum menaruh (p) dan ID 1 diangkat.
 - **19 Okt:** ~~README utama~~ (18 Okt: README bahasa Inggris dengan angka dari STATUS, diagram Mermaid, contoh trace nyata, batasan; LICENSE MIT; `.gitignore` ditambah `.pytest_cache/`; scan file yang di-track dan seluruh riwayat git: tidak ada Function URL, nomor akun AWS, atau key) · ~~rapikan repo~~ (18 Okt: `test_cam.py` dihapus; `aws/README.md` diperbarui ke bahasa Inggris dan cara deploy dengan tag hash; nama IAM user dihapus dari docs; `data/camera_laptop_draft.yaml` dipertahankan sebagai file kalibrasi).
-- **18 Okt (Sabtu) siang:** evaluasi sesi 1, T01–T12 (dimajukan dari 20 Okt malam). **20 Okt:** cadangan.
-- **21 Okt (Rabu):** evaluasi T13–T25 (`--eval-start 13`), lalu `tools/eval_report.py` (kriteria C1–C4, tabel kalibrasi, kasus gagal), sekaligus validasi setelan ketidakpastian Tes 2; malamnya fitur dikunci.
+- **18 Okt (Sabtu) sore:** ~~evaluasi 25 percobaan~~ (selesai dalam satu sesi, FAIL di C2b). **20 Okt:** cadangan.
+- **21 Okt (Rabu):** sesi 2 evaluasi tidak dipakai (semua percobaan selesai 18 Okt); fitur dikunci. Opsional, bukan untuk submit: percobaan lanjutan di pita margin tengah (lihat hasil evaluasi).
 - **25–26 Okt:** jadikan repo publik + cek ulang tidak ada secret, nomor akun AWS, atau Function URL di seluruh riwayat git (bukan hanya commit terakhir).
 
 ## Bonus (hanya kalau inti selesai)

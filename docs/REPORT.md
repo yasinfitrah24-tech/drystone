@@ -1,7 +1,7 @@
 # Drystone: technical report
 
-*Predict before you stack.* OpenCV AI Competition 2026. Draft of 18 Oct 2026; the evaluation on new trials is
-running (section 6.4). Every number in this report comes from `docs/STATUS.md` or from the agent logs it cites.
+*Predict before you stack.* OpenCV AI Competition 2026. Draft of 18 Oct 2026, with the results of the evaluation
+on new trials (section 6.4). Every number in this report comes from `docs/STATUS.md` or from the agent logs it cites.
 
 > Drystone is a **decision-support prototype, not a certified safety device**. It estimates a risk; a person makes
 > every decision and places every box.
@@ -114,17 +114,104 @@ centre of mass sits relative to the edge below.
 - Final scene: GREEN → RED 93% → override → fell → FELL → re-planned → suggestion +9 cm → OK (−0.3 cm), stack
   GREEN 1%.
 
-### 6.4 Evaluation on new trials (20–30 trials) — RESULTS PENDING
-Protocol `docs/EVAL_PROTOCOL.md`, locked before any data (commit `8a953e4`): 25 pre-set trials in a shuffled order
-(8 GREEN, 9 YELLOW, 8 RED expected; 11 close to a zone line), settings frozen, outcome confirmed by the worker.
-Criteria: C1 0 falls in GREEN, C2a ≥ 85% accuracy on clear trials, C2b total falls inside the 90% interval of the
-predicted number, C3 Brier ≤ 0.20, C4 ≥ 20 trials. A perfectly calibrated model passes all of them about 70% of
-the time (C1 alone ~78%), so a FAIL is possible without the model being wrong; the report will say which.
+### 6.4 Evaluation on new trials (18 Oct): FAIL on C2b by one fall
+Protocol `docs/EVAL_PROTOCOL.md`, locked before any data (commit `8a953e4`): 25 pre-set trials in a shuffled order,
+settings frozen, outcome confirmed by the worker. All 25 trials ran in one session (18 Oct, 15:26–15:53, 26 minutes,
+`agent.py --aws`); the protocol records this and two other administrative corrections (title date, session date).
+Trial list, settings, criteria and code did not change after the lock (sha256 of the trial list unchanged, no diff
+in `tools/`, `tests/`, `config/`). Per-trial data: `data/eval_report/trials.csv`; summary: `data/eval_report/summary.md`.
 
-*[Results table from `tools/eval_report.py`: criteria with PASS/FAIL, overall accuracy next to Test 2, falls per
-zone, calibration table, placement error, Lambda times, retakes, f/p questions, fallbacks.]*
+| Criterion (locked) | Result | Target | |
+|---|---|---|---|
+| C1 falls in the GREEN zone | **0 of 8** GREEN trials | 0 | PASS |
+| C2a accuracy on clear trials (P < 10% or > 70%) | **14/14 (100%)** | ≥ 85% | PASS |
+| C2b total falls inside the 90% interval of the predicted number | **12 falls**; Σp = 8.537, sd 1.772, interval 5.62–11.45 → 6–11 | inside | **FAIL** |
+| C3 Brier score | **0.125** | ≤ 0.20 | PASS |
+| C4 trials with an outcome | **25 of 25** | ≥ 20 | PASS |
 
-*[Failure cases: every GREEN fall, every wrong prediction, every corrected outcome; photos with faces blurred.]*
+**Verdict: FAIL** under the locked criteria, because of C2b: one fall more than the upper end of the interval
+(z = 1.96). A calibrated model with these P would see 12 or more falls only 4.7% of the time, so this is a real
+signal, not bad luck: **the model under-predicts falls.** Overall accuracy (P ≥ 50% predicts a fall), which is not a
+criterion, was **84% (21/25)**, against 82% in Test 2.
+
+| Zone | Trials | Falls | Fall rate | Mean P(fall) |
+|---|---|---|---|---|
+| GREEN | 8 | 0 | 0% | 3% |
+| YELLOW | 9 | 4 | 44% | 25% |
+| RED | 8 | 8 | 100% | 75% |
+
+| P(fall) range | Trials | Mean predicted | Observed fall rate |
+|---|---|---|---|
+| 0–10% | 9 | 4% | 0% |
+| 10–30% | 5 | 20% | 40% |
+| 30–50% | 3 | 39% | 67% |
+| 50–70% | 3 | 60% | 100% |
+| 70–90% | 3 | 80% | 100% |
+| 90–100% | 2 | 92% | 100% |
+
+Operations: placement error of the boxes that stood: mean 0.6 cm, median 0.6 cm, max 1.7 cm (10/13 within 1 cm;
+T06 was 1.7 cm off and stood). Decisions on AWS Lambda: median 7.6 s, max 11.1 s round trip, 25/25 on AWS. Retakes
+0, f/p questions 0, laptop fallbacks 0, outcomes corrected by the worker 0. The agent refused to decide 4 times
+because the setup was wrong (T03: ID 1 at +10 cm instead of +5 cm, twice; T09: ID 1 not placed yet, twice).
+
+#### Failure cases
+The protocol requires every GREEN fall (none), every wrong prediction and every corrected outcome (none). The four
+wrong predictions are all **YELLOW trials that fell**:
+
+| Trial | Stack | Shift | Centre-of-mass margin | P(fall) | Outcome |
+|---|---|---|---|---|---|
+| T16 | 3 boxes, ID 1 at −4.6 cm | +12 cm | +2.5 cm | 14% | fell |
+| T17 | 3 boxes, ID 1 at −0.2 cm | −12 cm | +2.5 cm | 17% | fell |
+| T01 | 2 boxes | +14 cm | +0.5 cm | 35% | fell |
+| T25 | 3 boxes, ID 1 at +5.2 cm | +14 cm | +0.5 cm | 43% | fell |
+
+The RED trials closest to the line (T18 62%, T20 58%, T21 60%; margin −0.5 cm) all fell too: correct, but they also
+show the model is too cautious about the stack *standing* near the edge.
+
+Ordered by the static centre-of-mass margin, the picture is clear: every trial with a margin of −0.5 cm or less fell
+(8/8, all predicted RED), every trial with +3.5 cm or more stood (9/9, all GREEN or 9%), and in between, from +0.5
+to +2.5 cm, **4 of 8 fell** while the model predicted 12–43%. The model ranks the risk correctly and keeps GREEN
+safe, but it is **too optimistic in the middle band**. In that band 3 of the 4 three-box trials fell (T16, T17, T25;
+T07 stood) against 1 of 4 two-box trials (T01; T04, T13, T15 stood); with 8 trials this is a hint, not a finding.
+
+Possible causes (hypotheses, not conclusions):
+- **Friction** in the simulation (0.5) may not match these boxes and this floor (the post-hoc check below does not
+  support "too high").
+- **Load and centre of mass**: the 2 cm uncertainty of the load centre may be too small (contents shift; the box
+  flaps add weight near the top).
+- **The floor**: smooth tiles; the base box can slide or rock, which the simulation treats as fixed ground with the
+  same friction.
+- **How the box is released**: a small push or tilt when letting go matters most near the edge, and more for a box
+  released 40 cm up (three-box trials) than 20 cm up.
+- **Box compliance**: cardboard edges bend under an overhanging box; the simulation uses rigid boxes.
+
+#### Post-hoc analysis (not used by the system)
+**Post-hoc, not used by the system, nothing deployed.** P(fall) recomputed on the 25 stacks recorded in the log with
+other simulation settings (the locked settings reproduce the logged P exactly, max difference 0.000):
+
+| Position sd | Load-centre sd | Friction | Brier | Log-likelihood | Σp (90% interval) |
+|---|---|---|---|---|---|
+| **1 cm** | **2 cm** | **0.5 (locked)** | 0.125 | −9.61 | 8.54 (5.6–11.5) |
+| 1 cm | 3 cm | 0.5 | 0.126 | −9.96 | 9.23 (5.9–12.6) |
+| 1 cm | 4 cm | 0.5 | 0.132 | −10.69 | 10.42 (6.8–14.1) |
+| 1.5 cm | 2 cm | 0.5 | 0.124 | −9.64 | 8.79 (5.7–11.9) |
+| 2 cm | 2 cm | 0.5 | 0.121 | −9.63 | 9.24 (6.0–12.5) |
+| 1 cm | 2 cm | 0.3 | 0.126 | −9.65 | 8.48 (5.6–11.4) |
+| 1 cm | 2 cm | 0.8 | 0.123 | −9.43 | 8.74 (5.8–11.7) |
+| 1.5 cm | 3 cm | 0.5 | 0.123 | −9.87 | 9.56 (6.1–13.0) |
+| 2 cm | 3 cm | 0.5 | 0.124 | −10.14 | 10.10 (6.6–13.6) |
+
+- No single global setting fixes the middle band: the Brier score stays between 0.121 and 0.132. More uncertainty
+  raises Σp enough to bring 12 falls inside the interval, but it raises P everywhere, and the log-likelihood gets
+  worse. Every setting still gives 0 falls in the GREEN zone.
+- The "friction too high" hypothesis is **not supported**: a lower friction (0.3) gives *fewer* predicted falls.
+- So the gap looks structural (how a box is released, cardboard compliance, the three-box case) rather than a
+  wrong parameter. With 25 trials, tuning on this data would overfit it, exactly what this evaluation was designed
+  to avoid.
+
+Follow-up work (not done): a dedicated set of trials in the +0.5 to +2.5 cm margin band, split by two and three
+boxes; measure box-on-box and box-on-floor friction with a tilt test; model the release (small random push or
+tilt when the box is let go); then lock new settings and test them on new trials again.
 
 ## 7. Agentic Vision: perception → decision → action
 ### 7.1 The loop
@@ -196,6 +283,9 @@ with synthetic camera photos rendered through the real calibration, on the lapto
 - Test 1 showed an unexplained scale bias of about ±3%. The marker-to-marker height read 20.2 cm where the ruler
   gives 19.9 cm; the 0.3 cm left over is within that bias.
 - Small samples: Test 2 has 11 counted trials; the practice runs are demonstrations; the evaluation has 25 trials.
+- **The model under-predicts falls near the edge.** In the evaluation, trials with a centre-of-mass margin of
+  +0.5 to +2.5 cm fell 4 times out of 8 while the model predicted 12–43%; the evaluation failed criterion C2b
+  (12 falls against an interval of 6–11). Treat YELLOW as more dangerous than its number says.
 - The public endpoint runs on a paid AWS account; rate limits and the cache are per container.
 
 ## 9. Responsible use

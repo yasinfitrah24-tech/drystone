@@ -6,6 +6,7 @@ sha256 `e69deb9dc325212b3ccd455f3266a83af389b7951fd8d6a412bbb8b27993e114`. Nothi
 
 Correction (18 Oct, after lock 8a953e4): title date 21–22 Oct → 20–21 Oct. Administrative only; trial list, sha256, settings and criteria unchanged.
 Correction (18 Oct, after lock 8a953e4): session 1 (T01–T12) moved forward to 18 Oct afternoon, in bright daylight; session 2 (T13–T25) stays as planned. Administrative only; trial list, sha256, settings and criteria unchanged.
+Correction (18 Oct, after the run): all 25 trials ran in one session on 18 Oct from 15:26 to 15:53 (log `data/agent_20261018_152640`), so session 2 was not used. A session started at 15:23 recorded 0 decisions and is ignored. Administrative only; trial list (sha256 above), settings, criteria and code unchanged: no diff in `tools/`, `tests/` or `config/` since 8a953e4.
 
 ## 1. Purpose
 Test 2 (17 Oct) scored 82% accuracy, Brier 0.145 and 0 falls in the GREEN zone, but the uncertainty settings were

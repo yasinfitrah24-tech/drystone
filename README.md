@@ -102,8 +102,21 @@ What happened next, all driven by what the camera saw:
 | Practice with real boxes, 18 Oct (3 sessions, `--aws`) | 7 RED placements forced by override (P(fall) 86–98%): **7/7 fell, 7/7 detected as FELL**. Real placements landed 0.0–1.3 cm from the plan. RED decisions on Lambda 8.5–10.4 s round trip; checks 2.9–6.9 s |
 | Final scene, 18 Oct | GREEN → RED 93% → override → fell → FELL → re-planned → suggestion +9 cm → OK (−0.3 cm), stack GREEN 1% |
 
-**Evaluation on 20–30 new trials: pending (21 Oct).** It will report accuracy, Brier score, falls in the GREEN
-zone, decision time, retakes, laptop fallbacks and failure cases, with the current settings and perception.
+**Evaluation on 25 new trials (18 Oct), protocol locked before the data: FAIL on one of five criteria.**
+
+| Locked criterion | Result | Target | |
+|---|---|---|---|
+| C1 falls in the GREEN zone | 0 of 8 GREEN trials | 0 | PASS |
+| C2a accuracy on clear trials (P < 10% or > 70%) | 14/14 (100%) | ≥ 85% | PASS |
+| C2b total falls inside the 90% interval of the predicted number | 12 falls; predicted 8.5, interval 6–11 | inside | **FAIL** |
+| C3 Brier score | 0.125 | ≤ 0.20 | PASS |
+| C4 trials with an outcome | 25/25 | ≥ 20 | PASS |
+
+GREEN stayed safe (0/8 fell) and every RED trial fell (8/8), but YELLOW trials fell 4 times out of 9 against a
+mean predicted P of 25%: the model is too optimistic close to the edge. Overall accuracy (not a criterion) 84%,
+against 82% in Test 2. Decisions on AWS Lambda: median 7.6 s; placement error of boxes that stood: median 0.6 cm.
+Details, failure cases and a post-hoc analysis (not used by the system): [docs/REPORT.md](docs/REPORT.md),
+per-trial data: [data/eval_report/trials.csv](data/eval_report/trials.csv).
 
 ## Run it yourself
 Windows Command Prompt, Python 3.12, from the repository folder. One command per line.
@@ -157,9 +170,10 @@ python -m pytest tests -q
 - **Uniform boxes.** The catalogue has three measured boxes of the same type (29 × 17 × 19.4–19.6 cm, 1.0 kg,
   load in the middle). Other boxes, uneven loads or soft boxes are outside what we tested.
 - **Measurement limits.** Test 1 showed a scale bias of about ±3% that we have not explained. Uncertainty
-  settings were tuned on the same 11 trials they were scored on; new trials are pending.
-- **Small evaluation so far.** Test 2 has 11 counted trials; the practice runs are demonstrations, not an
-  evaluation.
+  settings were tuned on Test 2 and then tested on 25 new trials with locked criteria (see Results).
+- **Under-prediction near the edge.** In the evaluation, trials with a centre-of-mass margin of +0.5 to +2.5 cm
+  fell 4 times out of 8 while the model predicted 12–43%. Treat YELLOW as more dangerous than its number says.
+- **Small samples.** Test 2 has 11 counted trials and the evaluation 25; the practice runs are demonstrations.
 - **Public endpoint and cost.** The Function URL is public and the AWS account is a paid account: it does not
   close by itself (the endpoint stays up through judging, until 10 Nov), and usage above the always-free quota
   (Lambda: 1 million requests and 400,000 GB-seconds a month; CloudWatch Logs: 5 GB) is billed. A zero-spend budget
