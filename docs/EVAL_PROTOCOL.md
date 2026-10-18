@@ -1,8 +1,10 @@
-# Drystone evaluation protocol (new trials, 21–22 Oct 2026)
+# Drystone evaluation protocol (new trials, 20–21 Oct 2026)
 
 Status: **LOCKED on 18 Oct 2026**, before any evaluation data was taken, by the commit that changed this line
 (`git log -- docs/EVAL_PROTOCOL.md`; the hash is also in `docs/STATUS.md`). Trial list `config/eval_plan.json`,
 sha256 `e69deb9dc325212b3ccd455f3266a83af389b7951fd8d6a412bbb8b27993e114`. Nothing in this protocol, the settings, the trial list or the criteria changes from here on.
+
+Correction (18 Oct, after lock 8a953e4): title date 21–22 Oct → 20–21 Oct. Administrative only; trial list, sha256, settings and criteria unchanged.
 
 ## 1. Purpose
 Test 2 (17 Oct) scored 82% accuracy, Brier 0.145 and 0 falls in the GREEN zone, but the uncertainty settings were
