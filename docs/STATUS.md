@@ -19,17 +19,17 @@ Terakhir diperbarui: 18 Okt 2026, sore. Live: `drystone-service:3b023a4`. **Eval
 | 2+3 | Persepsi + fisika + agent | 19 Okt | ✅ inti jalan dengan kardus asli (17 Okt) |
 | 4 | AWS: Lambda foto → keputusan, halaman web juri dengan approve/override | 21 Okt | ✅ Lambda + Function URL + `agent.py --aws`; halaman web juri live dengan foto asli (`3b023a4`); log approve/override masuk CloudWatch Logs. S3, DynamoDB, dashboard/alarm CloudWatch → Bonus |
 | 5 | Evaluasi 20–30 percobaan baru + kasus gagal. **Fitur dikunci** | 21 Okt malam (dimajukan) | ✅ dijalankan 18 Okt (25/25, protokol dikunci `8a953e4`): **FAIL di C2b** (12 roboh, interval 6–11); C1, C2a, C3, C4 lulus. Fitur dikunci. |
-| 6 | Gladi (23) + rekam video (24) | 24 Okt | — |
-| 7 | Laporan teknis, diagram, README | 25 Okt | — |
-| 8 | Edit video, isi Devpost, submit | 26 Okt malam | — |
+| 6 | Review naskah/diagram (23) + rekam video (24) | 24 Okt | — (Vincent dikonfirmasi) |
+| 7 | Laporan teknis, diagram, README | 25 Okt | ⏳ README dan draf REPORT ada; finalisasi 23 dan 25 Okt |
+| 8 | Edit video + isi Devpost (25), repo publik + submit (26) | 26 Okt | — (form Devpost sudah dicek) |
 
 Target tambahan (S3, DynamoDB, dashboard/alarm CloudWatch, deteksi tanpa marker) ada di bagian Bonus, hanya dikerjakan kalau inti selesai.
 
 ## Pembagian tugas
 - **Yasin:** kamera/OpenCV, tes, simulasi, agent (juga pegang teknis Echolocate, freeze 22 Okt).
 - **AWS dipegang Yasin** (keputusan 17 Okt), IAM user pribadi di laptop Yasin.
-- **Vincent:** bantu video (24 Okt, belum dikonfirmasi), naskah, diagram; opsional kalibrasi webcam-nya + Tes 1.
-- Vincent perlu daftar Devpost dan kirim username untuk diundang ke tim.
+- **Vincent:** sudah masuk tim Drystone di Devpost; naskah, diagram, dan **rekam video Sabtu 24 Okt (dikonfirmasi)**.
+- Form submit Devpost sudah dicek.
 
 ## Hasil
 ### Kalibrasi webcam laptop Yasin (11 Okt) — LAYAK
@@ -267,14 +267,17 @@ Latihan final 18 Okt 13.36–13.41, `agent.py --aws`, Lambda `drystone-service:3
 - **Lifecycle policy ECR diterapkan (18 Okt)**, `aws/ecr-lifecycle.json`: image tanpa tag dihapus setelah 14 hari; hanya **2 image bertag terbaru** yang disimpan. Preview sebelum diterapkan: yang kedaluwarsa hanya `7e9f416` dan `f5b647b`; tetap ada `3b023a4`/`latest` (live) dan `9523213`. Akibatnya **target rollback selalu tepat satu versi sebelumnya** (deploy baru menghapus versi bertag ketiga). Rollback lama di bagian deploy di atas (`7e9f416`, `f5b647b`, dan digest tanpa tag `9afba661…`, kedaluwarsa ±31 Okt) tidak bisa dipakai lagi.
 
 ## Wajib sebelum submit
-- **Vincent masuk tim di Devpost.**
+- Tidak ada item terpisah lagi; semua sisa pekerjaan ada di rencana 23–26 Okt di bawah.
 
 ## Berikutnya
 - **18 Okt:** ~~latihan adegan override → roboh~~ (selesai: alur video final teruji dengan kardus asli, 13.41) · ~~alur jatuh → angkat → keputusan ulang → s → OK~~ · ~~margin usulan~~ (aturan A) · ~~setelan deteksi marker~~ (ditolak) · opsional: uji dengan kardus asli SPASI sebelum menaruh (p) dan ID 1 diangkat.
 - **19 Okt:** ~~README utama~~ (18 Okt: README bahasa Inggris dengan angka dari STATUS, diagram Mermaid, contoh trace nyata, batasan; LICENSE MIT; `.gitignore` ditambah `.pytest_cache/`; scan file yang di-track dan seluruh riwayat git: tidak ada Function URL, nomor akun AWS, atau key) · ~~rapikan repo~~ (18 Okt: `test_cam.py` dihapus; `aws/README.md` diperbarui ke bahasa Inggris dan cara deploy dengan tag hash; nama IAM user dihapus dari docs; `data/camera_laptop_draft.yaml` dipertahankan sebagai file kalibrasi).
 - **18 Okt (Sabtu) sore:** ~~evaluasi 25 percobaan~~ (selesai dalam satu sesi, FAIL di C2b). **20 Okt:** cadangan.
 - **21 Okt (Rabu):** sesi 2 evaluasi tidak dipakai (semua percobaan selesai 18 Okt); fitur dikunci. Opsional, bukan untuk submit: percobaan lanjutan di pita margin tengah (lihat hasil evaluasi).
-- **25–26 Okt:** jadikan repo publik + cek ulang tidak ada secret, nomor akun AWS, atau Function URL di seluruh riwayat git (bukan hanya commit terakhir).
+- **Jumat 23 Okt:** rapikan `docs/REPORT.md` + review naskah dan diagram Vincent.
+- **Sabtu 24 Okt:** rekam video (Yasin + Vincent), adegan sesuai "Alur video final".
+- **Minggu 25 Okt:** edit video, finalisasi laporan, isi Devpost.
+- **Senin 26 Okt:** jadikan repo publik + cek ulang tidak ada secret, nomor akun AWS, atau Function URL di seluruh riwayat git (bukan hanya commit terakhir), cek akhir halaman juri dari HP, submit (deadline 27 Okt 14.45).
 
 ## Bonus (hanya kalau inti selesai)
 - S3 (foto bukti per keputusan) + DynamoDB (log keputusan, approval, override). Log approve/override dari halaman juri **sudah** tercatat di CloudWatch Logs (satu baris JSON `web_supervisor_choice`).
