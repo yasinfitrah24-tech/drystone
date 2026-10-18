@@ -58,6 +58,44 @@ Target tambahan (S3, DynamoDB, dashboard/alarm CloudWatch, deteksi tanpa marker)
 ### Layanan AWS (17 Okt) — kode
 - `tools/service.py`: 1–5 foto → keputusan JSON (mode decide / check), `lambda_handler`. Uji dengan foto asli: +6 cm HIJAU 1% (1,7 dtk), +12 cm KUNING 41% + usulan (8,3 dtk), +16 cm MERAH 87% (8,2 dtk). Jalan di Python 3.12 bersih dengan paket Lambda (OpenCV headless).
 
+### Alur video final, teruji dengan kardus asli 18 Okt
+Latihan final 18 Okt 13.36–13.41, `agent.py --aws`, Lambda `drystone-service:3b023a4`. Log: `data/agent_20261018_133639/log.jsonl` (tidak di-commit, foto memuat wajah). Semua langkah lulus; tidak ada pertanyaan f/p, marker ID 2 terbaca terus. Naskah adegan untuk rekaman 24 Okt dan draf naskah video Vincent.
+
+**Persiapan**
+- Kamera laptop ±1 m, latar polos, cahaya cukup (marker pudar di cahaya redup tidak terbaca). Hanya kardus yang ditumpuk terlihat kamera; ID 1 dan ID 2 disiapkan di luar pandangan. ID 0 sudah di lantai, di tengah gambar.
+- cmd, dari folder repo, satu per baris:
+  ```
+  cd /d E:\opencv-project
+  ```
+  ```
+  .venv\Scripts\activate
+  ```
+  ```
+  set DRYSTONE_URL=<Function URL>
+  ```
+  ```
+  python tools/agent.py --calib data/camera_laptop.yaml --marker-mm 80 --aws %DRYSTONE_URL%
+  ```
+- Tombol di jendela kamera: **D** / **A** geser calon 1 cm ke kanan / kiri · **SPASI** minta keputusan, atau cek ulang setelah kardus ditaruh · **X** batalkan rencana · **Q** selesai. Jawaban supervisor diketik di cmd.
+
+**Adegan (urutan teruji, angka dari latihan final)**
+
+| # | Yang dilakukan | Tombol / jawaban | Yang tampil (latihan final) |
+|---|---|---|---|
+| 1 | Geser calon ID 1 ke +6 cm, minta keputusan | **D** ×6, **SPASI** | GREEN 0% → GUIDE, kerangka hijau (Lambda 5,0 dtk) |
+| 2 | Taruh ID 1 di kerangka, lepas tangan, cek ulang | **SPASI** | check OK (−0,4 cm), tumpukan GREEN |
+| 3 | Geser calon ID 2 ke +18 cm, minta keputusan | **D** ×18, **SPASI** | **RED 93%** → REJECT. Trace margin: +10 cm (4%) ditolak karena +11 cm 12%; usulan **+9 cm** (1%, +10 cm 4% juga GREEN). Lambda 10,0 dtk (server 7,1) |
+| 4 | Supervisor memaksa | **o**, nama (Yasin), alasan (≥ 5 huruf) | "override logged. The supervisor takes responsibility for the risk." |
+| 5 | Taruh ID 2 di +18 cm, lepas → roboh ke lantai, cek ulang | **SPASI** | **FELL** "box ID 2 is on the floor next to the stack -> it fell" + "box ID 2 fell. Pick it up and keep it out of the camera view, then press SPACE to plan ID 2 again." (sekali, tanpa retake; cek 3,1 dtk) |
+| 6 | Angkat ID 2 keluar pandangan, minta keputusan lagi (geseran tetap +18) | **SPASI** | "planning box ID 2 again after it fell", RED 93% lagi, usulan +9 cm (Lambda 10,4 dtk, server 7,5) |
+| 7 | Pakai usulan agent | **s** | kerangka hijau di +9 cm |
+| 8 | Taruh ID 2 di kerangka hijau, lepas, cek ulang | **SPASI** | check OK (−0,3 cm), tumpukan **GREEN 1%** (cek 3,9 dtk) |
+| 9 | Selesai | **Q** | ringkasan: decisions 3, GREEN 1, RED 2, override 1, fell 1, retry_after_fall 1 |
+
+- Durasi aksi di latihan: ±2,5 menit (13.38.07–13.40.34), termasuk tunggu Lambda ±10 dtk per keputusan MERAH.
+- Kalau SPASI cek ulang ditekan sebelum kardus ditaruh, atau markernya tidak terbaca: agent bertanya "f = it fell out of view, p = not placed yet" → jawab **p**, taruh kardus, **SPASI** lagi.
+- Untuk video: +18 cm (93–95% di semua latihan). Keselamatan saat uji roboh: laptop jangan di arah jatuhnya.
+
 ### Latihan alur setelah jatuh dengan kardus asli (18 Okt 12.46–12.58, `agent.py --aws`)
 - Log: `data/agent_20261018_124638/log.jsonl` (tidak di-commit: foto per langkah memuat **wajah dua orang**).
 - **Jatuh nyata: 3/3 override MERAH roboh** (ID 2 +18 cm 95%, +19 cm 98%, +18 cm 94% → P 94–98%), **FELL terdeteksi 3/3** ("on the floor next to the stack"), pesan "Pick it up…" sekali, tanpa loop retake.
@@ -206,7 +244,7 @@ Target tambahan (S3, DynamoDB, dashboard/alarm CloudWatch, deteksi tanpa marker)
 - **Vincent masuk tim di Devpost.**
 
 ## Berikutnya
-- **18 Okt:** ~~latihan adegan override → roboh~~ (selesai, 3/3) · ~~alur jatuh → angkat → keputusan ulang → s → OK~~ (selesai, 12.58) · ~~margin usulan~~ (aturan A) · ~~setelan deteksi marker~~ (ditolak) · uji ulang dengan kardus asli: SPASI sebelum menaruh (p) dan ID 1 diangkat.
+- **18 Okt:** ~~latihan adegan override → roboh~~ (selesai: alur video final teruji dengan kardus asli, 13.41) · ~~alur jatuh → angkat → keputusan ulang → s → OK~~ · ~~margin usulan~~ (aturan A) · ~~setelan deteksi marker~~ (ditolak) · opsional: uji dengan kardus asli SPASI sebelum menaruh (p) dan ID 1 diangkat.
 - **19 Okt:** README utama + rapikan repo.
 - **20 Okt:** cadangan.
 - **21 Okt:** evaluasi 20–30 percobaan baru dengan pipeline persepsi baru (akurasi, Brier, roboh di zona GREEN, waktu keputusan, retake, fallback) + kasus gagal; sekaligus validasi setelan ketidakpastian Tes 2; malamnya fitur dikunci.
