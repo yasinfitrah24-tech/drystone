@@ -239,15 +239,24 @@ Latihan final 18 Okt 13.36–13.41, `agent.py --aws`, Lambda `drystone-service:3
 - **Live sejak 18 Okt 13.30: `drystone-service:3b023a4`**, Function URL tetap sama. Detektor marker tetap setelan lama.
 - Tes live (dari laptop): `GET /` 200 (3,2 dtk) · 9 keputusan contoh: zona identik dengan tabel, usulan sesuai `suggestion_cm` (s1 +10 cm 3%, 1 cm lebih jauh 5% · s2 +9 cm 1%, +10 cm 2,7% · s3 +9 cm 1–2%, +10 cm 6,2–6,7%) · **s2 +16 cm → RED 69%, usulan +9 cm** (8,7 dtk) · POST foto lama (s2 +6 cm, box 2) → GREEN GUIDE (3,4 dtk) · `POST /log` → baris di CloudWatch · check lewat Lambda, ID 2 tegak di lantai samping tumpukan → FELL, STOP, tanpa retake (2,3 dtk); pembanding sesuai rencana → OK · 0 baris error.
 
+### Evaluasi percobaan baru — protokol DIKUNCI (18 Okt), belum dijalankan
+- Protokol `docs/EVAL_PROTOCOL.md` (bahasa Inggris), dikunci di commit **`8a953e4`** sebelum data diambil. Daftar percobaan `config/eval_plan.json` (dari `tools/make_eval_plan.py`, seed 20261021), sha256 `e69deb9dc325212b3ccd455f3266a83af389b7951fd8d6a412bbb8b27993e114` (file dijaga LF lewat `.gitattributes`; agent mencatat sha256 ini di log `eval_start`).
+- Setelan dikunci: posisi 1 cm, isi 2 cm, ambang 10%/50%, margin usulan A, detektor lama, katalog terukur, Lambda `3b023a4`.
+- 25 percobaan acak: 10 × 2 kardus, 15 × 3 kardus, 15 geseran positif dan 10 negatif; rencana 8 GREEN, 9 YELLOW, 8 RED; 11 sengaja dekat garis zona; perkiraan total roboh 8,6.
+- Kriteria lulus (peluang lulus model yang terkalibrasi, dari P rencana): **C1** 0 roboh di GREEN (78%; peluang ≥1 roboh di GREEN tetap ±22%) · **C2a** akurasi ≥ 85% pada percobaan jelas, P < 10% atau > 70% (92%; 14 percobaan) · **C2b** jumlah roboh di interval 90% Σp ± 1,645·√Σp(1−p) (91%; rencana 6–11 roboh) · **C3** Brier ≤ 0,20 (97%; Brier diharapkan 0,125) · **C4** ≥ 20 dari 25 percobaan. Semua sekaligus: ±70% untuk model terkalibrasi. Akurasi keseluruhan (P ≥ 50%) dilaporkan untuk dibandingkan dengan Tes 2 (82%), bukan kriteria: model sempurna pun diharapkan ±82% dan gagal target 80% ±27%.
+- Alat: `agent.py --eval-plan config/eval_plan.json --supervisor Yasin --aws %DRYSTONE_URL%` (lanjut sesi: `--eval-start 13`); laporan `python tools/eval_report.py --logs "data/agent_*/log.jsonl"` → `data/eval_report/trials.csv` + `summary.md`. Tes kamera palsu `tests/test_eval.py`; 51 tes lulus.
+- **Jadwal: Selasa 20 Okt malam T01–T12, Rabu 21 Okt T13–T25** (`--eval-start 13`). Perkiraan ±1,2 menit per percobaan 2 kardus, ±1,7 menit per percobaan 3 kardus → ±40 menit murni, 75–80 menit dengan persiapan dan cadangan (Selasa ±40 menit, Rabu ±45 menit).
+- Persiapan tiap sesi: lampu terang (Selasa malam!), kedua sisi tumpukan kosong ±30 cm (geseran negatif jatuh ke kiri), laptop di depan tumpukan.
+
 ## Wajib sebelum submit
-- **Validasi setelan ketidakpastian** (posisi 1 cm, isi 2 cm) di percobaan baru (evaluasi 21 Okt, pipeline persepsi baru), target **0 roboh di zona GREEN**.
+- **Validasi setelan ketidakpastian** (posisi 1 cm, isi 2 cm) di percobaan baru: evaluasi 20–21 Okt menurut protokol yang dikunci (`8a953e4`), kriteria C1–C4, laporkan apa adanya.
 - **Vincent masuk tim di Devpost.**
 
 ## Berikutnya
 - **18 Okt:** ~~latihan adegan override → roboh~~ (selesai: alur video final teruji dengan kardus asli, 13.41) · ~~alur jatuh → angkat → keputusan ulang → s → OK~~ · ~~margin usulan~~ (aturan A) · ~~setelan deteksi marker~~ (ditolak) · opsional: uji dengan kardus asli SPASI sebelum menaruh (p) dan ID 1 diangkat.
 - **19 Okt:** ~~README utama~~ (18 Okt: README bahasa Inggris dengan angka dari STATUS, diagram Mermaid, contoh trace nyata, batasan; LICENSE MIT; `.gitignore` ditambah `.pytest_cache/`; scan file yang di-track dan seluruh riwayat git: tidak ada Function URL, nomor akun AWS, atau key) · ~~rapikan repo~~ (18 Okt: `test_cam.py` dihapus; `aws/README.md` diperbarui ke bahasa Inggris dan cara deploy dengan tag hash; nama IAM user dihapus dari docs; `data/camera_laptop_draft.yaml` dipertahankan sebagai file kalibrasi).
-- **20 Okt:** cadangan.
-- **21 Okt:** evaluasi 20–30 percobaan baru dengan pipeline persepsi baru (akurasi, Brier, roboh di zona GREEN, waktu keputusan, retake, fallback) + kasus gagal; sekaligus validasi setelan ketidakpastian Tes 2; malamnya fitur dikunci.
+- **20 Okt (Selasa) malam:** evaluasi T01–T12 (`docs/EVAL_PROTOCOL.md`), lampu terang.
+- **21 Okt (Rabu):** evaluasi T13–T25 (`--eval-start 13`), lalu `tools/eval_report.py` (kriteria C1–C4, tabel kalibrasi, kasus gagal), sekaligus validasi setelan ketidakpastian Tes 2; malamnya fitur dikunci.
 - **25–26 Okt:** jadikan repo publik + cek ulang tidak ada secret, nomor akun AWS, atau Function URL di seluruh riwayat git (bukan hanya commit terakhir).
 
 ## Bonus (hanya kalau inti selesai)
