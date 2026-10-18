@@ -408,14 +408,20 @@ def ask_text(prompt, min_len=1):
         print(f"  required (at least {min_len} characters)")
 
 
-def next_box_id(stack, catalog, fallen=()):
-    """Next box to place: a box that fell is planned again first, otherwise the smallest ID not on the stack."""
+def next_box_id(stack, catalog):
+    """Next box to place: the smallest ID that is not on the stack (boxes are stacked in ID order, so a box that
+    fell or was taken off is planned again before any higher ID)."""
     used = {b["id"] for b in stack}
-    again = [i for i in sorted(fallen) if i not in used and i in catalog]
-    if again:
-        return again[0]
     free = [i for i in sorted(catalog) if i not in used]
     return free[0] if free else None
+
+
+def not_visible_only(plan, stack, loose):
+    """True when the planned box is nowhere in view (not on the stack, not on the floor) and every box that stood
+    before the placement still stands: the camera cannot tell "fell out of view" from "not placed yet"."""
+    on_stack = {b["id"] for b in stack}
+    seen = on_stack | {b["id"] for b in loose or []}
+    return plan["box"]["id"] not in seen and all(b["id"] in on_stack for b in plan["before"])
 
 
 def fallen_message(ids):
@@ -511,6 +517,7 @@ def main():
     plan = None           # approved placement waiting to be checked: {"before", "box", "how", "zone", "p"}
     last = None           # last decision, drawn until the candidate moves
     fallen = []           # boxes that fell off: not placed any more, planned again once picked up
+    expected = [args.base_id]  # box IDs the agent last saw standing on the stack (after a check)
     stats = {"decisions": 0, "GREEN": 0, "YELLOW": 0, "RED": 0, "override": 0, "fell": 0, "retry_after_fall": 0}
     try:
         while True:
@@ -532,7 +539,7 @@ def main():
                 else:
                     if fallen:
                         lines.append(fallen_message(fallen))
-                    nid = next_box_id(stack, catalog, fallen)
+                    nid = next_box_id(stack, catalog)
                     if nid is not None:
                         cand = core.candidate_box(stack, nid, offset, catalog)
                         color = COLORS[last["zone"]] if last else COLORS["CANDIDATE"]
@@ -575,7 +582,19 @@ def main():
                                                      "decision")
                 if stack is None:
                     continue
-                nid = next_box_id(stack, catalog, fallen)
+                ids_now = [b["id"] for b in stack]
+                missing = [i for i in expected if i not in ids_now]
+                if missing:                        # a box that was standing is gone: plan it again, in ID order
+                    print(f"  [agent] stack changed: {', '.join(f'ID {i}' for i in missing)} "
+                          f"{'is' if len(missing) == 1 else 'are'} missing from the stack.")
+                    log.write("stack_changed", shot, missing=missing, expected=expected, stack=ids_now)
+                back = [i for i in fallen if i in ids_now]
+                if back:                           # a box counted as fallen is standing on the stack after all
+                    print(f"  [agent] box {', '.join(f'ID {i}' for i in back)} is on the stack now.")
+                    log.write("back_on_stack", shot, box_ids=back, stack=ids_now)
+                    fallen = [i for i in fallen if i not in back]
+                expected = ids_now
+                nid = next_box_id(stack, catalog)
                 if nid is None:
                     print("  [agent] every box in the catalogue is already on the stack.")
                     continue
@@ -628,6 +647,19 @@ def main():
                 else:
                     v = core.verify(plan["before"], stack, plan["box"], catalog, loose=loose)
                 print(f"\n[agent] check: {v['status']} - {v['message']}")
+                answer = None
+                if v["status"] == "FELL" and stack is not None and not_visible_only(plan, stack, loose):
+                    # nothing on the floor and the stack below is intact: maybe SPACE came before the box did,
+                    # or its marker was not read. The worker can see it; the camera cannot.
+                    bid = plan["box"]["id"]
+                    answer = ask(f"  box ID {bid} is not visible. f = it fell out of view, "
+                                 "p = not placed yet (look again): ", "fp")
+                    if answer == "p":
+                        v = {"status": "NOT_PLACED", "deviation_m": None,
+                             "message": f"box ID {bid} not visible; worker says not placed yet -> look again"}
+                    else:
+                        v = dict(v, message=v["message"] + " (confirmed by the worker)")
+                    print(f"  [agent] {v['message']}")
                 if not args.aws:
                     extra, src = {}, "laptop"
                     if v["status"] in ("OK", "OFF_PLAN") and stack is not None:
@@ -648,13 +680,15 @@ def main():
                     fell_ids = sorted({plan["box"]["id"]} | {b["id"] for b in plan["before"] if b["id"] not in on_stack
                                                              and b["id"] != args.base_id})
                 log.write("check", shot, **v, planned_by=plan["how"], planned_zone=plan["zone"],
-                          planned_p=plan["p"], checked_on=src, fell_ids=fell_ids, **extra)
+                          planned_p=plan["p"], checked_on=src, fell_ids=fell_ids, worker_answer=answer, **extra)
                 if v["status"] == "NOT_PLACED":
                     continue                       # box not placed yet: keep the plan
                 if v["status"] == "OFF_PLAN" and extra.get("zone_now", "GREEN") != "GREEN":
                     continue                       # wait for the worker to fix it, then check again
                 plan = None
                 last = None
+                if stack is not None:
+                    expected = [b["id"] for b in stack]
                 if fell_ids:
                     # the fallen boxes are "not placed" again; keep the requested shift so the new decision
                     # shows the same risk and its suggestion

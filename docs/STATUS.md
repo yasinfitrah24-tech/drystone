@@ -58,6 +58,27 @@ Target tambahan (S3, DynamoDB, dashboard/alarm CloudWatch, deteksi tanpa marker)
 ### Layanan AWS (17 Okt) — kode
 - `tools/service.py`: 1–5 foto → keputusan JSON (mode decide / check), `lambda_handler`. Uji dengan foto asli: +6 cm HIJAU 1% (1,7 dtk), +12 cm KUNING 41% + usulan (8,3 dtk), +16 cm MERAH 87% (8,2 dtk). Jalan di Python 3.12 bersih dengan paket Lambda (OpenCV headless).
 
+### Latihan alur setelah jatuh dengan kardus asli (18 Okt 12.46–12.58, `agent.py --aws`)
+- Log: `data/agent_20261018_124638/log.jsonl` (tidak di-commit: foto per langkah memuat **wajah dua orang**).
+- **Jatuh nyata: 3/3 override MERAH roboh** (ID 2 +18 cm 95%, +19 cm 98%, +18 cm 94% → P 94–98%), **FELL terdeteksi 3/3** ("on the floor next to the stack"), pesan "Pick it up…" sekali, tanpa loop retake.
+- **Alur video lengkap berhasil** (percobaan terakhir): ID 2 +18 cm RED 94% → override → roboh → FELL → "Pick it up…" sekali → keputusan ulang → s → +10 cm → cek OK (+0,5 cm, tumpukan P 7% GREEN).
+- Waktu: keputusan MERAH lewat Lambda 8,5–10,3 dtk round trip; HIJAU 3,7–5,6 dtk; cek ulang 3,0–6,9 dtk.
+- **2 FELL palsu** "not on the stack and not visible" (ringkasan log mencatat fell: 5, yang nyata 3), sudah diperbaiki (lihat di bawah):
+  - Langkah 11 (setelah s di +9 cm): foto menunjukkan ID 2 **sudah berdiri di tumpukan**, tapi markernya tidak terbaca (kontras rendah siang hari; terbaca kalau gambar diperbesar 2×). Bukan SPASI terlalu cepat.
+  - Langkah 13: ID 1 dan ID 2 sudah diangkat; agent merencanakan ID 2 di atas tumpukan [0] ("1 box(es)"), lalu yang ditaruh ID 1 → ID 2 tidak terlihat.
+- **Usulan terlalu dekat garis 10%:** usulan +9 cm (P 5%) ditaruh meleset +1,3 cm → tumpukan YELLOW 18% (langkah 19). Kesalahan penempatan nyata di latihan: 0,0–1,3 cm.
+
+### Perbaikan alur (18 Okt siang) — laptop saja, belum deploy
+- **Kardus calon tidak terlihat sama sekali dan tumpukan di bawahnya utuh** → agent bertanya "box ID 2 is not visible. f = it fell out of view, p = not placed yet (look again)"; jawaban dicatat (`worker_answer`). p → rencana tetap, lihat lagi; f → FELL "(confirmed by the worker)". Kardus yang terlihat di lantai tetap otomatis FELL tanpa bertanya.
+- **Tumpukan berubah:** kalau kardus yang tadi berdiri hilang, agent bilang "stack changed: ID 1 is missing from the stack." (log `stack_changed`) dan merencanakan ulang menurut urutan ID (ID 1 dulu, bukan ID 2). Kardus yang tadi dianggap jatuh tapi kini berdiri: `back_on_stack`. "every box in the catalogue is already on the stack" hanya kalau semua kardus memang berdiri.
+- Tes kamera palsu `tests/test_agent_flow.py` (lokal dan `--aws`): jatuh → angkat → keputusan ulang → s → OK · SPASI sebelum menaruh → tanya → p → lihat lagi → OK (fell 0) · jawaban f → FELL · ID 1 diangkat → "stack changed" → ID 1 direncanakan lagi. Total 48 tes lulus.
+- Lambda tidak memakai loop ini → **tidak perlu deploy** untuk perbaikan ini.
+
+### Usulan dengan margin (18 Okt) — analisis, BELUM diubah
+- Dibandingkan di 6 contoh KUNING/MERAH halaman juri + tumpukan latihan (langkah 17): aturan **A** (posisi usulan dan posisi 1 cm lebih jauh ke arah bahaya sama-sama GREEN) dan **B** (P ≤ 5% dan batas atas 95% < 10%) memberi **usulan yang sama persis di 7/7 kasus**: 1 cm lebih dekat (s1 +11→+10, s2 +11→+10, s3 +10→+9, latihan +9→+8), P di usulan 1–3%, dan kalau meleset 1 cm keluar P tetap ≤ 7% (GREEN). Aturan sekarang: meleset 1 cm → P 10–14% (YELLOW), sama seperti langkah 19.
+- Zona contoh di `samples.json` tidak berubah (aturan hanya memengaruhi usulan); angka usulan di halaman bergeser 1 cm. Waktu pencarian +0–3 dtk. Perubahan ada di `drystone_core.search_alternative`, jadi butuh deploy Lambda dan penyesuaian tes.
+- **Deteksi marker** (opsi terpisah, belum diubah): di 49 foto asli (dua log latihan + 3 foto contoh) setelan sekarang melewatkan 1 marker (ID 2 di langkah 11); `adaptiveThreshConstant=3` membacanya tanpa deteksi palsu. Sampel kecil; menyentuh persepsi di semua jalur.
+
 ### Latihan override → roboh dengan kardus asli (18 Okt 02.37–02.48, `agent.py --aws`)
 - Log: `data/agent_20261018_023749/log.jsonl` (tidak di-commit; folder berisi foto). ID 1 HIJAU di +6 cm tiap kali (cek ulang OK, −0,5 / +0,1 / −0,0 cm).
 - **3 percobaan ID 2 MERAH** (+17 cm 86%, +18 cm 95%, +18 cm 95%), semua override oleh Yasin, **semua roboh (3/3)**, **FELL terdeteksi 3/3** ("box ID 2 is on the floor next to the stack -> it fell"), tanpa retake. Perbaikan cek ulang terbukti dengan kardus asli.
@@ -163,7 +184,7 @@ Target tambahan (S3, DynamoDB, dashboard/alarm CloudWatch, deteksi tanpa marker)
 - **Vincent masuk tim di Devpost.**
 
 ## Berikutnya
-- **18 Okt:** ~~latihan adegan override → roboh~~ (selesai, 3/3) · ulangi dengan kardus asli: jatuh → angkat → keputusan ulang ID 2 → s → cek OK (menguji perbaikan alur setelah FELL).
+- **18 Okt:** ~~latihan adegan override → roboh~~ (selesai, 3/3) · ~~alur jatuh → angkat → keputusan ulang → s → OK~~ (selesai, 12.58) · putuskan margin usulan (A/B) dan setelan deteksi marker · uji ulang dengan kardus asli: SPASI sebelum menaruh (p) dan ID 1 diangkat.
 - **19 Okt:** README utama + rapikan repo.
 - **20 Okt:** cadangan.
 - **21 Okt:** evaluasi 20–30 percobaan baru dengan pipeline persepsi baru (akurasi, Brier, roboh di zona GREEN, waktu keputusan, retake, fallback) + kasus gagal; sekaligus validasi setelan ketidakpastian Tes 2; malamnya fitur dikunci.
