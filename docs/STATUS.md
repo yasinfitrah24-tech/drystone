@@ -274,6 +274,7 @@ Latihan final 18 Okt 13.36–13.41, `agent.py --aws`, Lambda `drystone-service:3
 - **19 Okt:** ~~README utama~~ (18 Okt: README bahasa Inggris dengan angka dari STATUS, diagram Mermaid, contoh trace nyata, batasan; LICENSE MIT; `.gitignore` ditambah `.pytest_cache/`; scan file yang di-track dan seluruh riwayat git: tidak ada Function URL, nomor akun AWS, atau key) · ~~rapikan repo~~ (18 Okt: `test_cam.py` dihapus; `aws/README.md` diperbarui ke bahasa Inggris dan cara deploy dengan tag hash; nama IAM user dihapus dari docs; `data/camera_laptop_draft.yaml` dipertahankan sebagai file kalibrasi).
 - **18 Okt (Sabtu) sore:** ~~evaluasi 25 percobaan~~ (selesai dalam satu sesi, FAIL di C2b). **20 Okt:** cadangan.
 - **21 Okt (Rabu):** sesi 2 evaluasi tidak dipakai (semua percobaan selesai 18 Okt); fitur dikunci. Opsional, bukan untuk submit: percobaan lanjutan di pita margin tengah (lihat hasil evaluasi).
+- **Kamis 22–Jumat 23 Okt:** percantik UI halaman juri, **hanya tampilan** (CSS, layout, teks, tampilan HP); logika keputusan, `samples.json`, dan API tidak berubah. `pytest` lulus, deploy dengan tag hash baru + tes live. **Selesai Jumat malam**, sebelum rekam video Sabtu.
 - **Jumat 23 Okt:** rapikan `docs/REPORT.md` + review naskah dan diagram Vincent.
 - **Sabtu 24 Okt:** rekam video (Yasin + Vincent), adegan sesuai "Alur video final".
 - **Minggu 25 Okt:** edit video, finalisasi laporan, isi Devpost.
