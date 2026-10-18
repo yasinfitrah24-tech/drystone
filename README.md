@@ -9,6 +9,10 @@ suggest a safer spot. After the box is placed, the agent looks again and checks 
 > **Drystone is a decision-support prototype, not a certified safety device.** It estimates a risk; a person
 > always makes the final call. Do not use it to protect people or property.
 
+Why: US OSHA requires stacked materials to be "stable and secure against sliding or collapse", and in US
+transportation and warehousing alone 12,100 injuries with days away from work in 2020 were "struck by object or
+equipment" (a broader category than falling stacks); see the sources in [docs/REPORT.md](docs/REPORT.md).
+
 Built for the OpenCV AI Competition 2026.
 
 ## Live demo for judges

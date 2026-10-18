@@ -25,8 +25,23 @@ Where it fits: places that stack cartons by hand without racking or a stacking p
 shop's stock room, or a house move. What it needs: a laptop with a webcam (ours: the built-in webcam at 1280×720,
 calibrated once), an 80 mm ArUco marker printed and stuck on each box, and a catalogue of the box sizes and weights.
 AWS is optional: it adds a shared, logged decision service and the judges' page; without it the laptop computes
-everything. A decision took a median of **7.6 s** on AWS Lambda in the evaluation (section 7.4). We do not quote
-injury statistics: we have no source we can cite for this setting.
+everything. A decision took a median of **7.6 s** on AWS Lambda in the evaluation (section 7.4).
+
+**Why it matters.**
+- *Scale of the problem.* In US transportation and warehousing in 2020, the Bureau of Labor Statistics counted
+  **99,800** nonfatal cases with days away from work, of which **12,100** were "struck by object or equipment",
+  and **65** fatal injuries from "contact with objects and equipment" (62–75 a year in 2016–2020) [1]. These
+  figures combine transportation with warehousing, and the categories are much broader than stacks that fall:
+  they show the scale of the problem, **not** how many people are hurt by falling stacks of boxes.
+- *What the rules ask for.* US OSHA requires materials stored in tiers to be stacked, blocked, interlocked and
+  limited in height so that they are "stable and secure against sliding or collapse" [2].
+- *What it looks like.* Oregon OSHA (November 2025) reports a 39-year-old worker killed when two stacks of lumber
+  fell on him (initial penalties USD 43,401), and a retail case where boxes stacked more than 7 feet high collapsed
+  and trapped an employee at the waist [3].
+
+Drystone is a low-cost decision aid for this: a webcam and printed markers that estimate the risk **before** the
+box is placed. It is a prototype, **not a certified safety device**, and it was tested only on three uniform
+cardboard boxes of 1.0 kg, not on real warehouse loads such as lumber or full cartons stacked above head height.
 
 ## 2. Users
 - **The worker** who stacks the boxes: sees on screen where the next box can go, and is told when it should not.
@@ -437,3 +452,11 @@ agent overlay; faces removed.*
   can be reviewed.
 - Logs and photos show people and rooms; they stay on the laptop and are not published. Published data (CSV,
   reports) has no photos and no names.
+
+## 11. Sources
+1. U.S. Bureau of Labor Statistics, *Injuries, illnesses, and fatalities in transportation and warehousing, 2016–20*
+   (Injuries, Illnesses, and Fatalities snapshot). https://www.bls.gov/iif/snapshots/isn-transportation-and-warehousing-2016-20.htm
+2. U.S. Occupational Safety and Health Administration, 29 CFR 1910.176(b), *Handling materials – general: secure
+   storage*. https://www.osha.gov/laws-regs/regulations/standardnumber/1910/1910.176
+3. Oregon OSHA, *Resource* newsletter, 20 Nov 2025, on unstable loads.
+   https://osha.oregon.gov/pubs/newsletters/resource/2025/Pages/2511-unstable-loads.aspx
