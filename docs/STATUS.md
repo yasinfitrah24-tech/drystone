@@ -264,7 +264,7 @@ Latihan final 18 Okt 13.36–13.41, `agent.py --aws`, Lambda `drystone-service:3
 - Aturan: tetap dalam kuota gratis (Lambda 1 juta request + 400.000 GB-detik per bulan, CloudWatch Logs 5 GB), tanpa Marketplace, budget `zero-spend-opencv` (USD 1, notifikasi biaya aktual > 0,01, email) sudah ada.
 - Akun tidak tutup sendiri → endpoint aman sampai 10 Nov. Biaya di atas kuota ditagih.
 - Batas terburuk: 10 eksekusi bersamaan (limit akun) × 2 GB × 3.600 dtk = 72.000 GB-detik per jam ≈ **USD 1,20 per jam** (harga daftar Lambda x86 ap-southeast-1, USD 0,0000166667/GB-detik; ±USD 29 per hari); kuota gratis bulanan cukup untuk ±5,5 jam beban terburuk. Halaman juri hampir gratis karena cache maks 99 entri per container; beban terburuk hanya lewat POST foto baru (≤ 2 MB, 20 per menit per IP per container). Request: USD 0,20 per juta, tidak berarti.
-- Usulan (belum diterapkan): lifecycle policy ECR `drystone-service`: hapus image tanpa tag yang lebih tua dari 14 hari, simpan 2 image bertag terbaru (sekarang `3b023a4`/`latest` dan target rollback `9523213`; `f5b647b` dan `7e9f416` akan terhapus). Cek dulu dengan `start-lifecycle-policy-preview`.
+- **Lifecycle policy ECR diterapkan (18 Okt)**, `aws/ecr-lifecycle.json`: image tanpa tag dihapus setelah 14 hari; hanya **2 image bertag terbaru** yang disimpan. Preview sebelum diterapkan: yang kedaluwarsa hanya `7e9f416` dan `f5b647b`; tetap ada `3b023a4`/`latest` (live) dan `9523213`. Akibatnya **target rollback selalu tepat satu versi sebelumnya** (deploy baru menghapus versi bertag ketiga). Rollback lama di bagian deploy di atas (`7e9f416`, `f5b647b`, dan digest tanpa tag `9afba661…`, kedaluwarsa ±31 Okt) tidak bisa dipakai lagi.
 
 ## Wajib sebelum submit
 - **Vincent masuk tim di Devpost.**

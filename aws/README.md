@@ -57,7 +57,7 @@ aws lambda update-function-code --function-name drystone --image-uri %REPO%:%TAG
 aws lambda wait function-updated --function-name drystone --region ap-southeast-1
 ```
 
-Before each deploy, write the current image tag down as the rollback target (`docs/STATUS.md`). To roll back, run
+Before each deploy, write the current image tag down as the rollback target (`docs/STATUS.md`). The ECR lifecycle policy (`aws/ecr-lifecycle.json`) keeps only the 2 newest tagged images and removes untagged images after 14 days, so the rollback target is always exactly the previous version. To roll back, run
 `update-function-code` with the previous tag and wait again. Never delete or recreate the function: that would
 change the Function URL. Builds after the first are fast (cached) as long as `aws/requirements-lambda.txt` does
 not change. From China, PyPI can be very slow; build with
