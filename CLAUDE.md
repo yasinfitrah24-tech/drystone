@@ -8,7 +8,7 @@ Konteks untuk Claude (akun Yasin maupun Vincent). **Baca `docs/STATUS.md` lalu `
 Drystone: satu kamera + OpenCV 5 membaca posisi tiap kardus (marker ArUco + katalog ukuran dan berat), membangun kembaran digital tumpukan, lalu simulasi MuJoCo (Monte Carlo) menghitung peluang roboh untuk calon posisi kardus berikutnya. Agent memandu, minta persetujuan, atau menolak, lalu mengecek ulang setelah kardus ditaruh.
 
 - Lomba: OpenCV AI Competition 2026 (Devpost). Deadline 27 Okt 14.45 waktu China.
-- Wajib: analisis gambar pakai OpenCV 5, dan bagian penting jalan di AWS (region ap-southeast-1, Free plan).
+- Wajib: analisis gambar pakai OpenCV 5, dan bagian penting jalan di AWS (region ap-southeast-1). Akun AWS ternyata **Paid plan** (dicek 18 Okt: PAID, ACTIVE, kredit 0; tagihan Okt USD 0,00), tidak bisa turun ke Free plan.
 - Target: Agentic Vision Award + juara utama.
 
 ## Aturan agent
@@ -65,7 +65,7 @@ Pastikan muncul `(.venv)` di awal baris sebelum menjalankan pip atau python. Pyt
 - Perintah untuk Yasin: cmd Windows, satu perintah per baris/blok, dijelaskan singkat.
 - Versi dependency di-pin di `requirements.txt`.
 - Tiap klaim di README dan laporan harus didukung angka evaluasi. Drystone adalah alat bantu keputusan, bukan perangkat keselamatan bersertifikat.
-- Jangan pakai layanan AWS Marketplace dan jangan upgrade akun AWS ke Paid plan.
+- Biaya AWS: tetap dalam kuota gratis (Lambda 1 juta request dan 400.000 GB-detik/bulan, CloudWatch Logs 5 GB), tanpa AWS Marketplace, alarm Zero spend budget lewat email (`zero-spend-opencv`). Akun tidak tutup sendiri; biaya di atas kuota ditagih. Jangan tulis nomor akun di mana pun.
 
 ## Kerja berdua (Yasin + Vincent)
 - Repo: GitHub private `drystone`. Selalu `git pull` sebelum mulai, commit + push setelah selesai.

@@ -5,6 +5,7 @@ Status: **LOCKED on 18 Oct 2026**, before any evaluation data was taken, by the 
 sha256 `e69deb9dc325212b3ccd455f3266a83af389b7951fd8d6a412bbb8b27993e114`. Nothing in this protocol, the settings, the trial list or the criteria changes from here on.
 
 Correction (18 Oct, after lock 8a953e4): title date 21–22 Oct → 20–21 Oct. Administrative only; trial list, sha256, settings and criteria unchanged.
+Correction (18 Oct, after lock 8a953e4): session 1 (T01–T12) moved forward to 18 Oct afternoon, in bright daylight; session 2 (T13–T25) stays as planned. Administrative only; trial list, sha256, settings and criteria unchanged.
 
 ## 1. Purpose
 Test 2 (17 Oct) scored 82% accuracy, Brier 0.145 and 0 falls in the GREEN zone, but the uncertainty settings were

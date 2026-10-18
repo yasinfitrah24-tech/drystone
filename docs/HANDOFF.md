@@ -71,5 +71,5 @@ Baca file ini setelah `CLAUDE.md` dan `docs/STATUS.md`. Isinya cara kerja yang s
   ```
   (beri ke user satu perintah per blok). Tes: `python aws/test_endpoint.py --url %DRYSTONE_URL% --image <foto> --offset-cm 12`.
 - Laptop Vincent: repo hasil `git clone` (`C:\Users\Xlyph\drystone`), belum ada kalibrasi kamera Vincent, tidak punya akses AWS.
-- AWS: Free plan, jangan Marketplace, jangan upgrade ke Paid plan. Nomor akun dan Function URL jangan masuk repo publik. Jangan commit `event.json`, `out.json`, `*_result.jpg`, `hasil_endpoint.jpg`, `data/agent_*` (foto memuat kamar/wajah).
+- AWS: akun **Paid plan** (bukan Free plan, koreksi 18 Okt); tetap dalam kuota gratis (Lambda 1 juta request dan 400.000 GB-detik/bulan, CloudWatch Logs 5 GB), tanpa AWS Marketplace, alarm Zero spend budget lewat email (`zero-spend-opencv`). Nomor akun dan Function URL jangan masuk repo publik. Jangan commit `event.json`, `out.json`, `*_result.jpg`, `hasil_endpoint.jpg`, `data/agent_*` (foto memuat kamar/wajah).
 - Doc project claude.ai Yasin (`claude/opencv-ai-competition.md`) **tidak terbaca** dari akun lain → `docs/STATUS.md` adalah sumber status di repo. Update di commit yang sama setiap ada progres.

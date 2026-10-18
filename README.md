@@ -160,9 +160,15 @@ python -m pytest tests -q
   settings were tuned on the same 11 trials they were scored on; new trials are pending.
 - **Small evaluation so far.** Test 2 has 11 counted trials; the practice runs are demonstrations, not an
   evaluation.
-- **Public endpoint.** The Function URL is public. Requests are limited per IP and per container, and identical
-  requests are cached, but the AWS account limit (10 concurrent executions) does not allow reserved concurrency.
-  The service runs on the AWS Free plan.
+- **Public endpoint and cost.** The Function URL is public and the AWS account is a paid account: it does not
+  close by itself (the endpoint stays up through judging, until 10 Nov), and usage above the always-free quota
+  (Lambda: 1 million requests and 400,000 GB-seconds a month; CloudWatch Logs: 5 GB) is billed. A zero-spend budget
+  alarm sends an email at the first cent. Requests are limited per IP and per container (60 GET and 20 POST a
+  minute), and the judges' page answers from a cache of at most 99 decisions per container, so repeated page use
+  costs almost nothing. The worst case is someone keeping all 10 concurrent executions busy (the account limit;
+  reserved concurrency cannot be set below it) with new photos: 10 × 2 GB × 3,600 s = 72,000 GB-seconds an hour,
+  about **USD 1.20 an hour** at the Lambda list price (USD 0.0000166667 per GB-second, x86, ap-southeast-1); the
+  monthly free quota covers about 5.5 hours of that.
 - **Decision support only.** The agent never moves a box. A person places every box, can override a rejection
   (logged with name and reason), and remains responsible.
 

@@ -3,7 +3,7 @@
 `tools/service.py` turns stack photos into a decision (JSON) and serves the judges' page. It calls the same
 decision code as the laptop agent (`tools/drystone_core.py`), so no decision rule is written twice.
 
-Region **ap-southeast-1**, AWS Free plan, no AWS Marketplace. Never put access keys in the repository, in this
+Region **ap-southeast-1**, no AWS Marketplace. The account is on the AWS **Paid plan** (not the Free plan), so usage above the always-free quota is billed: stay inside it (Lambda 1 million requests and 400,000 GB-seconds a month, CloudWatch Logs 5 GB), and keep the zero-spend budget alarm (email) on. Never put access keys in the repository, in this
 file or in chat: use `aws configure` on your own machine. The Function URL is not written in the repository;
 keep it in the environment variable `DRYSTONE_URL`.
 
