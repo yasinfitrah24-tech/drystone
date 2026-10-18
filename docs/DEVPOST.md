@@ -1,6 +1,6 @@
 # Drystone: Devpost submission draft
 
-Draft text for the Devpost form. Every number comes from `docs/STATUS.md`, `docs/REPORT.md` or
+Draft text for the Devpost form; Yasin fills the form. Every number comes from `docs/STATUS.md`, `docs/REPORT.md` or
 `data/eval_report/`; statistics have the same sources as the report (section 11). The live demo link goes in the
 Devpost "Try it out" field, not in this file.
 
@@ -9,14 +9,23 @@ Predict before you stack: a camera, OpenCV 5 and a physics simulation estimate t
 before the next box goes on.
 
 ## Inspiration
-Stacking boxes by hand is a judgement call made by eye: how far can the next box hang over the one below? US OSHA
-asks for stacked materials to be "stable and secure against sliding or collapse" (29 CFR 1910.176(b)). In US
-transportation and warehousing in 2020, the Bureau of Labor Statistics counted 12,100 injuries with days away from
-work that were "struck by object or equipment", a category much broader than falling stacks, so it shows the scale
-of the problem, not the number of people hurt by falling boxes. Oregon OSHA reported in November 2025 a worker
-killed when two stacks of lumber fell on him, and a retail case where boxes stacked more than 7 feet high collapsed
-and trapped an employee at the waist. We wanted a cheap tool that measures the stack and predicts the risk *before*
-the box is placed.
+Stacking boxes by hand is a judgement call: how far can the next box hang over the one below before the stack
+falls?
+
+- *Scale of the problem.* In US transportation and warehousing in 2020, the Bureau of Labor Statistics counted
+  **99,800** nonfatal cases with days away from work, of which **12,100** were "struck by object or equipment",
+  and **65** fatal injuries from "contact with objects and equipment" (62–75 a year in 2016–2020). These
+  figures combine transportation with warehousing, and the categories are much broader than stacks that fall:
+  they show the scale of the problem, **not** how many people are hurt by falling stacks of boxes.
+- *What the rules ask for.* US OSHA requires materials stored in tiers to be stacked, blocked, interlocked and
+  limited in height so that they are "stable and secure against sliding or collapse".
+- *What it looks like.* Oregon OSHA (November 2025) reports a 39-year-old worker killed when two stacks of lumber
+  fell on him (initial penalties USD 43,401), and a retail case where boxes stacked more than 7 feet high collapsed
+  and trapped an employee at the waist.
+
+Drystone is a low-cost decision aid for this: a webcam and printed markers that estimate the risk **before** the
+box is placed. It is a prototype, **not a certified safety device**, and it was tested only on three uniform
+cardboard boxes of 1.0 kg, not on real warehouse loads such as lumber or full cartons stacked above head height.
 
 ## What it does
 - A calibrated webcam reads an ArUco marker on every box; OpenCV 5 turns the markers into a digital twin of the
@@ -71,7 +80,8 @@ It is a decision-support prototype, **not a certified safety device**, tested on
 ## Accomplishments that we're proud of
 - **An honest, locked evaluation.** 25 pre-set trials, shuffled, settings and pass criteria locked in git before any
   data. Results: **0 falls in the GREEN zone** (0 of 8), **14/14 correct on clear cases**, **Brier 0.125**, all 25
-  trials completed, overall accuracy 84% (82% in our earlier Test 2). And one **FAIL**: 12 boxes fell where the model
+  trials completed, overall accuracy 84% (82% in our earlier Test 2). GREEN stayed safe (0 of 8 fell) and every
+  RED trial fell (8 of 8). And one **FAIL**: 12 boxes fell where the model
   predicted 8.5 (90% interval 6–11). The model is too optimistic close to the edge: trials with a centre-of-mass
   margin of +0.5 to +2.5 cm fell 4 times out of 8 against a predicted 12–43%. We report it as a FAIL and did not tune
   on the evaluation data.
@@ -89,10 +99,14 @@ It is a decision-support prototype, **not a certified safety device**, tested on
 - When the camera cannot tell, ask the person; never guess about a safety outcome.
 
 ## What's next
-- Trials focused on the near-edge band where the model under-predicts, split by two and three boxes; measure
-  friction with a tilt test; model how a box is released; then lock new settings and test them on new data.
-- More box types and real loads; marker-free box detection.
-- A supervisor dashboard on top of the CloudWatch log.
+From the follow-up work in our report:
+- A dedicated set of trials in the near-edge band (centre-of-mass margin +0.5 to +2.5 cm), where the model
+  under-predicts falls, split by two and three boxes.
+- Measure box-on-box and box-on-floor friction with a tilt test.
+- Model how a box is released (a small random push or tilt when it is let go).
+- Then lock new settings and test them on new trials again.
+- Later: more box types and real loads, marker-free box detection, a supervisor dashboard on top of the CloudWatch
+  log.
 
 ## Built with
 OpenCV 5 (`opencv-python` 5.0.0.93, ArUco, ChArUco, solvePnP), Python 3.12, NumPy 2.5.3, MuJoCo 3.15.0, AWS Lambda
