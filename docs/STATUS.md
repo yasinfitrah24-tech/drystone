@@ -2,7 +2,7 @@
 
 Salinan status untuk repo (dibaca Yasin, Vincent, dan Claude masing-masing). Update di commit yang sama setiap ada keputusan atau hasil tes baru. Semua jam = waktu China.
 
-Terakhir diperbarui: 18 Okt 2026, 02.40. Live: `drystone-service:9523213` (halaman web dengan foto asli, cek ulang berbasis kontak, tinggi kardus terukur).
+Terakhir diperbarui: 18 Okt 2026, 13.40. Live: `drystone-service:3b023a4` (halaman web dengan foto asli, cek ulang berbasis kontak, tinggi kardus terukur, usulan dengan margin 1 cm).
 
 ## Ringkasan
 - **Lomba:** OpenCV AI Competition 2026 (https://opencv26.devpost.com/). Deadline **27 Okt, 14.45** (target submit 26 Okt malam). Penjurian 27 Okt–10 Nov, endpoint harus tetap hidup.
@@ -17,7 +17,7 @@ Terakhir diperbarui: 18 Okt 2026, 02.40. Live: `drystone-service:9523213` (halam
 | 0 | Persiapan | 11 Okt | ✅ |
 | 1 | Uji kelayakan: kalibrasi, Tes 1, Tes 2, go/no-go | 17 Okt | ✅ **GO** |
 | 2+3 | Persepsi + fisika + agent | 19 Okt | ✅ inti jalan dengan kardus asli (17 Okt) |
-| 4 | AWS: Lambda foto → keputusan, halaman web juri dengan approve/override | 21 Okt | ✅ Lambda + Function URL + `agent.py --aws`; halaman web juri live dengan foto asli (`9523213`); log approve/override masuk CloudWatch Logs. S3, DynamoDB, dashboard/alarm CloudWatch → Bonus |
+| 4 | AWS: Lambda foto → keputusan, halaman web juri dengan approve/override | 21 Okt | ✅ Lambda + Function URL + `agent.py --aws`; halaman web juri live dengan foto asli (`3b023a4`); log approve/override masuk CloudWatch Logs. S3, DynamoDB, dashboard/alarm CloudWatch → Bonus |
 | 5 | Evaluasi 20–30 percobaan baru + kasus gagal. **Fitur dikunci** | 21 Okt malam (dimajukan) | — |
 | 6 | Gladi (23) + rekam video (24) | 24 Okt | — |
 | 7 | Laporan teknis, diagram, README | 25 Okt | — |
@@ -74,7 +74,7 @@ Target tambahan (S3, DynamoDB, dashboard/alarm CloudWatch, deteksi tanpa marker)
 - Tes kamera palsu `tests/test_agent_flow.py` (lokal dan `--aws`): jatuh → angkat → keputusan ulang → s → OK · SPASI sebelum menaruh → tanya → p → lihat lagi → OK (fell 0) · jawaban f → FELL · ID 1 diangkat → "stack changed" → ID 1 direncanakan lagi. Total 48 tes lulus.
 - Lambda tidak memakai loop ini → **tidak perlu deploy** untuk perbaikan ini.
 
-### Usulan dengan margin 1 cm (18 Okt) — aturan A dipakai, live setelah deploy
+### Usulan dengan margin 1 cm (18 Okt) — aturan A dipakai, live di `3b023a4`
 - **Kasus nyata (latihan 18 Okt, langkah 19):** usulan +9 cm (P 5%) ditaruh meleset +1,3 cm → tumpukan YELLOW 18%. Kesalahan penempatan nyata di latihan: 0,0–1,3 cm.
 - **Analisis (7 kasus:** 6 contoh KUNING/MERAH halaman juri + tumpukan latihan langkah 17): aturan A (posisi usulan DAN posisi 1 cm lebih jauh ke arah bahaya sama-sama GREEN) dan aturan B (P ≤ 5% dan batas atas 95% < 10%) memberi usulan yang sama di 7/7 kasus, 1 cm lebih dekat, **P usulan 1–3%**, dan kalau meleset +1 cm P tetap ≤ 7%. Dengan aturan lama, meleset +1 cm memberi **P 10–14% (YELLOW)**.
 - **Keputusan: aturan A** di `drystone_core.search_alternative` (satu sumber untuk laptop dan Lambda). Trace menulis kedua angka, misalnya "try +10 cm: P = 3%, but 1 cm further out (+11 cm P = 12%) is not green -> no margin, keep looking" lalu "try +9 cm: P = 1%; 1 cm further out (+10 cm P = 3%) also green -> suggestion". JSON usulan berisi `further_offset_cm` dan `p_further`; halaman juri menulis "The suggested spot stays green even if the box lands 1 cm further out"; README juga.
@@ -196,6 +196,10 @@ Target tambahan (S3, DynamoDB, dashboard/alarm CloudWatch, deteksi tanpa marker)
   ```
   aws lambda get-function --function-name drystone --region ap-southeast-1 --query "{Uri:Code.ImageUri,Status:Configuration.LastUpdateStatus}"
   ```
+
+- Image baru: `drystone-service:3b023a4` (+ `:latest`, digest `sha256:4ec67926…`).
+- **Live sejak 18 Okt 13.30: `drystone-service:3b023a4`**, Function URL tetap sama. Detektor marker tetap setelan lama.
+- Tes live (dari laptop): `GET /` 200 (3,2 dtk) · 9 keputusan contoh: zona identik dengan tabel, usulan sesuai `suggestion_cm` (s1 +10 cm 3%, 1 cm lebih jauh 5% · s2 +9 cm 1%, +10 cm 2,7% · s3 +9 cm 1–2%, +10 cm 6,2–6,7%) · **s2 +16 cm → RED 69%, usulan +9 cm** (8,7 dtk) · POST foto lama (s2 +6 cm, box 2) → GREEN GUIDE (3,4 dtk) · `POST /log` → baris di CloudWatch · check lewat Lambda, ID 2 tegak di lantai samping tumpukan → FELL, STOP, tanpa retake (2,3 dtk); pembanding sesuai rencana → OK · 0 baris error.
 
 ## Wajib sebelum submit
 - **Validasi setelan ketidakpastian** (posisi 1 cm, isi 2 cm) di percobaan baru (evaluasi 21 Okt, pipeline persepsi baru), target **0 roboh di zona GREEN**.
