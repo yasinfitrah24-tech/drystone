@@ -278,6 +278,7 @@ Latihan final 18 Okt 13.36–13.41, `agent.py --aws`, Lambda `drystone-service:3
 - **21 Okt (Rabu):** sesi 2 evaluasi tidak dipakai (semua percobaan selesai 18 Okt); fitur dikunci. Opsional, bukan untuk submit: percobaan lanjutan di pita margin tengah (lihat hasil evaluasi).
 - **Kamis 22–Jumat 23 Okt:** percantik UI halaman juri, **hanya tampilan** (CSS, layout, teks, tampilan HP); logika keputusan, `samples.json`, dan API tidak berubah. `pytest` lulus, deploy dengan tag hash baru + tes live. **Selesai Jumat malam**, sebelum rekam video Sabtu.
 - **Jumat 23 Okt:** rapikan `docs/REPORT.md` + review naskah dan diagram Vincent.
+- **Diagram final (18 Okt):** `docs/img/architecture.png` dan `docs/img/agent_loop.png` (dari Claude Design, 1920×1080, ±0,23 MB tiap file, dicek: tanpa Function URL atau nomor akun, metadata PNG kosong). Dipasang di REPORT §4 dan §8.1 (Mermaid tetap ada di bawahnya sebagai versi teks) dan di README. **Saat submit:** unggah ke galeri gambar Devpost, architecture dulu, lalu agent_loop.
 - **Sabtu 24 Okt:** rekam video (Yasin + Vincent), adegan sesuai "Alur video final".
 - **Minggu 25 Okt:** edit video, finalisasi laporan, isi Devpost.
 - **Senin 26 Okt:** jadikan repo publik + cek ulang tidak ada secret, nomor akun AWS, atau Function URL di seluruh riwayat git (bukan hanya commit terakhir), cek akhir halaman juri dari HP, submit (deadline 27 Okt 14.45).

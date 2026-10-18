@@ -67,6 +67,10 @@ with a margin; a yes/no cannot tell a borderline placement from a safe one.
 
 ## 4. Architecture
 
+![Drystone system architecture](img/architecture.png)
+
+Text version of the figure (Mermaid):
+
 ```mermaid
 flowchart LR
     cam["Webcam 1280x720<br/>(ChArUco calibration)"] --> cv["OpenCV 5<br/>ArUco detection + pose<br/>10 frames, median"]
@@ -315,6 +319,10 @@ tilt when the box is let go); then lock new settings and test them on new trials
 
 ## 8. Agentic Vision: perception → decision → action
 ### 8.1 The loop
+
+![Drystone agent loop](img/agent_loop.png)
+
+Text version with every failure branch (Mermaid):
 
 ```mermaid
 stateDiagram-v2

@@ -34,6 +34,11 @@ the service is calibrated for one camera (our laptop webcam, 1280×720).
 
 ## How it works
 
+![Drystone system architecture](docs/img/architecture.png)
+
+The agent loop, with its failure branches, is in [docs/img/agent_loop.png](docs/img/agent_loop.png) and in the
+[technical report](docs/REPORT.md). Text version of the architecture (Mermaid):
+
 ```mermaid
 flowchart LR
     cam["Webcam 1280x720<br/>(ChArUco calibration)"] --> cv["OpenCV 5<br/>ArUco detection + pose<br/>10 frames, median"]

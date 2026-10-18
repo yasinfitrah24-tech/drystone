@@ -4,6 +4,9 @@ Draft text for the Devpost form; Yasin fills the form. Every number comes from `
 `data/eval_report/`; statistics have the same sources as the report (section 11). The live demo link goes in the
 Devpost "Try it out" field, not in this file.
 
+**For Yasin, image gallery:** upload `docs/img/architecture.png` first, then `docs/img/agent_loop.png` (both
+1920×1080 PNG, about 0.23 MB each; checked: no Function URL or account number in the pictures or their metadata).
+
 ## Tagline
 Predict before you stack: a camera, OpenCV 5 and a physics simulation estimate the chance a stack of boxes falls
 before the next box goes on.
