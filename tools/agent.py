@@ -9,6 +9,7 @@ For each box:
 Every decision is logged in data/agent_<time>/log.jsonl (+ a photo per step).
 
 Keys in the camera window: A / D move candidate, SPACE decide / check, X cancel, Q quit.
+Evaluation on a fixed trial list (docs/EVAL_PROTOCOL.md): add --eval-plan config/eval_plan.json --supervisor <name>.
 
     python tools/agent.py --calib data/camera_laptop.yaml --marker-mm 80
 Decisions computed on AWS Lambda (the laptop only does camera + display; if AWS fails, the laptop computes):
@@ -16,6 +17,7 @@ Decisions computed on AWS Lambda (the laptop only does camera + display; if AWS 
 """
 import argparse
 import base64
+import hashlib
 import json
 import os
 import sys
@@ -43,10 +45,11 @@ class Log:
         self.dir = out_dir
         self.path = os.path.join(out_dir, "log.jsonl")
         self.step = 0
+        self.extra = {}           # added to every entry (evaluation: the current trial_id)
 
     def write(self, event, frame=None, **data):
         self.step += 1
-        entry = {"step": self.step, "time": time.strftime("%Y-%m-%d %H:%M:%S"), "event": event, **data}
+        entry = {"step": self.step, "time": time.strftime("%Y-%m-%d %H:%M:%S"), "event": event, **self.extra, **data}
         if frame is not None:
             name = f"step_{self.step:03d}_{event}.png"
             cv2.imwrite(os.path.join(self.dir, name), frame)
@@ -392,10 +395,12 @@ def verify_aws(url, cap, shot, plan, catalog, settings, stack, loose=None):
         return v, extra, "laptop (fallback)"
 
 
-def ask(prompt, valid):
+def ask(prompt, valid, allow_empty=False):
+    """One letter from valid. An empty answer (Enter) only counts when allow_empty: '' is "in" every string, so it
+    used to slip through as an answer (Enter at the f/p question meant "fell")."""
     while True:
         ans = input(prompt).strip().lower()
-        if ans[:1] in valid:
+        if (ans and ans[0] in valid) or (allow_empty and not ans):
             return ans[:1]
         print(f"  type one of: {', '.join(valid)}")
 
@@ -477,6 +482,90 @@ def handle_decision(d, frame, log, supervisor):
     return False, d["offset_m"], "cancel"
 
 
+class Evaluation:
+    """--eval-plan: walk through a fixed trial list (docs/EVAL_PROTOCOL.md). For each trial the worker builds the
+    stack, the agent decides at the planned shift, the box is placed there anyway (YELLOW / RED as an override with
+    reason "evaluation"), and the check after placement gives the outcome, confirmed by the worker."""
+
+    def __init__(self, path, start, log):
+        with open(path, "rb") as f:
+            raw = f.read()
+        self.trials = json.loads(raw)["trials"]
+        self.i = max(0, start - 1)
+        self.log = log
+        self.last_decision = None
+        log.write("eval_start", None, plan=os.path.basename(path), plan_sha256=hashlib.sha256(raw).hexdigest(),
+                  n_trials=len(self.trials), start_trial=self.i + 1)
+        self._enter()
+
+    @property
+    def trial(self):
+        return self.trials[self.i] if self.i < len(self.trials) else None
+
+    def _enter(self):
+        self.log.extra = {"trial_id": self.trial["trial_id"]} if self.trial else {}
+        self.last_decision = None
+
+    def needed_ids(self):
+        return [b["id"] for b in self.trial["stack"]]
+
+    def describe(self):
+        t = self.trial
+        base = " + ".join(f"ID {b['id']}" + (f" at {b['shift_cm']:+d} cm" if "shift_cm" in b else "") for b in t["stack"])
+        return f"{t['trial_id']} ({self.i + 1}/{len(self.trials)}): {base}; then ID {t['box_id']} at {t['shift_cm']:+d} cm"
+
+    SETUP_TOL_M = 0.015        # a setup box must be within 1.5 cm of its planned shift
+
+    def state(self, stack):
+        """For the stack the camera sees: ("ready", None) | ("setup", (box id, shift m)) | ("shift", (box id, planned m,
+        seen m)) when a setup box is too far from its planned shift | ("wrong", None)."""
+        need, now = self.needed_ids(), [b["id"] for b in stack]
+        if now == need:
+            for planned, below, b in zip(self.trial["stack"][1:], stack, stack[1:]):
+                want, seen = planned.get("shift_cm", 0) / 100.0, b["x"] - below["x"]
+                if abs(seen - want) > self.SETUP_TOL_M:
+                    return "shift", (b["id"], want, seen)
+            return "ready", None
+        if now == need[:len(now)]:
+            b = self.trial["stack"][len(now)]
+            return "setup", (b["id"], b.get("shift_cm", 0) / 100.0)
+        return "wrong", None
+
+    @staticmethod
+    def setup_shifts(stack):
+        return [round((b["x"] - a["x"]) * 100, 1) for a, b in zip(stack, stack[1:])]
+
+    def finish(self, v, fell_auto, fell, extra):
+        t, d = self.trial, self.last_decision or {}
+        dev = v.get("deviation_m")
+        self.log.write("eval_result", None, box_id=t["box_id"], shift_cm=t["shift_cm"], n_boxes=len(t["stack"]) + 1,
+                       expected_zone=t["expected_zone"], expected_p=t["expected_p"], p=d.get("p"), ci=d.get("ci"),
+                       n=d.get("n"), zone=d.get("zone"), action=d.get("action"), source=d.get("source"),
+                       aws_seconds=d.get("aws_seconds"), setup_shift_cm=d.get("setup_shift_cm"),
+                       check_status=v["status"], check_message=v.get("message"),
+                       deviation_cm=None if dev is None else round(dev * 100, 2),
+                       fell_auto=fell_auto, fell=fell, corrected=fell != fell_auto,
+                       p_now=extra.get("p_now"), zone_now=extra.get("zone_now"))
+        self.i += 1
+        self._enter()
+
+
+def eval_decision(d, frame, log, supervisor, ev, stack):
+    """Evaluation: the box goes where the trial says. GREEN as usual; YELLOW / RED as a logged override."""
+    ev.last_decision = dict(d, setup_shift_cm=ev.setup_shifts(stack))
+    entry = {k: v for k, v in d.items() if k != "trace"}
+    log.write("decision", frame, **entry, trace=d["trace"], eval=True, stack_cm=[_cm(b) for b in stack],
+              setup_shift_cm=ev.setup_shifts(stack))
+    if d["zone"] == "GREEN":
+        print("  [eval] GREEN: place the box in the green wireframe.")
+        return True, d["offset_m"], "automatic"
+    log.write("override", None, box_id=d["box_id"], offset_m=d["offset_m"], p=d["p"], supervisor=supervisor,
+              reason="evaluation", eval=True)
+    print(f"  [eval] {d['zone']}: placed anyway for the evaluation (override by {supervisor}, reason 'evaluation', "
+          "logged). Place the box in the wireframe, let go, wait 5 s, then SPACE.")
+    return True, d["offset_m"], f"override {supervisor}: evaluation"
+
+
 def main():
     ap = argparse.ArgumentParser(description="Drystone agent: guide, ask for approval, or reject each placement")
     ap.add_argument("--calib", required=True)
@@ -491,7 +580,11 @@ def main():
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--aws", default=os.environ.get("DRYSTONE_URL", ""),
                     help="Drystone Lambda Function URL; empty = everything runs on the laptop")
+    ap.add_argument("--eval-plan", help="evaluation trial list (config/eval_plan.json, docs/EVAL_PROTOCOL.md)")
+    ap.add_argument("--eval-start", type=int, default=1, help="evaluation: start at this trial number (resume)")
     args = ap.parse_args()
+    if args.eval_plan and not args.supervisor:
+        sys.exit("--eval-plan needs --supervisor <name>: evaluation overrides are logged under that name.")
 
     catalog = load_catalog(args.boxes)
     K, dist, calib_size = common.load_calibration(args.calib)
@@ -511,6 +604,11 @@ def main():
     cv2.namedWindow(WIN, cv2.WINDOW_NORMAL)
     cv2.resizeWindow(WIN, 960, 540)
     print(__doc__.split("\n    python")[0])
+    ev = Evaluation(args.eval_plan, args.eval_start, log) if args.eval_plan else None
+    if ev:
+        print(f"\nEVALUATION MODE ({len(ev.trials)} trials). A/D are off; the shift comes from the trial list.")
+        if ev.trial:
+            print(f"  next: {ev.describe()}")
 
     smoother = LiveSmoother()
     offset = 0.0          # candidate shift (m) relative to the current top box
@@ -536,6 +634,30 @@ def main():
                 if plan:
                     draw_box(view, plan["box"], catalog, R0, t0, K, dist, COLORS[plan["zone"]], 3)
                     lines.append(f"place box ID {plan['box']['id']} in the wireframe, let go, then SPACE = check")
+                elif ev is not None:
+                    if ev.trial is None:
+                        lines.append("evaluation finished | Q quit")
+                    else:
+                        what, setup = ev.state(stack)
+                        lines.append("EVAL " + ev.describe())
+                        if what == "setup":
+                            sid, sshift = setup
+                            draw_box(view, core.candidate_box(stack, sid, sshift, catalog), catalog, R0, t0, K, dist,
+                                     COLORS["CANDIDATE"], 2)
+                            lines.append(f"setup (not scored): place ID {sid} at {sshift * 100:+.0f} cm")
+                        elif what == "shift":
+                            sid, want, seen = setup
+                            draw_box(view, core.candidate_box(stack[:-1], sid, want, catalog), catalog, R0, t0, K,
+                                     dist, COLORS["CANDIDATE"], 2)
+                            lines.append(f"setup (not scored): move ID {sid} to {want * 100:+.0f} cm "
+                                         f"(now {seen * 100:+.1f} cm)")
+                        elif what == "wrong":
+                            lines.append(f"take boxes off: this trial needs the stack {ev.needed_ids()}")
+                        else:
+                            offset = ev.trial["shift_cm"] / 100.0
+                            cand = core.candidate_box(stack, ev.trial["box_id"], offset, catalog)
+                            draw_box(view, cand, catalog, R0, t0, K, dist, COLORS["CANDIDATE"], 2)
+                            lines.append("SPACE decide | Q quit")
                 else:
                     if fallen:
                         lines.append(fallen_message(fallen))
@@ -561,7 +683,7 @@ def main():
 
             if key in (ord("q"), ord("Q"), 27):
                 break
-            if plan is None and key in (ord("a"), ord("A"), ord("d"), ord("D")):
+            if plan is None and ev is None and key in (ord("a"), ord("A"), ord("d"), ord("D")):
                 offset += (-0.01 if key in (ord("a"), ord("A")) else 0.01)
                 offset = round(offset, 3)
                 last = None
@@ -578,11 +700,25 @@ def main():
                         log.write("wait_pickup", shot, box_ids=[b["id"] for b in still],
                                   where=[b["where"] for b in still])
                         continue
+                if ev is not None and ev.trial is None:
+                    print("  [eval] every trial is done. Press Q.")
+                    continue
                 stack, _, R0, t0, shot, _ = perceive(cap, detector, catalog, obj, K, dist, args.base_id, log,
                                                      "decision")
                 if stack is None:
                     continue
                 ids_now = [b["id"] for b in stack]
+                if ev is not None:
+                    what, info = ev.state(stack)
+                    if what != "ready":
+                        why = (f"ID {info[0]} must be at {info[1] * 100:+.0f} cm (now {info[2] * 100:+.1f} cm)"
+                               if what == "shift" else f"it needs the stack {ev.needed_ids()}; the camera sees {ids_now}")
+                        print(f"  [eval] {ev.trial['trial_id']} is not set up: {why}.")
+                        log.write("eval_wrong_stack", shot, needed=ev.needed_ids(), stack=ids_now,
+                                  setup_shift_cm=ev.setup_shifts(stack), why=why)
+                        continue
+                    expected = ids_now
+                    offset = ev.trial["shift_cm"] / 100.0
                 missing = [i for i in expected if i not in ids_now]
                 if missing:                        # a box that was standing is gone: plan it again, in ID order
                     print(f"  [agent] stack changed: {', '.join(f'ID {i}' for i in missing)} "
@@ -594,7 +730,7 @@ def main():
                     log.write("back_on_stack", shot, box_ids=back, stack=ids_now)
                     fallen = [i for i in fallen if i not in back]
                 expected = ids_now
-                nid = next_box_id(stack, catalog)
+                nid = ev.trial["box_id"] if ev is not None else next_box_id(stack, catalog)
                 if nid is None:
                     print("  [agent] every box in the catalogue is already on the stack.")
                     continue
@@ -623,7 +759,10 @@ def main():
                 outlined(snap, f"ID {nid} {d['overhang_pct']:+.0f}%: P(fall) {d['p']:.0%} {d['zone']} -> {d['action']}", (10, 30))
                 cv2.imshow(WIN, snap)
                 cv2.waitKey(1)
-                approved, off, how = handle_decision(d, snap, log, args.supervisor)
+                if ev is not None:
+                    approved, off, how = eval_decision(d, snap, log, args.supervisor, ev, stack)
+                else:
+                    approved, off, how = handle_decision(d, snap, log, args.supervisor)
                 if how.startswith("override"):
                     stats["override"] += 1
                 if approved:
@@ -683,6 +822,23 @@ def main():
                           planned_p=plan["p"], checked_on=src, fell_ids=fell_ids, worker_answer=answer, **extra)
                 if v["status"] == "NOT_PLACED":
                     continue                       # box not placed yet: keep the plan
+                if ev is not None and ev.trial is not None:
+                    fell_auto = v["status"].startswith("FELL")
+                    tid = ev.trial["trial_id"]
+                    ans = ask(f"  [eval] {tid}: the check says the box {'FELL' if fell_auto else 'STOOD'}. "
+                              "Enter or y = confirm, n = the opposite: ", "yn", allow_empty=True)
+                    fell = fell_auto if ans in ("", "y") else not fell_auto
+                    ev.finish(v, fell_auto, fell, extra)
+                    print(f"  [eval] {tid} done: {'fell' if fell else 'stood'}"
+                          + (" (corrected by the worker)" if fell != fell_auto else "") + ".")
+                    if ev.trial:
+                        print(f"  [eval] next: {ev.describe()}. Take the boxes off and build that stack.")
+                    else:
+                        print("  [eval] every trial is done. Press Q.")
+                    plan = None
+                    last = None
+                    fallen = []
+                    continue
                 if v["status"] == "OFF_PLAN" and extra.get("zone_now", "GREEN") != "GREEN":
                     continue                       # wait for the worker to fix it, then check again
                 plan = None

@@ -43,7 +43,7 @@ def _log(tmp_path):
     return [json.loads(line) for line in open(d / "log.jsonl", encoding="utf-8")]
 
 
-def run_agent(tmp_path, monkeypatch, capsys, use_aws, keys, steps, answers):
+def run_agent(tmp_path, monkeypatch, capsys, use_aws, keys, steps, answers, extra_argv=()):
     """keys: key codes, or names from steps (change what the camera sees). answers: terminal inputs in order."""
     state = {"img": S.render(scene_base())}
     keys = list(keys)
@@ -79,7 +79,8 @@ def run_agent(tmp_path, monkeypatch, capsys, use_aws, keys, steps, answers):
                      ("resizeWindow", lambda *a: None), ("destroyAllWindows", lambda: None), ("waitKey", wait_key)):
         monkeypatch.setattr(cv2, name, fn)
     monkeypatch.setattr(common, "DATA_DIR", str(tmp_path))
-    argv = ["agent.py", "--calib", os.path.join(S.ROOT, "data", "camera_laptop.yaml"), "--marker-mm", "80"]
+    argv = ["agent.py", "--calib", os.path.join(S.ROOT, "data", "camera_laptop.yaml"), "--marker-mm", "80",
+            *extra_argv]
     if use_aws:
         def fake_aws_call(url, body, cap, first):
             """Same request agent.aws_call sends, answered by the Lambda handler instead of the network."""
