@@ -74,10 +74,16 @@ Target tambahan (S3, DynamoDB, dashboard/alarm CloudWatch, deteksi tanpa marker)
 - Tes kamera palsu `tests/test_agent_flow.py` (lokal dan `--aws`): jatuh → angkat → keputusan ulang → s → OK · SPASI sebelum menaruh → tanya → p → lihat lagi → OK (fell 0) · jawaban f → FELL · ID 1 diangkat → "stack changed" → ID 1 direncanakan lagi. Total 48 tes lulus.
 - Lambda tidak memakai loop ini → **tidak perlu deploy** untuk perbaikan ini.
 
-### Usulan dengan margin (18 Okt) — analisis, BELUM diubah
-- Dibandingkan di 6 contoh KUNING/MERAH halaman juri + tumpukan latihan (langkah 17): aturan **A** (posisi usulan dan posisi 1 cm lebih jauh ke arah bahaya sama-sama GREEN) dan **B** (P ≤ 5% dan batas atas 95% < 10%) memberi **usulan yang sama persis di 7/7 kasus**: 1 cm lebih dekat (s1 +11→+10, s2 +11→+10, s3 +10→+9, latihan +9→+8), P di usulan 1–3%, dan kalau meleset 1 cm keluar P tetap ≤ 7% (GREEN). Aturan sekarang: meleset 1 cm → P 10–14% (YELLOW), sama seperti langkah 19.
-- Zona contoh di `samples.json` tidak berubah (aturan hanya memengaruhi usulan); angka usulan di halaman bergeser 1 cm. Waktu pencarian +0–3 dtk. Perubahan ada di `drystone_core.search_alternative`, jadi butuh deploy Lambda dan penyesuaian tes.
-- **Deteksi marker** (opsi terpisah, belum diubah): di 49 foto asli (dua log latihan + 3 foto contoh) setelan sekarang melewatkan 1 marker (ID 2 di langkah 11); `adaptiveThreshConstant=3` membacanya tanpa deteksi palsu. Sampel kecil; menyentuh persepsi di semua jalur.
+### Usulan dengan margin 1 cm (18 Okt) — aturan A dipakai, live setelah deploy
+- **Kasus nyata (latihan 18 Okt, langkah 19):** usulan +9 cm (P 5%) ditaruh meleset +1,3 cm → tumpukan YELLOW 18%. Kesalahan penempatan nyata di latihan: 0,0–1,3 cm.
+- **Analisis (7 kasus:** 6 contoh KUNING/MERAH halaman juri + tumpukan latihan langkah 17): aturan A (posisi usulan DAN posisi 1 cm lebih jauh ke arah bahaya sama-sama GREEN) dan aturan B (P ≤ 5% dan batas atas 95% < 10%) memberi usulan yang sama di 7/7 kasus, 1 cm lebih dekat, **P usulan 1–3%**, dan kalau meleset +1 cm P tetap ≤ 7%. Dengan aturan lama, meleset +1 cm memberi **P 10–14% (YELLOW)**.
+- **Keputusan: aturan A** di `drystone_core.search_alternative` (satu sumber untuk laptop dan Lambda). Trace menulis kedua angka, misalnya "try +10 cm: P = 3%, but 1 cm further out (+11 cm P = 12%) is not green -> no margin, keep looking" lalu "try +9 cm: P = 1%; 1 cm further out (+10 cm P = 3%) also green -> suggestion". JSON usulan berisi `further_offset_cm` dan `p_further`; halaman juri menulis "The suggested spot stays green even if the box lands 1 cm further out"; README juga.
+- Usulan baru di halaman (hitungan dari foto asli, `suggestion_cm` di `samples.json`, dicek tes): **s1 +10 cm** (3%; +11 cm 5%), **s2 +9 cm** (1%; +10 cm 3%), **s3 +9 cm** (1–2%; +10 cm 6–7%). Zona contoh tidak berubah. Waktu keputusan KUNING/MERAH di laptop 4,5–12 dtk (dulu 3,4–7 dtk), karena posisi tambahan disimulasikan.
+
+### Setelan detektor marker (18 Okt) — diuji, DITOLAK
+- Usulan: `adaptiveThreshConstant` 7 → 3 untuk membaca marker pudar (ID 2 di langkah 11 latihan kedua tidak terbaca).
+- Validasi di **148 foto asli** (126 foto latihan 17–18 Okt, 15 foto Tes 2, 1 foto service, 3 foto contoh, 3 foto contoh mentah): marker terbaca **341 vs 340** (hanya ID 2 langkah 11 bertambah, tidak ada yang hilang), **0 deteksi palsu**. Tapi **sudut marker bergeser sampai 6,4 px** (56 dari 340 marker > 0,1 px), keluar dari bingkai hitam ke kertas putih di foto yang lebih gelap, sehingga **posisi kardus meleset sampai 61 mm di 44 bacaan** (> 1 mm). Gagal syarat ≤ 0,1 cm → **ditolak**, detektor tetap setelan lama.
+- Penanganan marker yang tidak terbaca: pertanyaan f/p di agent ("box ID 2 is not visible. f = it fell out of view, p = not placed yet"), **cetak ulang marker kalau pudar**, dan **cahaya cukup saat rekaman**.
 
 ### Latihan override → roboh dengan kardus asli (18 Okt 02.37–02.48, `agent.py --aws`)
 - Log: `data/agent_20261018_023749/log.jsonl` (tidak di-commit; folder berisi foto). ID 1 HIJAU di +6 cm tiap kali (cek ulang OK, −0,5 / +0,1 / −0,0 cm).
@@ -118,9 +124,9 @@ Target tambahan (S3, DynamoDB, dashboard/alarm CloudWatch, deteksi tanpa marker)
 
   | Contoh | Susunan | Kardus berikutnya | HIJAU | KUNING (usulan) | MERAH (usulan) |
   |---|---|---|---|---|---|
-  | s1 | ID 0 saja | ID 1 | +6 cm, 0% | +14 cm, 35% (+11 cm, 5%) | +16 cm, 73% (+11 cm, 5%) |
-  | s2 | ID 0 + ID 1 lurus | ID 2 | +6 cm, 0% | **+13 cm**, 27% (+10 cm, 3%) | +16 cm, 69% (+10 cm, 3%) |
-  | s3 | ID 0 + ID 1 digeser +6,3 cm | ID 2 | +4 cm, 0% | +12 cm, 25% (+10 cm, 6%) | +16 cm, 77% (+10 cm, 7%) |
+  | s1 | ID 0 saja | ID 1 | +6 cm, 0% | +14 cm, 35% (+10 cm, 3%) | +16 cm, 73% (+10 cm, 3%) |
+  | s2 | ID 0 + ID 1 lurus | ID 2 | +6 cm, 0% | **+13 cm**, 27% (+9 cm, 1%) | +16 cm, 69% (+9 cm, 1%) |
+  | s3 | ID 0 + ID 1 digeser +6,3 cm | ID 2 | +4 cm, 0% | +12 cm, 25% (+9 cm, 1%) | +16 cm, 77% (+9 cm, 2%) |
 
   Pindaian dari foto asli: s1 +11 6% / +12 12% / +15 62%; s2 +11 7% / +12 14% / +14 41% / +15 58%; s3 +10 6% / +11 13% / +14 51%. s2 KUNING diganti +14 → **+13 cm** karena 41% terlalu dekat garis 50% (interval ±8%). Geseran dekat garis 10%/50% tidak dipakai sebagai contoh.
 - Cache foto: halaman memuat `samples/<id>.jpg?v=<photos_version>` (`photos_version` = 10 hex pertama sha256 foto, dicek tes) dan `samples.json` dikirim `no-cache`, jadi foto yang diganti tidak tampil dari cache browser (foto tetap `max-age` 1 hari). Ditemukan saat cek lokal: tanpa ini, browser yang pernah membuka halaman menampilkan placeholder lama dengan kerangka dari foto asli.
@@ -179,12 +185,24 @@ Target tambahan (S3, DynamoDB, dashboard/alarm CloudWatch, deteksi tanpa marker)
 - **Live sejak 18 Okt 02.30: `drystone-service:9523213`**, Function URL tetap sama. Berisi perbaikan cek ulang (kardus jatuh = FELL) dan `boxes.json` dengan tinggi terukur (dicek di dalam image).
 - Tes live (dari laptop): `GET /` 200 (3,4 dtk), `samples.json` versi foto a7aba3ca6c tanpa placeholder · **9 keputusan contoh identik dengan tabel** (s1 +6 GREEN 0% · +14 YELLOW 35% · +16 RED 73%; s2 +6 GREEN 0% · +13 YELLOW 27% · +16 RED 69%; s3 +4 GREEN 0% · +12 YELLOW 25% · +16 RED 77%; usulan sama) · POST foto lama (s2 +6 cm, box 2) → GREEN GUIDE (3,3 dtk) · `POST /log` → baris `web_supervisor_choice` di CloudWatch · **check lewat Lambda, foto sintetis ID 2 tegak di lantai samping tumpukan (berputar 25°) → FELL, action STOP**, "box ID 2 is on the floor next to the stack -> it fell", stack [0, 1], off_stack ID 2 (floor), tanpa retake (2,4 dtk) · pembanding penempatan sesuai rencana → OK, CONTINUE (+0,1 cm) · 0 baris error di CloudWatch.
 
+### Deploy margin usulan (18 Okt)
+- **Rollback target** (yang jalan sebelum deploy ini): `drystone-service:9523213` (digest `sha256:04b6f06b7b7cb01414c4b630e425589a6ddab4f734e7eb9e409465ece71953cf`, usulan tanpa margin). Tag `9523213` tetap ada di ECR. Rollback (cmd; ganti `<account>`):
+  ```
+  aws lambda update-function-code --function-name drystone --image-uri <account>.dkr.ecr.ap-southeast-1.amazonaws.com/drystone-service:9523213 --region ap-southeast-1 --query LastUpdateStatus
+  ```
+  ```
+  aws lambda wait function-updated --function-name drystone --region ap-southeast-1
+  ```
+  ```
+  aws lambda get-function --function-name drystone --region ap-southeast-1 --query "{Uri:Code.ImageUri,Status:Configuration.LastUpdateStatus}"
+  ```
+
 ## Wajib sebelum submit
 - **Validasi setelan ketidakpastian** (posisi 1 cm, isi 2 cm) di percobaan baru (evaluasi 21 Okt, pipeline persepsi baru), target **0 roboh di zona GREEN**.
 - **Vincent masuk tim di Devpost.**
 
 ## Berikutnya
-- **18 Okt:** ~~latihan adegan override → roboh~~ (selesai, 3/3) · ~~alur jatuh → angkat → keputusan ulang → s → OK~~ (selesai, 12.58) · putuskan margin usulan (A/B) dan setelan deteksi marker · uji ulang dengan kardus asli: SPASI sebelum menaruh (p) dan ID 1 diangkat.
+- **18 Okt:** ~~latihan adegan override → roboh~~ (selesai, 3/3) · ~~alur jatuh → angkat → keputusan ulang → s → OK~~ (selesai, 12.58) · ~~margin usulan~~ (aturan A) · ~~setelan deteksi marker~~ (ditolak) · uji ulang dengan kardus asli: SPASI sebelum menaruh (p) dan ID 1 diangkat.
 - **19 Okt:** README utama + rapikan repo.
 - **20 Okt:** cadangan.
 - **21 Okt:** evaluasi 20–30 percobaan baru dengan pipeline persepsi baru (akurasi, Brier, roboh di zona GREEN, waktu keputusan, retake, fallback) + kasus gagal; sekaligus validasi setelan ketidakpastian Tes 2; malamnya fitur dikunci.

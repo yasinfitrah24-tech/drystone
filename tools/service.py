@@ -164,7 +164,9 @@ def analyze(images, req):
         a = d["alternative"]
         alt = core.candidate_box(stack, int(box_id), a["offset_m"], catalog)
         result["decision"]["alternative"] = {"offset_cm": round(a["offset_m"] * 100, 1),
-                                             "overhang_pct": round(a["overhang_pct"], 1), "p": round(a["p"], 3)}
+                                             "overhang_pct": round(a["overhang_pct"], 1), "p": round(a["p"], 3),
+                                             "further_offset_cm": round(a["further_offset_m"] * 100, 1),
+                                             "p_further": None if a["p_further"] is None else round(a["p_further"], 3)}
         plans["suggested"] = {"before": result["stack"], "box": _box_out(alt), "zone": "GREEN", "p": round(a["p"], 3)}
         draw_box(view, alt, catalog, R0, t0, s["K"], s["dist"], COLORS["GREEN"], 1)
     result["plans"] = plans
@@ -322,7 +324,8 @@ def web_decide(sample_id, offset_cm):
     if d["alternative"]:
         a = d["alternative"]
         alt = {"offset_cm": round(a["offset_m"] * 100, 1), "overhang_pct": round(a["overhang_pct"], 2),
-               "p": round(a["p"], 3), "n": a["n"]}
+               "p": round(a["p"], 3), "n": a["n"], "further_offset_cm": round(a["further_offset_m"] * 100, 1),
+               "p_further": None if a["p_further"] is None else round(a["p_further"], 3)}
         boxes.append(("suggestion", core.candidate_box(stack, box_id, a["offset_m"], catalog)))
     polygons = []
     for role, b in boxes:

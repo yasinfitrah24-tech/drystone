@@ -132,6 +132,8 @@
       <li><strong>YELLOW</strong>, 10&ndash;50%: a supervisor approves, uses the suggestion, or rejects.</li>
       <li><strong>RED</strong>, over 50%: the agent rejects and suggests the nearest safe spot. Going on anyway
         needs an override with a name and a reason. An override is only logged; it never changes the result.</li>
+      <li>A suggested spot stays green even if the box lands 1 cm further out: real placements in our practice
+        landed up to 1.3 cm off the plan.</li>
       <li>P(fall) comes from many simulations with 1 cm position and 2 cm load uncertainty. Near a zone line the
         agent runs more simulations and, if still unsure, takes the safer zone.</li>
     </ul>
@@ -293,7 +295,9 @@
       signed(Math.round(d.overhang_pct)) + "% overhang). Centre-of-mass margin " + d.static_margin_cm.toFixed(1) + " cm.</p>";
     h += '<p class="action">' + esc(ACTION_TEXT[d.action]) + "</p>";
     if (a) h += '<p class="suggest">Suggested spot: <strong>' + signed(a.offset_cm) + " cm</strong> (" +
-      signed(Math.round(a.overhang_pct)) + "% overhang), P(fall) " + pct(a.p) + " in " + a.n + " simulations.</p>";
+      signed(Math.round(a.overhang_pct)) + "% overhang), P(fall) " + pct(a.p) + " in " + a.n + " simulations. " +
+      "The suggested spot stays green even if the box lands 1 cm further out (" + signed(Math.round(a.further_offset_cm)) +
+      " cm: P(fall) " + pct(a.p_further) + ").</p>";
     else if (d.zone !== "GREEN") h += '<p class="suggest">No safe spot found in the search range. Do not add a box to this stack.</p>';
     if (d.zone === "YELLOW" || d.zone === "RED") {
       h += '<div class="buttons">';

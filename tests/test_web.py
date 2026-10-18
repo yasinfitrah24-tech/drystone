@@ -71,7 +71,13 @@ def test_example_zones(sample, zone, offset):
     if zone == "GREEN":
         assert d["alternative"] is None
     else:
-        assert d["alternative"] and d["alternative"]["p"] < 0.10
+        alt = d["alternative"]
+        assert alt and alt["p"] < 0.10
+        # margin: the spot 1 cm further out (more overhang) is green too, and it is the suggested shift
+        assert alt["further_offset_cm"] == alt["offset_cm"] + (1 if alt["offset_cm"] >= 0 else -1)
+        assert alt["p_further"] is not None and alt["p_further"] < 0.10
+        expected = next(x for x in META["samples"] if x["id"] == sample)["suggestion_cm"][zone]
+        assert round(alt["offset_cm"]) == expected
         assert {p["role"] for p in r["polygons"]} == {"stack", "candidate", "suggestion"}
     assert [s["name"].split(" (")[0] for s in r["stages"]] == [
         "Marker detection", "Digital twin", "Monte Carlo simulation", "Decision", "Action"]

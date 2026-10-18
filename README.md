@@ -31,7 +31,9 @@ The link to the live page is on our Devpost submission page. The page runs on AW
 
 - P(fall) always comes from many simulations, with 1 cm position and 2 cm load-centre uncertainty. Near a zone
   line the agent runs more simulations; if still unsure, it takes the safer zone.
-- Suggested spots must pass 150 simulations before they are called GREEN.
+- Suggested spots must pass 150 simulations before they are called GREEN, and the spot 1 cm further out must
+  be GREEN too, so the suggestion stays green even if the box lands 1 cm further out (real placements in our
+  practice landed 0.0-1.3 cm off the plan).
 - All decision rules live in `tools/drystone_core.py`. The laptop agent and the AWS service both call it.
   Safety decisions are deterministic code and are logged; no language model decides anything.
 

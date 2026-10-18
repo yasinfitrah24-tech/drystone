@@ -129,12 +129,33 @@ def zone_safe(p, ci, near):
 
 
 def search_alternative(stack, box_id, offset_m, catalog, s, trace):
-    """Nearest HIJAU position to what the worker asked for, on a 1 cm grid, both directions.
+    """Nearest safe position to what the worker asked for, on a 1 cm grid, both directions.
 
+    Safe = GREEN there AND GREEN 1 cm further out (toward more overhang): real placements landed 0.0-1.3 cm off
+    the plan (practice 18 Oct), and a suggestion right at the 10% line turned YELLOW 18% after a 1.3 cm miss.
     Positions whose static centre-of-mass margin is under 2 cm are skipped without simulating."""
     half = catalog[box_id]["L"] / 2.0
     grid = [k * SEARCH_STEP_M for k in range(-int(half / SEARCH_STEP_M), int(half / SEARCH_STEP_M) + 1)]
     grid = sorted((g for g in grid if abs(g - offset_m) > 0.005), key=lambda g: (abs(g - offset_m), abs(g)))
+    seen = {}                                   # offset (cm) -> (green?, p, n): each position is simulated once
+
+    def surely_green(off):
+        key = round(off * 100)
+        if key not in seen:
+            cand = candidate_box(stack, box_id, off, catalog)
+            stable, margin = static_check(stack + [cand], catalog)
+            if not stable or margin < MIN_STATIC_MARGIN_M:
+                seen[key] = (False, None, 0)
+            else:
+                p, n, ci, near = p_fall_adaptive(stack + [cand], catalog, s, base=60, max_n=300)
+                ok = zone_safe(p, ci, near) == "GREEN"
+                if ok and n < BASE_SAMPLES:
+                    # a quick screen said green: confirm with the full sample count before relying on it
+                    p, n, ci, near = p_fall_adaptive(stack + [cand], catalog, s)
+                    ok = zone_safe(p, ci, near) == "GREEN"
+                seen[key] = (ok, p, n)
+        return seen[key]
+
     tried = 0
     for off in grid:
         cand = candidate_box(stack, box_id, off, catalog)
@@ -142,22 +163,20 @@ def search_alternative(stack, box_id, offset_m, catalog, s, trace):
         if not stable or margin < MIN_STATIC_MARGIN_M:
             continue
         tried += 1
-        p, n, ci, near = p_fall_adaptive(stack + [cand], catalog, s, base=60, max_n=300)
-        ok = zone_safe(p, ci, near) == "GREEN"
-        if ok and n < BASE_SAMPLES:
-            # a quick screen said green: confirm with the full sample count before promising it to the worker
-            p, n, ci, near = p_fall_adaptive(stack + [cand], catalog, s)
-            ok = zone_safe(p, ci, near) == "GREEN"
-            if not ok:
-                trace.append(f"try {off * 100:+.0f} cm: confirmation with {n} simulations gave P = {p:.0%}, not green")
-                tried += 1
-                if tried >= SEARCH_MAX_TRIES:
-                    break
-                continue
-        trace.append(f"try {off * 100:+.0f} cm ({overhang_pct(stack, cand, catalog):+.0f}%): P = {p:.0%}"
-                     + ("" if ok else (" (not surely green yet)" if p < P_GREEN else "")))
-        if ok:
-            return {"offset_m": off, "overhang_pct": overhang_pct(stack, cand, catalog), "p": p, "n": n}
+        ok, p, n = surely_green(off)
+        head = f"try {off * 100:+.0f} cm ({overhang_pct(stack, cand, catalog):+.0f}%): P = {p:.0%}"
+        if not ok:
+            trace.append(head + (" (not surely green yet)" if p < P_GREEN else ""))
+        else:
+            out = 1.0 if off > 0.005 else -1.0 if off < -0.005 else (1.0 if offset_m >= 0 else -1.0)
+            further = off + out * SEARCH_STEP_M
+            ok_f, p_f, n_f = surely_green(further)
+            margin_txt = f"{further * 100:+.0f} cm " + (f"P = {p_f:.0%}" if p_f is not None else "falls (static)")
+            if ok_f:
+                trace.append(head + f"; 1 cm further out ({margin_txt}) also green -> suggestion")
+                return {"offset_m": off, "overhang_pct": overhang_pct(stack, cand, catalog), "p": p, "n": n,
+                        "further_offset_m": further, "p_further": p_f}
+            trace.append(head + f", but 1 cm further out ({margin_txt}) is not green -> no margin, keep looking")
         if tried >= SEARCH_MAX_TRIES:
             break
     trace.append("no green position within the search range -> do not place a box on this stack")
