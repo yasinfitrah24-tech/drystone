@@ -1,78 +1,110 @@
-# Drystone di AWS Lambda
+# Drystone on AWS Lambda
 
-Layanan `tools/service.py` menerima foto tumpukan dan mengembalikan keputusan dalam bentuk JSON. Kodenya sama dengan agent di laptop (`drystone_core.py`), jadi tidak ada logika keputusan yang ditulis ulang.
+`tools/service.py` turns stack photos into a decision (JSON) and serves the judges' page. It calls the same
+decision code as the laptop agent (`tools/drystone_core.py`), so no decision rule is written twice.
 
-Region **ap-southeast-1**. Pakai akun Free plan dan IAM user masing-masing. **Jangan pernah** menulis access key di repo, file ini, atau chat. Simpan hanya lewat `aws configure` di laptop sendiri.
+Region **ap-southeast-1**, AWS Free plan, no AWS Marketplace. Never put access keys in the repository, in this
+file or in chat: use `aws configure` on your own machine. The Function URL is not written in the repository;
+keep it in the environment variable `DRYSTONE_URL`.
 
-## Kenapa memakai container image
-OpenCV 5 + MuJoCo + NumPy terlalu besar untuk zip Lambda (batas 250 MB setelah diekstrak), jadi dipakai container image (batas 10 GB).
+## Why a container image
+OpenCV 5 + MuJoCo + NumPy are too large for a Lambda zip (250 MB unzipped), so the function is a container image
+(limit 10 GB). The image copies `tools/`, `config/boxes.json`, `data/camera_laptop.yaml` and `web/`.
 
-## Sudah diuji (17 Okt)
-- Handler dijalankan di Python 3.12 bersih dengan `requirements-lambda.txt` (OpenCV headless, tanpa GUI), memakai foto asli tumpukan 2 kardus:
-  - +6 cm: HIJAU 1% (1,7 dtk)
-  - +12 cm: KUNING 41%, usulan +8 cm (8,3 dtk)
-  - +16 cm: MERAH 87% (8,2 dtk)
-- Image Docker **belum** dibangun, karena registry `public.ecr.aws` diblokir di lingkungan uji. Langkah build di bawah perlu dicoba sekali.
+## Function settings
+- Container image from ECR repository `drystone-service`, x86_64.
+- Memory **2048 MB** (Lambda CPU grows with memory; the simulation needs CPU). Timeout **60 s**.
+- Environment (set in the Dockerfile): `DRYSTONE_CALIB`, `DRYSTONE_BOXES`, `DRYSTONE_MARKER_MM=80`, `DRYSTONE_WEB`.
+- The calibration is `data/camera_laptop.yaml`: photos must come from that webcam at **1280×720**.
+- Function URL with auth type NONE and CORS for POST. Reserved concurrency cannot be set on this account (account
+  limit 10 concurrent executions, and AWS keeps 10 unreserved), so the protection is in the code (see Limits).
 
-## Pengaturan fungsi
-- Memori **2048 MB** (CPU Lambda naik seiring memori; simulasi butuh CPU).
-- Timeout **60 detik** (keputusan biasanya 2–10 detik).
-- Arsitektur x86_64.
-- Env (sudah di Dockerfile): `DRYSTONE_CALIB`, `DRYSTONE_BOXES`, `DRYSTONE_MARKER_MM=80`.
-- Kalibrasi yang dibawa adalah `data/camera_laptop.yaml`, jadi foto **harus dari webcam laptop Yasin, 1280×720**. Kamera lain butuh kalibrasi sendiri.
+## Update the function (Windows cmd, from the repository folder)
+Docker Desktop must be running. Build and push with two tags, `latest` and the commit hash, and point the function
+at the **commit-hash tag** so the live version is always clear. One command per line:
 
-## Langkah deploy (sekali)
-Butuh Docker (Docker Desktop di Windows) dan AWS CLI yang sudah `aws configure`. Jalankan dari folder repo.
+```
+docker build --provenance=false -f aws/Dockerfile -t drystone-service .
+```
+```
+for /f %i in ('aws sts get-caller-identity --query Account --output text') do set ACC=%i
+```
+```
+for /f %i in ('git rev-parse --short HEAD') do set TAG=%i
+```
+```
+set REPO=%ACC%.dkr.ecr.ap-southeast-1.amazonaws.com/drystone-service
+```
+```
+aws ecr get-login-password --region ap-southeast-1 | docker login --username AWS --password-stdin %ACC%.dkr.ecr.ap-southeast-1.amazonaws.com
+```
+```
+docker tag drystone-service:latest %REPO%:latest
+```
+```
+docker tag drystone-service:latest %REPO%:%TAG%
+```
+```
+docker push %REPO%:%TAG%
+```
+```
+docker push %REPO%:latest
+```
+```
+aws lambda update-function-code --function-name drystone --image-uri %REPO%:%TAG% --region ap-southeast-1 --query LastUpdateStatus
+```
+```
+aws lambda wait function-updated --function-name drystone --region ap-southeast-1
+```
 
-1. Build:
-   ```
-   docker build -f aws/Dockerfile -t drystone-service .
-   ```
-2. Buat repo ECR (sekali):
-   ```
-   aws ecr create-repository --repository-name drystone-service --region ap-southeast-1
-   ```
-3. Login, tag, push (`<akun>` = 12 digit ID akun AWS):
-   ```
-   aws ecr get-login-password --region ap-southeast-1 | docker login --username AWS --password-stdin <akun>.dkr.ecr.ap-southeast-1.amazonaws.com
-   docker tag drystone-service:latest <akun>.dkr.ecr.ap-southeast-1.amazonaws.com/drystone-service:latest
-   docker push <akun>.dkr.ecr.ap-southeast-1.amazonaws.com/drystone-service:latest
-   ```
-4. Buat fungsi di Console: Lambda → Create function → **Container image** → pilih image tadi → x86_64. Lalu Configuration → General: memori 2048 MB, timeout 60 dtk.
-5. Configuration → **Function URL** → Auth type **AWS_IAM** saat masih tahap uji, NONE untuk demo juri (sekarang NONE). *Reserved concurrency* **tidak bisa** dipasang di akun ini (limit akun 10, AWS mewajibkan 10 tetap unreserved), jadi perlindungan ada di kode: batas body, batas request per IP, dan cache (lihat bagian Halaman web juri).
-6. Uji di tab Test dengan event:
-   ```json
-   {"mode": "decide", "images": ["<base64 foto>"], "offset_cm": 12, "return_image": false}
-   ```
+Before each deploy, write the current image tag down as the rollback target (`docs/STATUS.md`). To roll back, run
+`update-function-code` with the previous tag and wait again. Never delete or recreate the function: that would
+change the Function URL. Builds after the first are fast (cached) as long as `aws/requirements-lambda.txt` does
+not change. From China, PyPI can be very slow; build with
+`--build-arg PIP_INDEX_URL=https://pypi.tuna.tsinghua.edu.cn/simple` if that file changes.
 
-## Format
-Request (body JSON):
-- `mode`: `"decide"` atau `"check"`
-- `images`: 1–5 foto base64 (jpg/png) berturut-turut. Lebih banyak foto = lebih stabil, karena arah hadap dirata-rata.
-- `decide`: `offset_cm` (geser ke kanan dari kardus teratas), `box_id` (opsional)
-- `check`: `plan` = salah satu isi `plans` dari jawaban decide (`plans.diminta` atau `plans.usulan`)
-- `return_image`: true = kirim balik foto beranotasi (`image_jpg_b64`, ±190 KB)
+## First-time setup (already done for this project)
+1. `aws ecr create-repository --repository-name drystone-service --region ap-southeast-1`
+2. Build, tag and push as above.
+3. Console: Lambda → Create function → Container image → the image → x86_64. Configuration → General: 2048 MB,
+   60 s.
+4. Configuration → Function URL: auth type NONE (public demo), CORS allow POST.
 
-Jawaban:
-- `ok`, `problem`
-- `action`: PANDU / MINTA_PERSETUJUAN / TOLAK / FOTO_ULANG / LANJUT / BETULKAN / BERHENTI / TUNGGU / SELESAI
-- `stack` (posisi kardus, cm)
-- `decision`: zone, p, ci, n, trace, alternative
-- `plans`
-- `verify` dan `risk_now` (mode check)
-- `seconds`
+## Routes on the Function URL
+- `GET /`: the judges' page (`web/index.html`). `GET /samples/<id>.jpg`: sample photos listed in
+  `web/samples/samples.json`.
+- `POST /` with `{"sample": "s2", "offset_cm": 14}`: decision for a sample photo (OpenCV + `drystone_core`, fixed
+  seed, cached per container and marked `"cached": true`).
+- `POST /log` with `{"sample", "offset_cm", "choice", "name", "reason"}`: one JSON line `web_supervisor_choice` in
+  CloudWatch Logs, without the IP address. An override needs a name and a reason and never changes the decision.
+- `POST /` with `"images"`: the photo API used by `agent.py --aws` (below).
 
-## Halaman web juri (Function URL yang sama)
-- `GET /` halaman (`web/index.html`), `GET /samples/<id>.jpg` foto contoh dari `web/samples/samples.json`.
-- `POST {"sample": "s2", "offset_cm": 14}` → keputusan untuk foto contoh (OpenCV + `drystone_core`, seed 0, di-cache per container, `"cached": true`).
-- `POST /log {"sample", "offset_cm", "choice", "name", "reason"}` → satu baris JSON `web_supervisor_choice` di CloudWatch Logs. Override wajib nama + alasan dan tidak mengubah keputusan.
-- POST foto lama (body berisi `images`) tidak berubah, jadi `agent.py --aws` tetap jalan.
-- Batas: JSON web ≤ 16 KB, POST foto ≤ 2 MB (413); per IP per container 60 GET dan 20 POST per menit (429); geseran dibulatkan ke 1 cm dalam −16…+16 cm, jadi cache maksimal 3 × 33 = 99 entri per container.
-- Uji lokal tanpa AWS: `python tools/web_local.py` lalu buka http://127.0.0.1:8000/. Tes: `python -m pytest tests -q`.
+## Limits
+Web JSON ≤ 16 KB and photo POST ≤ 2 MB (else 413). Per IP and per container: 60 GET and 20 POST per minute (else
+429). The shift is rounded to 1 cm in −16…+16 cm, so the decision cache holds at most 3 × 33 = 99 entries per
+container.
 
-## Berikutnya (20–21 Okt)
-- S3: simpan foto bukti per keputusan.
-- DynamoDB: log keputusan, persetujuan, dan override (isi sama dengan `log.jsonl` di laptop).
-- Dashboard statis (S3) untuk melihat log dan menyetujui atau override KUNING/MERAH.
-- CloudWatch: durasi, jumlah error, jumlah FOTO_ULANG.
-- Biaya: cek Billing setelah deploy. Harusnya sangat kecil dan tertutup kredit, tapi tetap dicek, jangan diasumsikan.
+## Photo API (used by `agent.py --aws`)
+Request body (JSON):
+- `mode`: `"decide"` or `"check"`
+- `images`: 1–5 base64 photos (JPEG or PNG) in a row; more photos give a steadier reading
+- decide: `offset_cm` (shift to the right of the box directly below), `box_id` (optional: smallest ID not on the
+  stack)
+- check: `plan` = one of the `plans` from a decide answer (`plans.requested` or `plans.suggested`)
+- `return_image`: true = also return the annotated photo (`image_jpg_b64`)
+
+Answer:
+- `ok`, `problem`, `seconds`, `stack` (box positions in cm), `off_stack` (visible boxes not on the stack, with
+  `where`: floor / beside / gap)
+- `action`: GUIDE / ASK_SUPERVISOR / REJECT (decide), RETAKE (bad reading), CONTINUE / FIX_PLACEMENT / STOP /
+  WAIT (check), DONE (every box is on the stack)
+- `decision`: `zone`, `p`, `ci`, `n`, `trace`, `alternative` (`offset_cm`, `p`, `further_offset_cm`, `p_further`)
+- `plans` (decide); `verify` with `status` OK / OFF_PLAN / FELL and `risk_now` (check)
+
+## Test it
+- Without AWS: `python tools/web_local.py` (same handler, fake Function URL events), then http://127.0.0.1:8000/,
+  and `python -m pytest tests -q`.
+- The Docker image on the laptop: `docker run -p 9000:8080 drystone-service`, then
+  `python aws/test_endpoint.py --image <photo> --offset-cm 12`.
+- The live Function URL: `python aws/test_endpoint.py --url %DRYSTONE_URL% --image web\samples\s2.jpg --offset-cm 6`.
+- Logs: `aws logs tail /aws/lambda/drystone --since 15m --region ap-southeast-1`.

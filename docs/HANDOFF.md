@@ -56,7 +56,7 @@ Baca file ini setelah `CLAUDE.md` dan `docs/STATUS.md`. Isinya cara kerja yang s
 5. Video 24 Okt (Yasin + Vincent), laporan/diagram/README 25 Okt, submit 26 Okt malam (deadline 27 Okt 14.45).
 
 ## Lingkungan
-- **Laptop Yasin** (`E:\opencv-project`): webcam 1280×720 terkalibrasi (`data/camera_laptop.yaml`), Docker Desktop (data di `E:\DockerData`, harus "Engine running"), AWS CLI v2 + `aws configure` (IAM user `yasin-dev`, ap-southeast-1). Claude di akun mana pun yang dipakai di laptop ini bisa memakai semua itu.
+- **Laptop Yasin** (`E:\opencv-project`): webcam 1280×720 terkalibrasi (`data/camera_laptop.yaml`), Docker Desktop (data di `E:\DockerData`, harus "Engine running"), AWS CLI v2 + `aws configure` (IAM user pribadi di laptop Yasin, ap-southeast-1). Claude di akun mana pun yang dipakai di laptop ini bisa memakai semua itu.
 - Agent lokal: `python tools/agent.py --calib data/camera_laptop.yaml --marker-mm 80 --supervisor Yasin`. Lewat AWS: `set DRYSTONE_URL=<Function URL>` dulu (berlaku per jendela cmd; minta URL ke Yasin, jangan ditulis di repo).
 - **AWS sekarang:** ECR repo `drystone-service`; Lambda `drystone` (container image, x86_64, 2048 MB, timeout 60 dtk); Function URL auth NONE + CORS POST. Update kode Lambda:
   ```
