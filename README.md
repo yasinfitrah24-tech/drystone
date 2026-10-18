@@ -73,7 +73,7 @@ flowchart LR
   suggestion stays green even if the box lands 1 cm further out.
 - **Check after placement.** OK, OFF_PLAN (placed more than 1.5 cm from the plan; the risk is computed again),
   or FELL (the box is on the floor or gone). If the box is not visible at all while the stack below is intact,
-  the agent asks the worker: *f = it fell out of view, p = not placed yet*.
+  the agent asks the supervisor at the terminal: *f = it fell out of view, p = not placed yet*.
 - **AWS.** `tools/service.py` runs as a container image on AWS Lambda behind one Function URL: the judges' page,
   the sample photos, decisions for the samples, the supervisor log (one JSON line per choice in CloudWatch Logs),
   and the photo API used by `agent.py --aws`. If AWS fails, the laptop computes the decision and logs it.

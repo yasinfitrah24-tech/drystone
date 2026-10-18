@@ -116,7 +116,7 @@ code; no rule is written twice, and no language model decides anything.
 - **Rejected change.** A lower adaptive threshold (`adaptiveThreshConstant` 7 → 3) read one faded marker that the
   default missed (148 real photos: 341 vs 340 markers, 0 false detections), but moved marker corners by up to
   **6.4 px** onto the white paper in darker photos and box positions by up to **61 mm** in 44 readings. It was
-  rejected; missed markers are handled by asking the worker instead (sections 8.4 and 8.6).
+  rejected; missed markers are handled by asking the supervisor instead (sections 8.4 and 8.6).
 
 *TODO (after the page redesign of 22–23 Oct): an annotated photo with the detected markers and the digital twin
 wireframes, faces removed.*

@@ -67,7 +67,7 @@ It is a decision-support prototype, **not a certified safety device**, tested on
   (0.37 px).
 - **Markers in dim light.** One faded marker was missed in a darker photo. A lower detection threshold read it, but
   when we validated that change on 148 real photos, marker corners moved by up to 6.4 px onto the white paper and box
-  positions by up to 61 mm in 44 readings. We rejected it and made the agent ask the worker ("fell out of view" or
+  positions by up to 61 mm in 44 readings. We rejected it and made the agent ask the supervisor ("fell out of view" or
   "not placed yet") instead.
 - **The check after a fall.** In practice with real boxes, a box that fell next to the stack was read as part of the
   stack, the message named the wrong box, and the agent looped on retakes. We rebuilt the stack reading around
