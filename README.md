@@ -161,6 +161,14 @@ Run the tests (web endpoint, check after placement, the whole agent loop with a 
 python -m pytest tests -q
 ```
 
+Rebuild the evaluation report from an evaluation log (`agent.py --eval-plan`, see `docs/EVAL_PROTOCOL.md`); it writes
+`data/eval_report/trials.csv` and `summary.md`:
+```
+python tools/eval_report.py --logs data/agent_20261018_152640/log.jsonl
+```
+The agent logs stay on our laptop (their photos show people), so this reproduces our report only with the log; the
+published `trials.csv` holds every per-trial number.
+
 ## Limitations and responsible use
 - **Markers are required.** Every box needs a printed ArUco marker in the middle of its front face. Faded markers
   in dim light can be missed; the agent then asks *f / p* instead of guessing. Reprint faded markers and record in
@@ -188,6 +196,8 @@ python -m pytest tests -q
 
 ## Repository
 - `tools/`: `calibrate.py` (ChArUco calibration), `pose_test.py` (Test 1), `predict_test.py` (Test 2),
+  `make_eval_plan.py` + `eval_report.py` (evaluation), `posthoc_sim_settings.py` (post-hoc analysis, not used by the
+  system),
   `drystone_core.py` (decision rules and simulation), `agent.py` (live agent), `service.py` (Lambda handler and
   the judges' page API), `web_local.py` (local server), `capture_sample.py` (sample photos),
   `make_placeholder_samples.py` (synthetic renders used by the tests), `common.py`
