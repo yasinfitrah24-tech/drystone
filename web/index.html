@@ -52,28 +52,35 @@
   .toplink { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; margin-right: -12px; border-radius: 8px; color: var(--hero-body); }
   .hero .toplink { color: var(--hero-body); }
   @media (hover: hover) { .hero .toplink:hover { color: #fff; background: rgba(255,255,255,0.08); } }
-  .hero-main { display: grid; grid-template-columns: minmax(0, 1fr) minmax(320px, 440px); align-items: center; gap: clamp(32px, 5vw, 72px); padding: clamp(32px, 5vw, 64px) 0 clamp(28px, 3.5vw, 48px); }
+  .hero-main { display: grid; grid-template-columns: minmax(0, 1fr) minmax(320px, 440px); align-items: center; gap: clamp(32px, 5vw, 72px); padding: clamp(24px, 3vw, 40px) 0; }
+  /* first screen: headline, buttons and the whole proof card, without scrolling */
+  @media (min-width: 861px) { .hero-main { min-height: calc(100svh - 57px); } }
+  .hero-cta { display: flex; flex-wrap: wrap; gap: 12px; margin-top: clamp(20px, 2.4vw, 32px); }
+  .hero .btn-solid, .hero .btn-line { display: inline-flex; align-items: center; min-height: 48px; padding: 0 22px; border-radius: 999px; font-size: 15px; font-weight: 600; text-decoration: none; }
+  .hero .btn-solid { background: var(--brand); color: #fff; border: 1px solid var(--brand-edge); }
+  .hero .btn-line { color: #fff; border: 1px solid rgba(185,203,238,0.45); }
+  @media (hover: hover) { .hero .btn-solid:hover { background: #1D4AAB; } .hero .btn-line:hover { background: rgba(255,255,255,0.08); } }
   .hero-copy { min-width: 0; }
   @media (max-width: 860px) { .hero-main { grid-template-columns: minmax(0, 1fr); } }
-  h1 { margin: 0; font-size: clamp(40px, 5.6vw, 80px); line-height: 0.98; font-weight: 700; letter-spacing: -0.03em; text-wrap: balance; }
+  h1 { margin: 0; font-size: clamp(40px, 5vw, 72px); line-height: 0.98; font-weight: 700; letter-spacing: -0.03em; text-wrap: balance; }
   .hero-sub { margin: clamp(8px, 1.2vw, 16px) 0 0; font-size: clamp(20px, 2.4vw, 32px); line-height: 1.2; color: var(--hero-sub); font-weight: 500; }
   .hero-body { max-width: 46ch; margin: clamp(16px, 2vw, 28px) 0 0; font-size: clamp(16px, 1.4vw, 19px); line-height: 1.5; color: var(--hero-body); text-wrap: pretty; }
   /* hero proof: a replay of one real check */
   .proof { width: 100%; margin: 0; background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow); overflow: hidden; }
   .proof-cmd { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 10px 14px; font: 12px var(--mono); color: var(--muted); border-bottom: 1px solid var(--soft); }
   .proof-tag { flex: none; font: 600 11px var(--mono); color: var(--brand); background: rgba(36,87,197,0.08); border: 1px solid rgba(36,87,197,0.25); padding: 2px 8px; border-radius: 999px; }
-  .proof canvas { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; background: var(--photo-bg); }
-  .proof-head { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; padding: 14px 16px 12px; min-height: 64px; background: var(--soft); transition: background-color 0.35s ease-out; }
+  .proof canvas { display: block; width: 100%; height: auto; aspect-ratio: 880 / 320; background: var(--photo-bg); }
+  .proof-head { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; padding: 10px 16px; min-height: 54px; background: var(--soft); transition: background-color 0.35s ease-out; }
   .proof-head.RED { background: var(--red-tint); }
-  .proof-safe small { display: block; font-weight: 500; font-size: 12px; }
-  .proof-zone { font-size: 36px; font-weight: 700; line-height: 1; letter-spacing: -0.02em; color: var(--red-text); }
+  .proof-safe small { display: block; font-weight: 500; font-size: 11.5px; }
+  .proof-zone { font-size: 30px; font-weight: 700; line-height: 1; letter-spacing: -0.02em; color: var(--red-text); }
   .proof-p { margin-left: auto; font: 500 14px var(--mono); }
-  .proof-p b { font-size: 30px; font-weight: 600; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
-  .proof-lines { list-style: none; margin: 0; padding: 12px 16px 0; display: grid; gap: 6px; font: 13px/1.45 var(--mono); }
+  .proof-p b { font-size: 26px; font-weight: 600; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+  .proof-lines { list-style: none; margin: 0; padding: 10px 16px 0; display: grid; gap: 3px; font: 12.5px/1.45 var(--mono); }
   .proof-lines li { display: grid; grid-template-columns: 58px 1fr; gap: 10px; }
   .proof-lines .k { color: var(--brand); font-weight: 600; }
-  .proof-safe { margin: 12px 16px 0; padding: 9px 12px; border: 1.5px solid var(--green); background: var(--green-tint); color: var(--green-text); border-radius: 8px; font: 600 13px/1.4 var(--mono); }
-  .proof-foot { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0 12px; padding: 4px 16px 4px; margin-top: 12px; border-top: 1px solid var(--soft); font-size: 12px; color: var(--muted); }
+  .proof-safe { margin: 10px 16px 0; padding: 7px 12px; border: 1.5px solid var(--green); background: var(--green-tint); color: var(--green-text); border-radius: 8px; font: 600 13px/1.4 var(--mono); }
+  .proof-foot { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0 12px; padding: 0 16px; margin-top: 10px; border-top: 1px solid var(--soft); font-size: 12px; color: var(--muted); }
   .hero .proof-foot a { display: inline-flex; align-items: center; min-height: 44px; font-size: 14px; font-weight: 600; color: var(--brand); }
   /* the replay only hides steps once the script runs, so the card is complete without it */
   .proof.anim [data-step] { opacity: 0; transform: translateY(4px); transition: opacity 0.35s ease-out, transform 0.35s ease-out; }
@@ -295,10 +302,11 @@
         <h1>Know before you stack.</h1>
         <p class="hero-sub">No mortar. Just placement.</p>
         <p class="hero-body">A camera reads the box stack, a physics simulation estimates the chance of a fall, and fixed rules decide.</p>
+        <div class="hero-cta"><a class="btn-solid" href="#h-try">Try the demo</a><a class="btn-line" href="#h-how">How it decides</a></div>
       </div>
       <figure class="proof" id="proof" aria-label="Replay of a real check: sample s1, next box at +16 cm">
         <div class="proof-cmd"><span id="proof-cmd">check &middot; sample s1 &middot; next box +16 cm</span><span class="proof-tag">real check</span></div>
-        <canvas id="proof-view" width="640" height="360" aria-hidden="true"></canvas>
+        <canvas id="proof-view" width="880" height="320" aria-hidden="true"></canvas>
         <div class="proof-head RED" id="proof-head"><span class="proof-zone" id="proof-zone" data-step>RED</span><span class="pill" id="proof-action" data-step>REJECT</span><span class="proof-p">P(fall) <b id="proof-p">73%</b></span></div>
         <ol class="proof-lines" id="proof-lines"></ol>
         <div class="proof-safe" id="proof-safe" data-step></div>
@@ -864,21 +872,34 @@
       ["OpenCV", "found " + REC.markers.length + " marker" + (REC.markers.length === 1 ? "" : "s") + ": ID " +
         REC.markers.map(function (m) { return m.id; }).join(", ")],
       ["Twin", "box ID " + REC.box_id + " at " + signed(REC.offset_cm) + " cm, " + Math.round(d.overhang_pct) + "% overhang"],
-      ["MuJoCo", d.n + " simulated drops, \u00b1 " + pct(d.ci) + " (95% CI)"],
-      ["Rule", "over 50% \u2192 " + d.zone + ", " + ACTION[d.action]]
+      ["MuJoCo", d.n + " simulated drops, \u00b1 " + pct(d.ci) + " (95% CI)"]
     ];
     el("proof-lines").innerHTML = lines.map(function (l) {
       return '<li data-step><span class="k">' + esc(l[0]) + "</span><span>" + esc(l[1]) + "</span></li>";
     }).join("");
     el("proof-safe").innerHTML = a ? esc("Safer spot " + signed(Math.round(a.offset_cm)) + " cm \u00b7 P(fall) " + pct(a.p) + " \u00b7 GREEN") +
       "<small>stays green even 1 cm further out</small>" : "No safe spot in the search range";
+    var crop = null;
+    function cropBox() {
+      // the part of the photo around the markers and boxes, at the canvas aspect ratio
+      var pts = [], W = img.naturalWidth, H = img.naturalHeight, A = pv.width / pv.height;
+      REC.polygons.concat(REC.markers).forEach(function (p) { pts = pts.concat(p.corners); });
+      var xs = pts.map(function (p) { return p[0]; }), ys = pts.map(function (p) { return p[1]; });
+      var x0 = Math.min.apply(null, xs), x1 = Math.max.apply(null, xs), y0 = Math.min.apply(null, ys), y1 = Math.max.apply(null, ys);
+      var cw = Math.min(W, Math.max((x1 - x0) * 1.6, (y1 - y0) * 1.35 * A)), ch = cw / A;
+      if (ch > H) { ch = H; cw = ch * A; }
+      var cx = Math.max(0, Math.min(W - cw, (x0 + x1) / 2 - cw / 2)), cy = Math.max(0, Math.min(H - ch, (y0 + y1) / 2 - ch / 2));
+      return { x: cx, y: cy, w: cw };
+    }
     function paint(stage) {
-      pv.width = 640; pv.height = 360;
-      g.setTransform(pv.width / img.naturalWidth, 0, 0, pv.height / img.naturalHeight, 0, 0);
+      pv.width = 880; pv.height = 320;
+      crop = crop || cropBox();
+      var k = pv.width / crop.w;
+      g.setTransform(k, 0, 0, k, -crop.x * k, -crop.y * k);
       g.drawImage(img, 0, 0);
       G = g;
       var lw = Math.max(2, img.naturalWidth / 400) * 1.4;
-      if (stage >= 1) REC.markers.forEach(function (m) { poly(m.corners, MARKER, lw); label("ID " + m.id, m.corners[0][0], m.corners[0][1] - 8, MARKER, 30); });
+      if (stage >= 1) REC.markers.forEach(function (m) { poly(m.corners, MARKER, lw); label("ID " + m.id, m.corners[0][0], m.corners[0][1] - 8, MARKER, 22); });
       REC.polygons.forEach(function (p) {
         if (p.role === "stack" && stage >= 2) box(p.corners, "#ffffff", lw, []);
         if (p.role === "suggestion" && stage >= 4) box(p.corners, BRAND, lw * 1.4, [14, 10]);
@@ -903,7 +924,7 @@
             if (k < 1) requestAnimationFrame(count);
           })();
         }],
-        [2550, function () { el("proof-head").classList.add(d.zone); on("#proof-head [data-step]"); steps[3].classList.add("on"); }],
+        [2550, function () { el("proof-head").classList.add(d.zone); on("#proof-head [data-step]"); }],
         [3250, function () { paint(4); on("#proof-safe"); }]
       ];
       t.forEach(function (x) { setTimeout(x[1], x[0]); });
