@@ -118,8 +118,12 @@ code; no rule is written twice, and no language model decides anything.
   **6.4 px** onto the white paper in darker photos and box positions by up to **61 mm** in 44 readings. It was
   rejected; missed markers are handled by asking the supervisor instead (sections 8.4 and 8.6).
 
-*TODO (after the page redesign of 22–23 Oct): an annotated photo with the detected markers and the digital twin
-wireframes, faces removed.*
+![Sample s2 with the detected markers, the digital twin of the stack, the planned next box and the suggested spot](img/annotated_s2.png)
+
+*Sample s2 (two boxes, aligned) with the next box planned at +13 cm, as drawn by the judges' page. Light blue:
+the detected ArUco markers with their IDs. White: the digital twin of the stack (boxes ID 0 and ID 1). Solid
+yellow: the planned next box, in its zone colour (YELLOW, P(fall) 27%). Dashed blue: the suggested spot,
++9 cm, which stays green even if the box lands 1 cm further out.*
 
 ## 6. AWS deployment
 
