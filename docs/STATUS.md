@@ -2,7 +2,7 @@
 
 Salinan status untuk repo (dibaca Yasin, Vincent, dan Claude masing-masing). Update di commit yang sama setiap ada keputusan atau hasil tes baru. Semua jam = waktu China.
 
-Terakhir diperbarui: 19 Okt 2026. Live: `drystone-service:7a08913` (halaman juri Blueprint, sejak 19 Okt 14.58; rollback `3b023a4`). **Evaluasi 25 percobaan baru selesai: FAIL (C2b, kelebihan 1 roboh); C1, C2a, C3, C4 lulus.**
+Terakhir diperbarui: 19 Okt 2026. Live: `drystone-service:e622387` (halaman juri Blueprint + perbaikan Impeccable, sejak 19 Okt 15.43; rollback `7a08913`). **Evaluasi 25 percobaan baru selesai: FAIL (C2b, kelebihan 1 roboh); C1, C2a, C3, C4 lulus.**
 
 ## Ringkasan
 - **Lomba:** OpenCV AI Competition 2026 (https://opencv26.devpost.com/). Deadline **27 Okt, 14.45** (target submit 26 Okt malam). Penjurian 27 Okt–10 Nov, endpoint harus tetap hidup.
@@ -227,7 +227,9 @@ Latihan final 18 Okt 13.36–13.41, `agent.py --aws`, Lambda `drystone-service:3
 - Skill lokal **Impeccable** (`.claude/`, tidak di-commit) dijalankan pada `web/index.html`: `audit`, `critique` (dua penilaian terpisah, skor 31/40; detektor 7 temuan, 5 positif palsu), lalu `typeset`, `layout`, `bolder`, `delight`, `polish`. **Hanya tampilan**; API, `service.py`, `samples.json`, dan aturan keputusan tidak berubah. Warna, font, dan susunan mockup Blueprint tetap.
 - Perubahan: label zona di penggaris 9 → 11 px; judul foto tidak terpotong; label "EVIDENCE" dihapus; lebar baca ±70 karakter; kartu keputusan menempel (sticky) di desktop; stepper jadi "Fine-tune" + tombol "Check +X cm"; **batang waktu per tahap** di "How it decided"; keterangan Action menyebut pencarian posisi aman; "± 7% (95% CI, n runs)"; kartu awal menawarkan contoh RED ("Check +16 cm"); penghitung detik saat loading; pin penggaris berwarna zona setelah hasil; hover/disabled; disclaimer juga di form override; kartu tahap sebelum hasil tidak memudar (kontras); `aria-live` satu baris; tombol Trace 44 px; tahap 0 ms = "<1 ms".
 - Skill global **Humanizer** dijalankan pada `docs/DEVPOST.md`: label hiasan dan pengulangan dibuang, kalimat dipecah; angka dicek dengan skrip (tidak ada angka baru; yang hilang hanya duplikat), batasan klaim tetap.
-- Screenshot `docs/img/web_desktop.png` dan `web_mobile.png` diperbarui. 51 tes lulus. Deploy: lihat di bawah.
+- Screenshot `docs/img/web_desktop.png` dan `web_mobile.png` diperbarui. 51 tes lulus.
+- **Deploy 19 Okt 15.43:** image `drystone-service:e622387` (+ `:latest`, digest `sha256:6c03b8c9…44be`), Lambda `Successful`/`Active`, Function URL tetap. **Rollback target: `drystone-service:7a08913`** (perintah rollback seperti di bagian deploy 18 Okt, dengan tag `7a08913`). ECR saat deploy: `e622387`/`latest`, `7a08913`, `3b023a4`, `9523213`; lifecycle policy menyisakan 2 image bertag terbaru.
+- **Tes live (15.44):** `GET /` 200 (3,8 dtk), halaman versi Impeccable ("Fine-tune", batang waktu) · `samples.json` 200 `no-cache` · **s2 +16 cm → RED 69%, REJECT, usulan +9 cm (1%; +10 cm 2,7%)**, 9,1 dtk, sama seperti sebelumnya · `aws/test_endpoint.py` s2 +6 cm → GREEN GUIDE (4,3 dtk) · `POST /log` cancel → 200, baris `web_supervisor_choice` di CloudWatch · override tanpa alasan → 400 · 0 baris ERROR.
 
 ### Halaman juri: desain Blueprint (19 Okt) — live `7a08913` (digantikan versi Impeccable)
 - `web/index.html` ditulis ulang dengan desain "TURN 4 · Blueprint · rhythm fix" dari Claude Design; **hanya tampilan**. `tools/service.py`, `tools/*.py`, `samples.json`, foto, format API, dan setelan evaluasi tidak berubah. Mockup disimpan sebagai referensi di `docs/design/judge_mockup.html` (tidak di-deploy; runtime `support.js` dari Claude Design tidak di-commit).
@@ -299,7 +301,7 @@ Latihan final 18 Okt 13.36–13.41, `agent.py --aws`, Lambda `drystone-service:3
 - **Diagram final (18 Okt):** `docs/img/architecture.png` dan `docs/img/agent_loop.png` (dari Claude Design, 1920×1080, ±0,23 MB tiap file, dicek: tanpa Function URL atau nomor akun, metadata PNG kosong). Dipasang di REPORT §4 dan §8.1 (Mermaid tetap ada di bawahnya sebagai versi teks) dan di README. **Saat submit:** unggah ke galeri gambar Devpost, architecture dulu, lalu agent_loop.
 - **Sabtu 24 Okt:** rekam video (Yasin + Vincent), adegan sesuai "Alur video final".
 - **Minggu 25 Okt:** edit video, finalisasi laporan, isi Devpost.
-- **Senin 26 Okt:** isi `LINKS` di awal skrip `web/index.html` (repo, video, REPORT; sekarang sengaja masih `#`) → deploy ulang dengan tag hash baru (rollback = `7a08913`) → tes live (`GET /`, link terbuka, s2 +16 → RED, `aws/test_endpoint.py`, `/log` di CloudWatch). Lalu jadikan repo publik + cek ulang tidak ada secret, nomor akun AWS, atau Function URL di seluruh riwayat git (bukan hanya commit terakhir), cek akhir halaman juri dari HP, submit (deadline 27 Okt 14.45).
+- **Senin 26 Okt:** isi `LINKS` di awal skrip `web/index.html` (repo, video, REPORT; sekarang sengaja masih `#`) → deploy ulang dengan tag hash baru (rollback = `e622387`) → tes live (`GET /`, link terbuka, s2 +16 → RED, `aws/test_endpoint.py`, `/log` di CloudWatch). Lalu jadikan repo publik + cek ulang tidak ada secret, nomor akun AWS, atau Function URL di seluruh riwayat git (bukan hanya commit terakhir), cek akhir halaman juri dari HP, submit (deadline 27 Okt 14.45).
 
 ## Bonus (hanya kalau inti selesai)
 - S3 (foto bukti per keputusan) + DynamoDB (log keputusan, approval, override). Log approve/override dari halaman juri **sudah** tercatat di CloudWatch Logs (satu baris JSON `web_supervisor_choice`).
