@@ -43,12 +43,15 @@
   /* hero band */
   .hero { background-color: var(--band); --g: rgba(143,176,240,0.13); background-image: var(--grid); background-size: 28px 28px; padding-bottom: var(--overlap); color: #fff; }
   .hero a { color: #fff; }
-  .topbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 20px 0; border-bottom: 1px solid var(--band-border); }
-  .brand { display: flex; align-items: center; gap: 12px; font-size: 22px; font-weight: 700; letter-spacing: -0.01em; }
-  .logo { display: flex; flex-direction: column; gap: 2px; width: 28px; }
-  .logo i { display: block; width: 22px; height: 13px; background: var(--brand); border: 1.5px solid var(--brand-edge); border-radius: 1.5px; }
-  .logo i:first-child { margin-left: 5px; }
-  .toplink { display: flex; align-items: center; min-height: 44px; padding: 0 4px; font-size: 15px; font-weight: 500; }
+  .topbar { background: rgba(9,20,40,0.35); border-bottom: 1px solid var(--band-border); }
+  .topbar .wrap { display: flex; align-items: center; justify-content: space-between; gap: 16px; height: 56px; }
+  .brand { display: flex; align-items: center; gap: 9px; font-size: 17px; font-weight: 700; letter-spacing: -0.01em; }
+  .logo { display: flex; flex-direction: column; gap: 1.5px; width: 19px; }
+  .logo i { display: block; width: 15px; height: 8.5px; background: var(--brand); border: 1px solid var(--brand-edge); border-radius: 1px; }
+  .logo i:first-child { margin-left: 4px; }
+  .toplink { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; margin-right: -12px; border-radius: 8px; color: var(--hero-body); }
+  .hero .toplink { color: var(--hero-body); }
+  @media (hover: hover) { .hero .toplink:hover { color: #fff; background: rgba(255,255,255,0.08); } }
   .hero-main { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: clamp(14px, 3vw, 48px); padding: clamp(24px, 6vw, 80px) 0 clamp(18px, 2.5vw, 28px); }
   .hero-main > div { flex: 1 1 560px; min-width: 0; }
   h1 { margin: 0; font-size: clamp(42px, 6.4vw, 88px); line-height: 0.98; font-weight: 700; letter-spacing: -0.03em; text-wrap: balance; }
@@ -244,11 +247,13 @@
 </head>
 <body>
 <div class="hero">
-  <div class="wrap">
-    <header class="topbar">
+  <header class="topbar">
+    <div class="wrap">
       <div class="brand"><span class="logo" aria-hidden="true"><i></i><i></i><i></i></span>Drystone</div>
-      <a class="toplink" data-link="repo" href="#">GitHub repo</a>
-    </header>
+      <a class="toplink" data-link="repo" href="#" aria-label="GitHub repository" title="GitHub repository"><svg viewBox="0 0 16 16" width="20" height="20" aria-hidden="true" focusable="false"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg></a>
+    </div>
+  </header>
+  <div class="wrap">
     <section class="hero-main">
       <div>
         <h1>Know before you stack.</h1>
