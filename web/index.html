@@ -86,21 +86,17 @@
   .proof.anim [data-step] { opacity: 0; transform: translateY(4px); transition: opacity 0.35s ease-out, transform 0.35s ease-out; }
   .proof.anim [data-step].on { opacity: 1; transform: none; }
   /* the problem, in the band between the hero and the try-it cards */
-  .problem { padding: clamp(8px, 2vw, 24px) 0 clamp(40px, 5vw, 72px); }
+  .problem { padding: clamp(16px, 2.5vw, 32px) 0 clamp(36px, 4.5vw, 64px); }
   .problem-label { font: 600 12px var(--mono); letter-spacing: 0.12em; color: var(--brand-edge); }
-  .problem h2 { margin: 10px 0 0; font-size: clamp(30px, 4vw, 52px); line-height: 1.08; letter-spacing: -0.02em; color: #fff; text-wrap: balance; }
+  .problem h2 { margin: 8px 0 0; font-size: clamp(28px, 3.3vw, 44px); line-height: 1.1; letter-spacing: -0.02em; color: #fff; text-wrap: balance; }
   .problem h2 span { display: block; color: var(--brand-edge); }
-  .problem-lead { margin: 16px 0 0; max-width: 62ch; font-size: clamp(16px, 1.3vw, 18px); line-height: 1.6; color: var(--hero-body); }
-  .stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(20px, 3vw, 40px); margin: clamp(28px, 4vw, 48px) 0 0; padding: 0; list-style: none; }
+  .problem-lead { margin: 14px 0 0; max-width: 72ch; font-size: 16px; line-height: 1.6; color: var(--hero-body); }
+  .stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(20px, 3vw, 36px); margin: clamp(28px, 3.5vw, 44px) 0 0; padding: 0; list-style: none; }
   @media (max-width: 760px) { .stats { grid-template-columns: minmax(0, 1fr); } }
-  .stats li { border-top: 1px solid var(--band-border); padding-top: clamp(16px, 2vw, 24px); }
-  /* captions start on one line across the three columns, whatever the height of the figure above */
-  @media (min-width: 761px) { .stats { grid-template-rows: auto auto; } .stats li { display: grid; grid-row: span 2; grid-template-rows: subgrid; align-items: end; } }
-  .stats li p { align-self: start; }
-  .stat-num { display: block; font-size: clamp(48px, 6vw, 80px); line-height: 1; font-weight: 700; letter-spacing: -0.03em; color: var(--brand-edge); font-variant-numeric: tabular-nums; }
-  .stat-num.quote { font-size: clamp(30px, 3.4vw, 44px); line-height: 1.1; padding-top: 0.15em; }
-  .stats p { margin: 14px 0 0; max-width: 36ch; font-size: 15px; line-height: 1.55; color: #fff; }
-  .problem-note { margin: clamp(24px, 3vw, 36px) 0 0; max-width: 80ch; font-size: 13px; line-height: 1.6; color: var(--hero-sub); }
+  .stats li { border-top: 1px solid var(--band-border); padding-top: clamp(18px, 2.2vw, 28px); }
+  .stat-num { display: block; font-size: clamp(44px, 4.8vw, 68px); line-height: 1; font-weight: 700; letter-spacing: -0.03em; color: var(--brand-edge); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .stats p { margin: 12px 0 0; max-width: 38ch; font-size: 14.5px; line-height: 1.5; color: #fff; }
+  .problem-note { margin: clamp(22px, 2.6vw, 32px) 0 0; font-size: 12.5px; line-height: 1.6; color: var(--hero-sub); }
   .hero .problem-note a { color: var(--hero-sub); }
 
   /* try it */
@@ -316,20 +312,20 @@
     <section class="problem" aria-labelledby="h-problem">
       <span class="problem-label">THE PROBLEM</span>
       <h2 id="h-problem">Every stack is a judgement call,<span>made by eye.</span></h2>
-      <p class="problem-lead">How far can the next box hang over the one below before the stack falls? When boxes are
-        stacked by hand, a person answers that by eye, one box at a time. A wrong guess only shows when the stack comes down.</p>
+      <p class="problem-lead">How far can the next box hang over the one below? When boxes are stacked by hand, a person
+        answers that by eye, and a wrong guess only shows when the stack comes down.</p>
       <ul class="stats">
-        <li><span class="stat-num">12,100</span><p>of the 99,800 injuries with days away from work in US transportation and
-          warehousing in 2020 were &ldquo;struck by object or equipment&rdquo;</p></li>
+        <li><span class="stat-num">12,100</span><p>injuries &ldquo;struck by object or equipment&rdquo;, of 99,800 with days
+          away from work in US transportation and warehousing (2020)</p></li>
         <li><span class="stat-num">65</span><p>deaths from &ldquo;contact with objects and equipment&rdquo; in the same
-          industries in 2020 (62&ndash;75 a year, 2016&ndash;2020)</p></li>
-        <li><span class="stat-num quote">&ldquo;Stable and secure&rdquo;</span><p>is what US OSHA requires of materials stored
-          in tiers: stacked, blocked, interlocked or limited in height, against sliding or collapse</p></li>
+          industries in 2020 (62&ndash;75 a year since 2016)</p></li>
+        <li><span class="stat-num">&gt;7 ft</span><p>of stacked boxes collapsed in a store and trapped a worker at the waist
+          (Oregon OSHA, Nov 2025)</p></li>
       </ul>
-      <p class="problem-note">The BLS categories cover all objects and equipment, not only falling stacks: they show the scale of
-        the risk, not how many people falling stacks hurt. Sources:
-        <a href="https://www.bls.gov/iif/snapshots/isn-transportation-and-warehousing-2016-20.htm" target="_blank" rel="noopener">US Bureau of Labor Statistics, transportation and warehousing 2016&ndash;20</a> &middot;
-        <a href="https://www.osha.gov/laws-regs/regulations/standardnumber/1910/1910.176" target="_blank" rel="noopener">OSHA 29 CFR 1910.176(b)</a></p>
+      <p class="problem-note">Sources:
+        <a href="https://www.bls.gov/iif/snapshots/isn-transportation-and-warehousing-2016-20.htm" target="_blank" rel="noopener">US BLS, transportation and warehousing 2016&ndash;20</a> &middot;
+        <a href="https://osha.oregon.gov/pubs/newsletters/resource/2025/Pages/2511-unstable-loads.aspx" target="_blank" rel="noopener">Oregon OSHA, unstable loads (Nov 2025)</a>.
+        BLS counts all objects and equipment, not only falling stacks.</p>
     </section>
   </div>
 </div>
