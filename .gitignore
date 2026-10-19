@@ -20,3 +20,6 @@ event.json
 out.json
 *_result.jpg
 hasil_endpoint.jpg
+
+# Local Claude Code skills, agents and hooks (Impeccable): never commit
+.claude/

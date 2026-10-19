@@ -41,7 +41,7 @@ cardboard boxes of 1.0 kg, not on real warehouse loads such as lumber or full ca
 - After the box is placed, the camera checks the result: OK, OFF_PLAN or FELL. A box that fell is planned again; a
   box that is not visible makes the agent ask instead of guessing.
 - The same decision code runs on the laptop and on AWS Lambda. Judges can try it on a public web page with three
-  real sample photos, a slider, the decision, a numbered trace with timings, "use suggestion" and "override".
+  real sample photos, a placement ruler, the decision, a numbered trace with timings, "use suggestion" and "override".
 
 It is a decision-support prototype, **not a certified safety device**, tested on three uniform 1 kg cardboard boxes.
 

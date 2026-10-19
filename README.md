@@ -21,9 +21,11 @@ the same code as the laptop agent.
 
 1. **Pick a sample photo.** Three real photos from our calibrated webcam: one box, two boxes aligned, two boxes
    with the top one shifted. The page draws the detected markers and the digital twin on the photo.
-2. **Move the slider** to choose where the next box goes. *Shift* = how far the next box sits to the right of the
-   box directly below it, in whole cm (−16 to +16). The example buttons give a GREEN, a YELLOW and a RED case.
-3. **Press Analyze and read the decision:** zone, P(fall) with its uncertainty and number of simulations, the
+2. **Tap a spot on the placement ruler** to choose where the next box goes. *Shift* = how far the next box sits to
+   the right of the box directly below it, in whole cm. The ruler markers give a GREEN, a YELLOW and a RED case and
+   the suggested spot; tapping anywhere else on the ruler, or the − / + buttons and **Check** (−16 to +16), picks
+   any other shift.
+3. **Read the decision:** zone, P(fall) with its uncertainty and number of simulations, the
    agent's action, a suggested spot when the request is not green, and a numbered trace (marker detection →
    digital twin → simulation → decision → action) with the time of each step.
 4. **Use suggestion** (YELLOW or RED) moves the box to the suggested spot and checks it again; it comes back GREEN.

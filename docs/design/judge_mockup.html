@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>@keyframes dsload{0%{left:-35%}100%{left:100%}}</style>
+</helmet>
+<div style="container-type:inline-size; background-color:{{ t.bg }}; background-image:{{ t.pageGrid }}; background-size:28px 28px; color:{{ t.text }}; font-family:'IBM Plex Sans',Helvetica,Arial,sans-serif; width:100%; overflow-x:hidden;">
+
+<div data-screen-label="Hero" style="background-color:{{ t.band }}; background-image:{{ t.bandGrid }}; background-size:{{ t.gridSize }}; padding-bottom:{{ t.overlap }};">
+<div style="max-width:1200px; margin:0 auto; padding:0 clamp(20px,5cqw,96px);">
+  <header style="display:flex; align-items:center; justify-content:space-between; gap:16px; padding:20px 0; border-bottom:1px solid {{ t.bandBorder }};">
+    <div style="display:flex; align-items:center; gap:12px;">
+      <div style="display:flex; flex-direction:column; gap:2px; width:28px;">
+        <div style="box-sizing:border-box; width:22px; height:13px; background:{{ t.logo }}; border:1.5px solid {{ t.logoEdge }}; border-radius:1.5px; margin-left:5px;"></div>
+        <div style="box-sizing:border-box; width:22px; height:13px; background:{{ t.logo }}; border:1.5px solid {{ t.logoEdge }}; border-radius:1.5px;"></div>
+        <div style="box-sizing:border-box; width:22px; height:13px; background:{{ t.logo }}; border:1.5px solid {{ t.logoEdge }}; border-radius:1.5px;"></div>
+      </div>
+      <span style="font-size:22px; font-weight:700; letter-spacing:-0.01em; color:{{ t.heroText }};">Drystone</span>
+    </div>
+    <a href="#" style="display:flex; align-items:center; min-height:44px; padding:0 4px; font-size:15px; font-weight:500; text-decoration:underline; text-underline-offset:3px; color:{{ t.bandLink }};">GitHub repo</a>
+  </header>
+  <section style="display:flex; flex-wrap:wrap; align-items:flex-end; justify-content:space-between; gap:clamp(14px,3cqw,48px); padding:clamp(24px,6cqw,80px) 0 clamp(24px,4cqw,48px);">
+    <div style="flex:1 1 560px; min-width:0;">
+      <h1 style="margin:0; font-size:clamp(42px,6.4cqw,88px); line-height:0.98; font-weight:700; letter-spacing:-0.03em; text-wrap:balance; color:{{ t.heroText }};">Know before you stack.</h1>
+      <p style="margin:clamp(8px,1.2cqw,16px) 0 0; font-size:clamp(20px,2.4cqw,32px); line-height:1.2; color:{{ t.heroSub }}; font-weight:500;">No mortar. Just placement.</p>
+    </div>
+    <p style="flex:1 1 340px; max-width:420px; margin:0; font-size:clamp(16px,1.4cqw,19px); line-height:1.5; color:{{ t.heroBody }}; text-wrap:pretty;">A camera reads the box stack, a physics simulation estimates the chance of a fall, and fixed rules decide.</p>
+  </section>
+</div>
+</div>
+
+<div style="max-width:1200px; margin:0 auto; padding:0 clamp(20px,5cqw,96px);">
+  <section data-screen-label="Try it" style="position:relative; margin-top:{{ t.overlapNeg }}; padding:clamp(24px,3cqw,40px) 0 clamp(40px,6cqw,88px);">
+    <div style="display:flex; flex-wrap:wrap; align-items:baseline; justify-content:space-between; gap:4px 16px; margin-bottom:14px;">
+      <h2 style="margin:0; font-size:clamp(22px,2.2cqw,28px); font-weight:700; letter-spacing:-0.01em; color:{{ t.tryHead }};">Try it</h2>
+      <span style="font-size:15px; color:{{ t.tryHelp }};">Pick a photo, then tap a spot on the ruler.</span>
+    </div>
+    <div style="display:flex; flex-wrap:wrap; gap:clamp(16px,2cqw,24px); align-items:stretch;">
+
+      <div style="flex:1 1 600px; min-width:0; background:{{ t.surface }}; border:1px solid {{ t.border }}; box-shadow:{{ t.cardShadow }}; border-radius:12px; padding:clamp(14px,2cqw,24px); display:flex; flex-direction:column; gap:clamp(14px,1.8cqw,20px);">
+        <div style="display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:clamp(8px,1cqw,12px);">
+          <sc-for list="{{ thumbs }}" as="th" hint-placeholder-count="3">
+            <button onClick="{{ th.onClick }}" disabled="{{ busy }}" style-focus="outline:3px solid {{ t.focus }}; outline-offset:2px;" style="all:unset; box-sizing:border-box; cursor:pointer; display:flex; flex-direction:column; gap:6px; padding:5px; min-height:44px; border-radius:8px; border:{{ th.border }}; opacity:{{ th.opacity }}; background:{{ t.surface }};">
+              <div style="position:relative; width:100%; aspect-ratio:16/9; border-radius:4px; overflow:hidden; background:{{ t.photoBg }};">
+                <img src="{{ th.img }}" alt="{{ th.label }}" style="width:100%; height:100%; object-fit:cover; display:block;">
+              </div>
+              <div style="display:flex; gap:6px; align-items:baseline; padding:0 2px 2px; min-width:0;">
+                <span style="font-family:'IBM Plex Mono',monospace; font-size:12px; font-weight:600; color:{{ th.idColor }};">{{ th.id }}</span>
+                <span style="font-size:13px; color:{{ t.muted }}; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ th.label }}</span>
+              </div>
+            </button>
+          </sc-for>
+        </div>
+
+        <div style="position:relative; width:100%; aspect-ratio:16/9; border-radius:8px; overflow:hidden; background:{{ t.photoBg }};">
+          <img src="{{ cur.img }}" alt="{{ cur.label }}" style="width:100%; height:100%; object-fit:cover; display:block;">
+          <span style="position:absolute; left:10px; top:10px; background:{{ t.surface }}; color:{{ t.text }}; border:1px solid {{ t.border }}; border-radius:6px; padding:4px 8px; font-family:'IBM Plex Mono',monospace; font-size:12px; font-weight:500;">{{ cur.id }} · {{ cur.label }}</span>
+        </div>
+
+        <div>
+          <div style="display:flex; justify-content:space-between; align-items:baseline; gap:12px; flex-wrap:wrap;">
+            <span style="font-size:15px; font-weight:600;">Placement ruler</span>
+            <span style="font-size:13px; color:{{ t.muted }};">Next box, cm right of the box below</span>
+          </div>
+          <div style="padding:0 30px; margin-top:6px; border-radius:8px; background-image:{{ t.rulerGrid }}; background-size:14px 14px;">
+            <div style="position:relative; height:150px;">
+              <sc-for list="{{ markers }}" as="m" hint-placeholder-count="4">
+                <div style="position:absolute; left:{{ m.left }}; top:{{ m.top }}; bottom:40px; transform:translateX(-50%); display:flex; flex-direction:column; align-items:center;">
+                  <button onClick="{{ m.onClick }}" disabled="{{ busy }}" aria-label="{{ m.aria }}" style-focus="outline:3px solid {{ t.focus }}; outline-offset:2px;" style="all:unset; box-sizing:border-box; cursor:pointer; min-width:46px; min-height:46px; padding:4px 7px; border-radius:7px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px; background:{{ m.bg }}; color:{{ m.ink }}; border:{{ m.border }}; outline:{{ m.outline }}; outline-offset:2px; opacity:{{ m.opacity }};">
+                    <span style="font-family:'IBM Plex Mono',monospace; font-size:15px; font-weight:600; line-height:1;">{{ m.label }}</span>
+                    <span style="font-size:9px; font-weight:700; letter-spacing:0.06em; line-height:1.1;">{{ m.word }}</span>
+                  </button>
+                  <div style="flex:1; width:0; border-left:{{ m.pin }};"></div>
+                </div>
+              </sc-for>
+              <div style="position:absolute; left:0; right:0; bottom:38px; height:2px; background:{{ t.ruler }};"></div>
+              <sc-for list="{{ ticks }}" as="k" hint-placeholder-count="19">
+                <div style="position:absolute; left:{{ k.left }}; bottom:{{ k.bottom }}; width:1px; height:{{ k.h }}; background:{{ t.tick }};"></div>
+              </sc-for>
+              <sc-for list="{{ tickLabels }}" as="k" hint-placeholder-count="10">
+                <span style="position:absolute; left:{{ k.left }}; bottom:6px; transform:translateX(-50%); font-family:'IBM Plex Mono',monospace; font-size:11px; color:{{ t.tickLabel }};">{{ k.text }}</span>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex; flex-wrap:wrap; gap:8px 18px; padding-top:14px; border-top:1px solid {{ t.soft }}; font-size:13px; color:{{ t.body }};">
+          <span style="display:flex; align-items:center; gap:6px;"><span style="width:10px; height:10px; border-radius:2px; background:#267D47;"></span><b>GREEN</b> &lt;10% · guide</span>
+          <span style="display:flex; align-items:center; gap:6px;"><span style="width:10px; height:10px; border-radius:2px; background:#E2AE1C;"></span><b>YELLOW</b> 10–50% · ask supervisor</span>
+          <span style="display:flex; align-items:center; gap:6px;"><span style="width:10px; height:10px; border-radius:2px; background:#C93A25;"></span><b>RED</b> &gt;50% · reject</span>
+        </div>
+      </div>
+
+      <div data-screen-label="Result" style="flex:1 1 380px; min-width:0; background:{{ t.surface }}; border:1px solid {{ t.border }}; box-shadow:{{ t.cardShadow }}; border-radius:12px; overflow:hidden; display:flex; flex-direction:column;">
+        <div style="padding:14px clamp(16px,2cqw,24px); border-bottom:1px solid {{ t.soft }}; display:flex; justify-content:space-between; gap:12px; font-family:'IBM Plex Mono',monospace; font-size:12px; color:{{ t.muted }}; letter-spacing:0.04em;">
+          <span>DECISION</span><span>{{ metaTop }}</span>
+        </div>
+
+        <sc-if value="{{ isIdle }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:32px clamp(16px,2cqw,24px); font-size:16px; color:{{ t.muted }}; line-height:1.5;">Tap a marker on the ruler to run the check.</div>
+        </sc-if>
+
+        <sc-if value="{{ isLoading }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:clamp(24px,3cqw,40px) clamp(16px,2cqw,24px); display:flex; flex-direction:column; gap:16px; flex:1;">
+            <span style="font-size:clamp(20px,2cqw,24px); font-weight:600;">Running Monte Carlo on AWS Lambda…</span>
+            {{ loader }}
+            <span style="font-size:15px; color:{{ t.muted }}; line-height:1.5;">600 simulated drops of the next box at <span style="font-family:'IBM Plex Mono',monospace; color:{{ t.text }};">{{ shiftLabel }} cm</span>, with 1 cm placement and 2 cm load uncertainty. Photos and ruler are locked until it answers.</span>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isError }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:clamp(24px,3cqw,40px) clamp(16px,2cqw,24px); display:flex; flex-direction:column; gap:14px; flex:1;">
+            <span style="font-size:clamp(22px,2.2cqw,28px); font-weight:700;">The simulator didn't answer.</span>
+            <span style="font-size:16px; color:{{ t.body }}; line-height:1.5; text-wrap:pretty;">AWS Lambda took longer than 10 seconds, so nothing was decided. Your photo and spot are kept. No zone is shown until a real result comes back.</span>
+            <button onClick="{{ retry }}" style="all:unset; box-sizing:border-box; cursor:pointer; align-self:flex-start; min-height:46px; padding:0 20px; display:flex; align-items:center; border-radius:8px; background:{{ t.brand }}; color:{{ t.brandInk }}; font-size:15px; font-weight:600;">Try again</button>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isResult }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex; flex-direction:column; flex:1;">
+            <div style="background:{{ r.tint }}; padding:clamp(18px,2.4cqw,28px) clamp(16px,2cqw,24px); display:flex; flex-direction:column; gap:10px;">
+              <div style="display:flex; flex-wrap:wrap; align-items:center; gap:10px 16px;">
+                <span style="font-size:clamp(48px,5cqw,64px); line-height:1; font-weight:700; letter-spacing:-0.02em; color:{{ r.text }};">{{ r.zone }}</span>
+                <span style="padding:7px 12px; border-radius:6px; background:{{ r.fill }}; color:{{ r.ink }}; font-family:'IBM Plex Mono',monospace; font-size:14px; font-weight:600; letter-spacing:0.04em;">{{ r.action }}</span>
+              </div>
+              <div style="display:flex; align-items:baseline; gap:12px; font-family:'IBM Plex Mono',monospace;">
+                <span style="font-size:clamp(20px,2cqw,24px); font-weight:500;">P(fall)</span>
+                <span style="font-size:clamp(56px,6cqw,80px); line-height:1; font-weight:600; letter-spacing:-0.03em;">{{ r.p }}%</span>
+              </div>
+              <div style="position:relative; height:26px; margin-top:4px;">
+                <div style="position:absolute; left:0; right:0; top:0; height:8px; background:{{ t.meterBg }}; border:1px solid {{ t.border }}; border-radius:4px; overflow:hidden;">
+                  <div style="height:100%; width:{{ r.pct }}; background:{{ r.fill }};"></div>
+                </div>
+                <div style="position:absolute; left:10%; top:-3px; width:2px; height:14px; background:{{ t.text }};"></div>
+                <div style="position:absolute; left:50%; top:-3px; width:2px; height:14px; background:{{ t.text }};"></div>
+                <span style="position:absolute; left:10%; top:13px; transform:translateX(-50%); font-family:'IBM Plex Mono',monospace; font-size:11px; color:{{ t.body }};">10%</span>
+                <span style="position:absolute; left:50%; top:13px; transform:translateX(-50%); font-family:'IBM Plex Mono',monospace; font-size:11px; color:{{ t.body }};">50%</span>
+              </div>
+            </div>
+            <div style="padding:clamp(16px,2cqw,24px); display:flex; flex-direction:column; gap:14px; flex:1;">
+              <p style="margin:0; font-size:17px; line-height:1.45; text-wrap:pretty;">{{ r.advice }}</p>
+              <sc-if value="{{ r.hasSug }}" hint-placeholder-val="{{ true }}">
+                <button onClick="{{ r.useSug }}" style="all:unset; box-sizing:border-box; cursor:pointer; align-self:flex-start; min-height:46px; padding:0 18px; display:flex; align-items:center; gap:8px; border-radius:8px; border:{{ t.ctaBorder }}; color:{{ t.cta }}; font-size:15px; font-weight:600;" style-focus="outline:3px solid {{ t.focus }}; outline-offset:2px;">Check <span style="font-family:'IBM Plex Mono',monospace;">{{ r.sugLabel }} cm</span></button>
+              </sc-if>
+              <sc-if value="{{ r.isYellow }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex; flex-direction:column; gap:8px; padding-top:12px; border-top:1px solid {{ t.soft }};">
+                  <span style="font-size:13px; color:{{ t.muted }};">Supervisor choice (logged, never changes the decision)</span>
+                  <div style="display:flex; flex-wrap:wrap; gap:8px;">
+                    <span style="min-height:44px; padding:0 14px; display:flex; align-items:center; border:1px solid {{ t.btnBorder }}; border-radius:8px; font-size:14px; font-weight:500;">Approve</span>
+                    <span style="min-height:44px; padding:0 14px; display:flex; align-items:center; border:1px solid {{ t.btnBorder }}; border-radius:8px; font-size:14px; font-weight:500;">Use suggestion</span>
+                    <span style="min-height:44px; padding:0 14px; display:flex; align-items:center; border:1px solid {{ t.btnBorder }}; border-radius:8px; font-size:14px; font-weight:500;">Override…</span>
+                  </div>
+                </div>
+              </sc-if>
+              <span style="margin-top:auto; font-family:'IBM Plex Mono',monospace; font-size:12px; color:{{ t.muted }};">{{ r.meta }}</span>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+    </div>
+  </section>
+
+</div>
+  <sc-if value="{{ full }}" hint-placeholder-val="{{ true }}">
+  <section data-screen-label="How it decided" style="background-color:{{ t.howBand }}; background-image:{{ t.howGrid }}; background-size:28px 28px; border-top:1px solid {{ t.howBorder }}; border-bottom:1px solid {{ t.howBorder }};">
+  <div style="max-width:1200px; margin:0 auto; padding:clamp(32px,4cqw,56px) clamp(20px,5cqw,96px);">
+    <div style="display:flex; flex-wrap:wrap; align-items:baseline; justify-content:space-between; gap:4px 16px; margin-bottom:20px;">
+      <h2 style="margin:0; font-size:clamp(22px,2.2cqw,28px); font-weight:700; letter-spacing:-0.01em;">How it decided</h2>
+      <span style="font-family:'IBM Plex Mono',monospace; font-size:14px; color:{{ t.body }};">total {{ totalMs }}</span>
+    </div>
+    <div style="display:flex; flex-wrap:wrap; gap:12px;">
+      <sc-for list="{{ stages }}" as="s" hint-placeholder-count="5">
+        <div style="flex:1 1 190px; min-width:0; background:{{ t.surface }}; border:1px solid {{ t.border }}; border-radius:10px; padding:16px; display:flex; flex-direction:column; gap:8px; opacity:{{ s.opacity }};">
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
+            <span style="flex:none; width:26px; height:26px; border-radius:50%; background:{{ t.brand }}; color:{{ t.brandInk }}; display:flex; align-items:center; justify-content:center; font-family:'IBM Plex Mono',monospace; font-size:12px; font-weight:600;">{{ s.n }}</span>
+            <span style="flex:1; height:2px; background:{{ t.brand }}; opacity:0.35;"></span>
+            <span style="font-family:'IBM Plex Mono',monospace; font-size:15px; font-weight:600;">{{ s.ms }}</span>
+          </div>
+          <span style="font-size:17px; font-weight:600;">{{ s.name }}</span>
+          <span style="font-size:14px; color:{{ t.muted }}; line-height:1.4;">{{ s.desc }}</span>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+  </section>
+  </sc-if>
+<div style="max-width:1200px; margin:0 auto; padding:0 clamp(20px,5cqw,96px);">
+  <sc-if value="{{ full }}" hint-placeholder-val="{{ true }}">
+  <section data-screen-label="Evidence" style="padding:clamp(32px,4cqw,56px) 0;">
+    <span style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.1em; color:{{ t.muted }};">EVIDENCE</span>
+    <h2 style="margin:6px 0 20px; font-size:clamp(22px,2.2cqw,28px); font-weight:700; letter-spacing:-0.01em;">Locked evaluation, 25 real trials</h2>
+    <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr)); gap:12px;">
+      <div style="background:{{ t.surface }}; border:1px solid {{ t.border }}; border-radius:10px; padding:18px; display:flex; flex-direction:column; gap:6px;">
+        <span style="font-family:'IBM Plex Mono',monospace; font-size:40px; font-weight:600; color:{{ zg }}; line-height:1;">0/8</span>
+        <span style="font-size:15px;"><b>GREEN</b> · 0 of 8 fell</span>
+      </div>
+      <div style="background:{{ t.surface }}; border:1px solid {{ t.border }}; border-radius:10px; padding:18px; display:flex; flex-direction:column; gap:6px;">
+        <span style="font-family:'IBM Plex Mono',monospace; font-size:40px; font-weight:600; color:{{ zr }}; line-height:1;">8/8</span>
+        <span style="font-size:15px;"><b>RED</b> · 8 of 8 fell</span>
+      </div>
+      <div style="background:{{ t.surface }}; border:1px solid {{ t.border }}; border-radius:10px; padding:18px; display:flex; flex-direction:column; gap:6px;">
+        <span style="font-family:'IBM Plex Mono',monospace; font-size:40px; font-weight:600; line-height:1;">25/25</span>
+        <span style="font-size:15px;"><b>Check after placement</b> correct</span>
+      </div>
+      <div style="background:{{ t.surface }}; border:1.5px dashed #C99A12; border-radius:10px; padding:18px; display:flex; flex-direction:column; gap:6px;">
+        <span style="font-family:'IBM Plex Mono',monospace; font-size:40px; font-weight:600; color:{{ zy }}; line-height:1;">4/9</span>
+        <span style="font-size:15px;"><b>Known gap:</b> YELLOW under-predicts (4 of 9 fell)</span>
+      </div>
+    </div>
+    <a href="#" style="display:inline-flex; align-items:center; min-height:44px; margin-top:12px; font-size:16px; font-weight:600; text-decoration:underline; text-underline-offset:3px; color:{{ t.link }};">Full report &amp; failure cases →</a>
+  </section>
+
+  </sc-if>
+</div>
+  <sc-if value="{{ full }}" hint-placeholder-val="{{ true }}">
+  <section data-screen-label="Roles" style="background-color:{{ t.rolesBand }}; background-image:{{ t.bandGrid }}; background-size:{{ t.gridSize }}; border-top:1px solid {{ t.rolesBorder }};">
+    <div style="max-width:1200px; margin:0 auto; padding:clamp(48px,7cqw,104px) clamp(20px,5cqw,96px);">
+      <p style="margin:0; display:flex; flex-wrap:wrap; gap:4px 0.4em; font-size:clamp(26px,3.4cqw,44px); line-height:1.2; font-weight:600; letter-spacing:-0.02em; text-wrap:balance; color:{{ t.rolesText }};">
+        <span style="color:{{ t.rolesMuted }};">The camera measures.</span>
+        <span style="color:{{ t.rolesMuted }};">The simulation estimates.</span>
+        <span style="color:{{ t.rolesMuted }};">The rules decide.</span>
+        <span>The supervisor signs.</span>
+      </p>
+    </div>
+  </section>
+  </sc-if>
+<div style="max-width:1200px; margin:0 auto; padding:0 clamp(20px,5cqw,96px);">
+  <sc-if value="{{ full }}" hint-placeholder-val="{{ true }}">
+  <footer style="padding:28px 0 36px; border-top:1px solid {{ t.footBorder }}; display:flex; flex-wrap:wrap; justify-content:space-between; gap:16px 32px; align-items:center;">
+    <div style="display:flex; flex-direction:column; gap:6px; min-width:0;">
+      <span style="font-size:15px; font-weight:600;">Decision aid prototype, not a certified safety device.</span>
+      <span style="font-family:'IBM Plex Mono',monospace; font-size:13px; color:{{ t.muted }};">OpenCV 5 · MuJoCo · AWS Lambda</span>
+    </div>
+    <div style="display:flex; gap:20px;">
+      <a href="#" style="display:flex; align-items:center; min-height:44px; font-size:15px; font-weight:500; text-decoration:underline; text-underline-offset:3px; color:{{ t.link }};">GitHub repo</a>
+      <a href="#" style="display:flex; align-items:center; min-height:44px; font-size:15px; font-weight:500; text-decoration:underline; text-underline-offset:3px; color:{{ t.link }};">Video</a>
+    </div>
+  </footer>
+  </sc-if>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;theme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;stone&quot;,&quot;blueprint&quot;,&quot;kraft&quot;,&quot;night&quot;],&quot;default&quot;:&quot;stone&quot;,&quot;tsType&quot;:&quot;'stone'|'blueprint'|'kraft'|'night'&quot;},&quot;topOnly&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;},&quot;forceState&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;interactive&quot;,&quot;loading&quot;,&quot;error&quot;],&quot;default&quot;:&quot;interactive&quot;,&quot;tsType&quot;:&quot;'interactive'|'loading'|'error'&quot;}}">
+const ZBASE = {
+  GREEN: { fill: '#267D47', ink: '#FFFFFF', text: '#1F7A43', tint: '#EAF4EC', action: 'GUIDE' },
+  YELLOW: { fill: '#E2AE1C', ink: '#26282B', text: '#7D5C00', tint: '#FBF3DC', action: 'ASK SUPERVISOR' },
+  RED: { fill: '#C93A25', ink: '#FFFFFF', text: '#B3301D', tint: '#FAEBE7', action: 'REJECT' }
+};
+const ZNIGHT = {
+  GREEN: { text: '#62C98C', tint: '#16271D' },
+  YELLOW: { text: '#EBC046', tint: '#2B2412' },
+  RED: { text: '#F2836D', tint: '#33191A' }
+};
+const STONE = {
+  bg: '#F4F3EF', band: '#F4F3EF', bandGrid: 'none', gridSize: 'auto', bandBorder: '#D9D7D1',
+  heroText: '#26282B', heroSub: '#5E6166', heroBody: '#3D4044', logo: '#26282B', bandLink: '#26282B',
+  surface: '#FFFFFF', border: '#D9D7D1', soft: '#ECEAE5', text: '#26282B', body: '#3D4044', muted: '#5E6166',
+  roleMuted: '#6B6E72', brand: '#26282B', brandInk: '#FFFFFF', link: '#26282B', ruler: '#26282B', tick: '#8E9196',
+  tickLabel: '#5E6166', rulerGrid: 'none', photoBg: '#D4D2CC', meterBg: '#FFFFFF', btnBorder: '#BDBAB3', loaderBg: '#E4E2DC',
+  logoEdge: 'transparent', sug: '#26282B', cta: '#26282B', ctaBorder: '1.5px dashed #26282B', focus: '#26282B',
+  rolesBand: 'transparent', rolesBorder: '#D9D7D1', rolesText: '#26282B', rolesMuted: '#6B6E72', footBorder: '#D9D7D1',
+  pageGrid: 'none', overlap: '0px', overlapNeg: '0px', tryHead: '#26282B', tryHelp: '#5E6166', cardShadow: 'none',
+  howBand: 'transparent', howGrid: 'none', howBorder: '#D9D7D1'
+};
+const THEMES = {
+  stone: STONE,
+  blueprint: Object.assign({}, STONE, {
+    band: '#13294B',
+    bandGrid: 'linear-gradient(rgba(143,176,240,0.13) 1px, transparent 1px), linear-gradient(90deg, rgba(143,176,240,0.13) 1px, transparent 1px)',
+    gridSize: '28px 28px', bandBorder: 'rgba(185,203,238,0.22)',
+    heroText: '#FFFFFF', heroSub: '#B9CBEE', heroBody: '#DCE5F5', logo: '#2457C5', logoEdge: '#8FB0F0', bandLink: '#FFFFFF',
+    sug: '#2457C5', cta: '#2457C5', ctaBorder: '2px solid #2457C5', focus: '#2457C5',
+    rolesBand: '#13294B', rolesBorder: '#13294B', rolesText: '#FFFFFF', rolesMuted: '#A9BFE8', footBorder: 'transparent',
+    brand: '#2457C5', link: '#2457C5', ruler: '#2457C5', tick: '#7C9BDB', tickLabel: '#2457C5',
+    rulerGrid: 'linear-gradient(rgba(36,87,197,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(36,87,197,0.06) 1px, transparent 1px)'
+  }),
+  kraft: Object.assign({}, STONE, {
+    howBorder: '#DDD3C3',
+    bg: '#F5F1E8', band: '#D8C19C',
+    bandGrid: 'repeating-linear-gradient(115deg, rgba(110,72,34,0.07) 0 1px, transparent 1px 6px), repeating-linear-gradient(25deg, rgba(110,72,34,0.04) 0 1px, transparent 1px 11px)',
+    gridSize: 'auto', bandBorder: 'rgba(90,58,26,0.22)',
+    heroText: '#2B1D10', heroSub: '#5E3E1E', heroBody: '#3E2B18', logo: '#6E4520', bandLink: '#2B1D10',
+    border: '#DDD3C3', soft: '#EEE7DB', text: '#2B2420', body: '#43392F', muted: '#66594C', roleMuted: '#7A6C5E',
+    brand: '#9A6532', link: '#8A5A2B', ruler: '#9A6532', tick: '#C09A70', tickLabel: '#7A4D22', photoBg: '#DCD3C4', btnBorder: '#C9BBA6', loaderBg: '#EAE1D2'
+  }),
+  night: {
+    bg: '#15181C', band: '#1B2027',
+    bandGrid: 'linear-gradient(rgba(127,167,217,0.07) 1px, transparent 1px), linear-gradient(90deg, rgba(127,167,217,0.07) 1px, transparent 1px)',
+    gridSize: '28px 28px', bandBorder: '#2F353D',
+    heroText: '#F1F3F5', heroSub: '#A9B4C2', heroBody: '#CDD3DA', logo: '#7FA7D9', bandLink: '#E9ECEF',
+    surface: '#1E2228', border: '#2F353D', soft: '#272C33', text: '#E9ECEF', body: '#C5CBD2', muted: '#9AA3AD',
+    roleMuted: '#848D98', brand: '#7FA7D9', brandInk: '#11161C', link: '#9DBDE6', ruler: '#7FA7D9', tick: '#4F6B8F',
+    tickLabel: '#9AA3AD', rulerGrid: 'linear-gradient(rgba(127,167,217,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(127,167,217,0.05) 1px, transparent 1px)',
+    photoBg: '#2A2F36', meterBg: '#11141A', btnBorder: '#3A414A', loaderBg: '#2A2F36',
+    logoEdge: 'transparent', sug: '#7FA7D9', cta: '#9DBDE6', ctaBorder: '2px solid #7FA7D9', focus: '#7FA7D9',
+    rolesBand: '#1B2027', rolesBorder: '#2F353D', rolesText: '#F1F3F5', rolesMuted: '#A9B4C2', footBorder: '#2F353D',
+    pageGrid: 'none', overlap: '0px', overlapNeg: '0px', tryHead: '#E9ECEF', tryHelp: '#9AA3AD', cardShadow: 'none',
+    howBand: 'transparent', howGrid: 'none', howBorder: '#2F353D'
+  }
+};
+const SAMPLES = {
+  s1: { label: 'One box', img: 'uploads/s1.jpg', markers: [[6, 3], [14, 31], [16, 93]], sug: [9, 4] },
+  s2: { label: 'Two boxes, aligned', img: 'uploads/s2.jpg', markers: [[4, 2], [8, 24], [12, 81]], sug: [5, 6] },
+  s3: { label: 'Top box shifted', img: 'uploads/s3.jpg', markers: [[2, 5], [7, 38], [10, 88]], sug: [1, 3] }
+};
+const zoneOf = p => (p < 10 ? 'GREEN' : p <= 50 ? 'YELLOW' : 'RED');
+const pos = v => (v / 18 * 100) + '%';
+const sgn = v => (v > 0 ? '+' + v : '' + v);
+
+class Component extends DCLogic {
+  state = { sample: 's1', shift: 16, status: 'result' };
+  componentWillUnmount() { clearTimeout(this.t); }
+  run(v) {
+    clearTimeout(this.t);
+    this.setState({ shift: v, status: 'loading' });
+    this.t = setTimeout(() => this.setState({ status: 'result' }), 1500);
+  }
+  renderVals() {
+    const tn = this.props.theme || 'stone';
+    const t = Object.assign({}, THEMES[tn] || STONE);
+    if (tn === 'blueprint') t.howBorder = 'transparent';
+    if (tn === 'blueprint2') {
+      Object.assign(t, THEMES.blueprint, {
+        pageGrid: 'linear-gradient(rgba(36,87,197,0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(36,87,197,0.035) 1px, transparent 1px)',
+        overlap: 'clamp(140px,20cqw,300px)', overlapNeg: 'calc(-1 * clamp(140px,20cqw,300px))',
+        tryHead: '#FFFFFF', tryHelp: '#B9CBEE',
+        cardShadow: '0 20px 48px rgba(19,41,75,0.16), 0 2px 6px rgba(19,41,75,0.08)',
+        howBand: '#EEF3FC', howBorder: '#D5E0F5',
+        howGrid: 'linear-gradient(rgba(36,87,197,0.07) 1px, transparent 1px), linear-gradient(90deg, rgba(36,87,197,0.07) 1px, transparent 1px)',
+        rolesBorder: '#13294B', footBorder: 'transparent'
+      });
+    }
+    const isNight = tn === 'night';
+    const Z = {};
+    Object.keys(ZBASE).forEach(k => { Z[k] = Object.assign({}, ZBASE[k], isNight ? ZNIGHT[k] : {}); });
+    const fs = this.props.forceState;
+    const status = fs === 'loading' || fs === 'error' ? fs : this.state.status;
+    const busy = status === 'loading';
+    const sid = this.state.sample, S = SAMPLES[sid], shift = this.state.shift;
+
+    const thumbs = Object.keys(SAMPLES).map(id => ({
+      id, label: SAMPLES[id].label, img: SAMPLES[id].img,
+      border: id === sid ? '2px solid ' + t.brand : '1px solid ' + t.border,
+      idColor: id === sid ? t.link : t.text,
+      opacity: busy ? 0.5 : 1,
+      onClick: () => { clearTimeout(this.t); this.setState({ sample: id, status: 'idle', shift: null }); }
+    }));
+
+    const all = S.markers.map(([v, p]) => ({ v, p, sug: false })).concat([{ v: S.sug[0], p: S.sug[1], sug: true }]).sort((a, b) => a.v - b.v);
+    const markers = all.map((m, i) => {
+      const z = Z[zoneOf(m.p)], sel = shift === m.v;
+      return {
+        left: pos(m.v), top: (i % 2 ? 54 : 0) + 'px',
+        label: sgn(m.v), word: m.sug ? 'SUGGESTED' : zoneOf(m.p),
+        aria: (m.sug ? 'Suggested ' : '') + sgn(m.v) + ' cm',
+        bg: m.sug ? t.surface : z.fill, ink: m.sug ? t.sug : z.ink,
+        border: m.sug ? '2px dashed ' + t.sug : '1.5px solid ' + z.fill,
+        pin: m.sug ? '2px dashed ' + t.sug : '2px solid ' + z.fill,
+        outline: sel ? '2px solid ' + t.brand : '2px solid transparent',
+        opacity: busy ? 0.45 : 1,
+        onClick: () => this.run(m.v)
+      };
+    });
+    const ticks = Array.from({ length: 19 }, (_, i) => ({ left: pos(i), bottom: i % 2 ? '32px' : '28px', h: i % 2 ? '6px' : '10px' }));
+    const tickLabels = Array.from({ length: 10 }, (_, i) => ({ left: pos(i * 2), text: i === 0 ? '0' : '+' + i * 2 }));
+
+    const hit = all.find(m => m.v === shift);
+    let r = null;
+    if (hit) {
+      const zn = zoneOf(hit.p), z = Z[zn], sv = S.sug[0];
+      const advice = zn === 'RED'
+        ? 'Try ' + sgn(sv) + ' cm: stays green even if the box lands 1 cm further out.'
+        : zn === 'YELLOW'
+          ? 'A supervisor approves, uses the suggestion, or rejects. Safer: ' + sgn(sv) + ' cm stays green even 1 cm further out.'
+          : 'Place at ' + sgn(hit.v) + ' cm. The agent guides the box in, then checks the placement against the plan.';
+      r = {
+        zone: zn, action: z.action, p: hit.p, pct: hit.p + '%',
+        tint: z.tint, text: z.text, fill: z.fill, ink: z.ink, advice,
+        hasSug: zn !== 'GREEN', isYellow: zn === 'YELLOW', sugLabel: sgn(sv),
+        useSug: () => this.run(sv),
+        meta: sid + ' · shift ' + sgn(hit.v) + ' cm · 600 sims · not cached'
+      };
+    }
+    const simMs = 1180 + (shift || 0) * 7;
+    const ms = [184, 37, simMs, 1, 92];
+    const has = status === 'result' && r;
+    const names = [['Perceive', 'ArUco markers read over 10 frames'], ['Digital twin', 'Stack rebuilt from contact + box catalog'], ['Simulate', 'MuJoCo Monte Carlo, 600 samples'], ['Decide', 'P(fall) mapped to a fixed band'], ['Check', 'Placed box compared to the plan']];
+    const stages = names.map(([name, desc], i) => ({ n: i + 1, name, desc, ms: has ? ms[i].toLocaleString('en-US') + ' ms' : '— ms', opacity: has ? 1 : 0.55 }));
+
+    return {
+      t, full: !this.props.topOnly, zg: Z.GREEN.text, zr: Z.RED.text, zy: Z.YELLOW.text,
+      busy, thumbs, cur: { id: sid, label: S.label, img: S.img }, markers, ticks, tickLabels,
+      isIdle: status === 'idle' || (status === 'result' && !r), isLoading: busy, isError: status === 'error', isResult: !!has,
+      r: r || {}, shiftLabel: shift != null ? sgn(shift) : '—',
+      metaTop: shift != null ? sid + ' · ' + sgn(shift) + ' cm' : sid,
+      retry: () => this.run(shift != null ? shift : S.sug[0]),
+      totalMs: has ? ms.reduce((a, b) => a + b, 0).toLocaleString('en-US') + ' ms' : '— ms',
+      stages,
+      loader: React.createElement('div', { style: { height: 4, background: t.loaderBg, borderRadius: 2, overflow: 'hidden', position: 'relative' } },
+        React.createElement('div', { style: { position: 'absolute', top: 0, bottom: 0, width: '35%', background: t.brand, animation: 'dsload 1.1s ease-in-out infinite' } }))
+    };
+  }
+}
+</script>
+</body>
+</html>

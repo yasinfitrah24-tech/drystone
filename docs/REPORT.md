@@ -90,7 +90,7 @@ flowchart LR
 | Decision core | `tools/drystone_core.py` | static check, Monte Carlo P(fall), zones, suggestion search, check after placement |
 | Live agent | `tools/agent.py` | camera loop, wireframes, human control, JSONL log with photos |
 | Service | `tools/service.py` | AWS Lambda handler: photo API for the agent, judges' web page and its API |
-| Web page | `web/index.html` | sample photos, slider, decision, numbered trace, use suggestion, override |
+| Web page | `web/index.html` | sample photos, placement ruler, decision, numbered trace, use suggestion, override |
 
 All decision rules live in one file, `drystone_core.py`. The laptop agent and the Lambda service call the same
 code; no rule is written twice, and no language model decides anything.
@@ -435,8 +435,16 @@ From the evaluation (25 trials, `agent.py --aws`) unless noted:
   always gives the same P; on the laptop the random stream continues from one decision to the next, so a repeated
   decision near a zone line can differ slightly (the safer-zone rule covers the line itself).
 
-*TODO (after the page redesign of 22–23 Oct): screenshots of the judges' page on a desktop and a phone, and of the
-agent overlay; faces removed.*
+![The judges' page on a desktop (1440 px): sample s1, the next box at +16 cm is RED, the suggested spot +10 cm is
+drawn dashed on the photo](img/web_desktop.png)
+
+*The judges' page on a desktop (1440 px wide). Sample s1, next box at +16 cm: RED, P(fall) 73%, suggestion +10 cm
+(drawn dashed on the photo). Markers on the ruler are the sample's GREEN, YELLOW and RED examples and the
+suggested spot.*
+
+<img src="img/web_mobile.png" alt="The judges' page on a phone (390 px): the same RED decision below the ruler" width="320">
+
+*The same request on a phone (390 px wide): after a tap on the ruler the page scrolls to the decision.*
 
 ## 9. Limitations
 - Markers are required on every box; faded markers in dim light can be missed.
