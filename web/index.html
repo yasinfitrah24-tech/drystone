@@ -52,11 +52,32 @@
   .toplink { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; margin-right: -12px; border-radius: 8px; color: var(--hero-body); }
   .hero .toplink { color: var(--hero-body); }
   @media (hover: hover) { .hero .toplink:hover { color: #fff; background: rgba(255,255,255,0.08); } }
-  .hero-main { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: clamp(14px, 3vw, 48px); padding: clamp(24px, 6vw, 80px) 0 clamp(18px, 2.5vw, 28px); }
-  .hero-main > div { flex: 1 1 560px; min-width: 0; }
+  .hero-main { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: clamp(28px, 4vw, 64px); padding: clamp(24px, 5vw, 64px) 0 clamp(18px, 2.5vw, 28px); }
+  .hero-copy { flex: 1 1 480px; min-width: 0; }
   h1 { margin: 0; font-size: clamp(42px, 6.4vw, 88px); line-height: 0.98; font-weight: 700; letter-spacing: -0.03em; text-wrap: balance; }
   .hero-sub { margin: clamp(8px, 1.2vw, 16px) 0 0; font-size: clamp(20px, 2.4vw, 32px); line-height: 1.2; color: var(--hero-sub); font-weight: 500; }
-  .hero-body { flex: 1 1 340px; max-width: 420px; margin: 0; font-size: clamp(16px, 1.4vw, 19px); line-height: 1.5; color: var(--hero-body); text-wrap: pretty; }
+  .hero-body { max-width: 46ch; margin: clamp(16px, 2vw, 28px) 0 0; font-size: clamp(16px, 1.4vw, 19px); line-height: 1.5; color: var(--hero-body); text-wrap: pretty; }
+  /* hero proof: a replay of one real check */
+  .proof { flex: 1 1 360px; max-width: 470px; margin: 0; background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow); overflow: hidden; }
+  .proof-cmd { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 10px 14px; font: 12px var(--mono); color: var(--muted); border-bottom: 1px solid var(--soft); }
+  .proof-tag { flex: none; font: 600 11px var(--mono); color: var(--brand); background: rgba(36,87,197,0.08); border: 1px solid rgba(36,87,197,0.25); padding: 2px 8px; border-radius: 999px; }
+  .proof canvas { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; background: var(--photo-bg); }
+  .proof-head { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; padding: 14px 16px 12px; min-height: 64px; background: var(--soft); transition: background-color 0.35s ease-out; }
+  .proof-head.RED { background: var(--red-tint); }
+  .proof-safe small { display: block; font-weight: 500; font-size: 12px; }
+  .proof-zone { font-size: 36px; font-weight: 700; line-height: 1; letter-spacing: -0.02em; color: var(--red-text); }
+  .proof-p { margin-left: auto; font: 500 14px var(--mono); }
+  .proof-p b { font-size: 30px; font-weight: 600; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+  .proof-lines { list-style: none; margin: 0; padding: 12px 16px 0; display: grid; gap: 6px; font: 13px/1.45 var(--mono); }
+  .proof-lines li { display: grid; grid-template-columns: 58px 1fr; gap: 10px; }
+  .proof-lines .k { color: var(--brand); font-weight: 600; }
+  .proof-safe { margin: 12px 16px 0; padding: 9px 12px; border: 1.5px solid var(--green); background: var(--green-tint); color: var(--green-text); border-radius: 8px; font: 600 13px/1.4 var(--mono); }
+  .proof-foot { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0 12px; padding: 4px 16px 4px; margin-top: 12px; border-top: 1px solid var(--soft); font-size: 12px; color: var(--muted); }
+  .hero .proof-foot a { display: inline-flex; align-items: center; min-height: 44px; font-size: 14px; font-weight: 600; color: var(--brand); }
+  /* the replay only hides steps once the script runs, so the card is complete without it */
+  .proof.anim [data-step] { opacity: 0; transform: translateY(4px); transition: opacity 0.35s ease-out, transform 0.35s ease-out; }
+  .proof.anim [data-step].on { opacity: 1; transform: none; }
+  @media (max-width: 860px) { .proof { max-width: none; } }
   .why { margin: 0 0 clamp(24px, 4vw, 48px); padding-top: 14px; border-top: 1px solid var(--band-border); max-width: 70ch; font-size: 15px; line-height: 1.65; letter-spacing: 0.005em; color: var(--hero-sub); }
   .why strong { color: #fff; font-weight: 600; }
   .why a { color: #fff; }
@@ -255,11 +276,19 @@
   </header>
   <div class="wrap">
     <section class="hero-main">
-      <div>
+      <div class="hero-copy">
         <h1>Know before you stack.</h1>
         <p class="hero-sub">No mortar. Just placement.</p>
+        <p class="hero-body">A camera reads the box stack, a physics simulation estimates the chance of a fall, and fixed rules decide.</p>
       </div>
-      <p class="hero-body">A camera reads the box stack, a physics simulation estimates the chance of a fall, and fixed rules decide.</p>
+      <figure class="proof" id="proof" aria-label="Replay of a real check: sample s1, next box at +16 cm">
+        <div class="proof-cmd"><span id="proof-cmd">check &middot; sample s1 &middot; next box +16 cm</span><span class="proof-tag">real check</span></div>
+        <canvas id="proof-view" width="640" height="360" aria-hidden="true"></canvas>
+        <div class="proof-head RED" id="proof-head"><span class="proof-zone" id="proof-zone" data-step>RED</span><span class="pill" id="proof-action" data-step>REJECT</span><span class="proof-p">P(fall) <b id="proof-p">73%</b></span></div>
+        <ol class="proof-lines" id="proof-lines"></ol>
+        <div class="proof-safe" id="proof-safe" data-step></div>
+        <figcaption class="proof-foot"><span>Replay of a real check &middot; OpenCV 5 &middot; MuJoCo</span><a href="#h-try" id="proof-run">Run it yourself &rarr;</a></figcaption>
+      </figure>
     </section>
     <p class="why"><strong>Why it matters:</strong> in 2020, US transportation and warehousing had 99,800 injuries with
       days away from work; 12,100 of them were &ldquo;struck by object or equipment&rdquo;. That category is broader than
@@ -430,28 +459,30 @@
       if (p.role === "candidate") box(p.corners, ZONE[r.decision.zone], lw * 1.8, []);
     });
   }
+  // G = the context being drawn on: the main photo, or the hero replay
+  var G = ctx;
   function poly(c, color, w) {
-    ctx.save(); ctx.strokeStyle = color; ctx.lineWidth = w; ctx.beginPath();
-    c.forEach(function (p, i) { if (i) ctx.lineTo(p[0], p[1]); else ctx.moveTo(p[0], p[1]); });
-    ctx.closePath(); ctx.stroke(); ctx.restore();
+    G.save(); G.strokeStyle = color; G.lineWidth = w; G.beginPath();
+    c.forEach(function (p, i) { if (i) G.lineTo(p[0], p[1]); else G.moveTo(p[0], p[1]); });
+    G.closePath(); G.stroke(); G.restore();
   }
   function box(c, color, w, dash) {
     // corner index = 4*x + 2*y + z bit; an edge joins corners that differ in one bit
-    ctx.save(); ctx.setLineDash(dash); ctx.lineJoin = "round";
+    G.save(); G.setLineDash(dash); G.lineJoin = "round";
     for (var pass = 0; pass < 2; pass++) {
-      ctx.strokeStyle = pass ? color : "rgba(0,0,0,.55)"; ctx.lineWidth = pass ? w : w + 2.5;
-      ctx.beginPath();
+      G.strokeStyle = pass ? color : "rgba(0,0,0,.55)"; G.lineWidth = pass ? w : w + 2.5;
+      G.beginPath();
       for (var a = 0; a < 8; a++) for (var b = a + 1; b < 8; b++) {
-        var x = a ^ b; if (x === 1 || x === 2 || x === 4) { ctx.moveTo(c[a][0], c[a][1]); ctx.lineTo(c[b][0], c[b][1]); }
+        var x = a ^ b; if (x === 1 || x === 2 || x === 4) { G.moveTo(c[a][0], c[a][1]); G.lineTo(c[b][0], c[b][1]); }
       }
-      ctx.stroke();
+      G.stroke();
     }
-    ctx.restore();
+    G.restore();
   }
-  function label(t, x, y, color) {
-    ctx.save(); ctx.font = "600 " + Math.round(canvas.width / 64) + "px 'IBM Plex Sans', system-ui, sans-serif";
-    ctx.lineWidth = 4; ctx.strokeStyle = "rgba(0,0,0,.6)"; ctx.strokeText(t, x, y);
-    ctx.fillStyle = color; ctx.fillText(t, x, y); ctx.restore();
+  function label(t, x, y, color, px) {
+    G.save(); G.font = "600 " + (px || Math.round(canvas.width / 64)) + "px 'IBM Plex Sans', system-ui, sans-serif";
+    G.lineWidth = 4; G.strokeStyle = "rgba(0,0,0,.6)"; G.strokeText(t, x, y);
+    G.fillStyle = color; G.fillText(t, x, y); G.restore();
   }
 
   /* ---------- ruler ---------- */
@@ -788,6 +819,87 @@
     choose(act);
   });
 
+  /* ---------- hero replay of one real check ---------- */
+  // Recorded from tools/service.py for sample s1 at +16 cm (fixed seed 0, the same code and answer as on AWS Lambda).
+  // tests/test_web.py checks that this record still matches the service.
+  var REC = {"sample":"s1","offset_cm":16,"box_id":1,"markers":[{"id":0,"corners":[[571.8,523.7],[643.4,525.9],[641.6,593.4],[571.1,591.2]]}],"polygons":[{"role":"stack","id":0,"corners":[[503.2,578.6],[479.6,635.5],[502.9,435.6],[478.3,470.7],[720.8,585.3],[732.2,643.7],[726.7,441.6],[739.7,478.1]]},{"role":"candidate","id":1,"corners":[[626.1,439.0],[622.0,475.0],[629.3,288.1],[625.8,298.9],[850.2,444.6],[883.8,481.4],[858.8,293.9],[895.0,305.8]]},{"role":"suggestion","id":1,"corners":[[579.7,437.8],[567.9,473.5],[581.9,287.0],[570.1,297.6],[804.0,443.5],[829.9,480.2],[811.6,292.6],[839.7,304.3]]}],"decision":{"zone":"RED","action":"REJECT","p":0.733,"ci":0.071,"n":150,"overhang_pct":55.17,"static_margin_cm":-1.5,"alternative":{"offset_cm":10.0,"overhang_pct":34.48,"p":0.027,"n":150,"further_offset_cm":11.0,"p_further":0.05}}};
+  function startProof() {
+    var s = state.meta.samples.filter(function (x) { return x.id === REC.sample; })[0];
+    if (!s) { el("proof").hidden = true; return; }
+    var d = REC.decision, a = d.alternative, pv = el("proof-view"), g = pv.getContext("2d"), img = new Image();
+    el("proof-cmd").textContent = "check \u00b7 sample " + REC.sample + " \u00b7 next box " + signed(REC.offset_cm) + " cm";
+    el("proof-zone").textContent = d.zone; el("proof-action").textContent = ACTION[d.action];
+    el("proof-p").textContent = pct(d.p);
+    var lines = [
+      ["OpenCV", "found " + REC.markers.length + " marker" + (REC.markers.length === 1 ? "" : "s") + ": ID " +
+        REC.markers.map(function (m) { return m.id; }).join(", ")],
+      ["Twin", "box ID " + REC.box_id + " at " + signed(REC.offset_cm) + " cm, " + Math.round(d.overhang_pct) + "% overhang"],
+      ["MuJoCo", d.n + " simulated drops, \u00b1 " + pct(d.ci) + " (95% CI)"],
+      ["Rule", "over 50% \u2192 " + d.zone + ", " + ACTION[d.action]]
+    ];
+    el("proof-lines").innerHTML = lines.map(function (l) {
+      return '<li data-step><span class="k">' + esc(l[0]) + "</span><span>" + esc(l[1]) + "</span></li>";
+    }).join("");
+    el("proof-safe").innerHTML = a ? esc("Safer spot " + signed(Math.round(a.offset_cm)) + " cm \u00b7 P(fall) " + pct(a.p) + " \u00b7 GREEN") +
+      "<small>stays green even 1 cm further out</small>" : "No safe spot in the search range";
+    function paint(stage) {
+      pv.width = 640; pv.height = 360;
+      g.setTransform(pv.width / img.naturalWidth, 0, 0, pv.height / img.naturalHeight, 0, 0);
+      g.drawImage(img, 0, 0);
+      G = g;
+      var lw = Math.max(2, img.naturalWidth / 400) * 1.4;
+      if (stage >= 1) REC.markers.forEach(function (m) { poly(m.corners, MARKER, lw); label("ID " + m.id, m.corners[0][0], m.corners[0][1] - 8, MARKER, 30); });
+      REC.polygons.forEach(function (p) {
+        if (p.role === "stack" && stage >= 2) box(p.corners, "#ffffff", lw, []);
+        if (p.role === "suggestion" && stage >= 4) box(p.corners, BRAND, lw * 1.4, [14, 10]);
+      });
+      REC.polygons.forEach(function (p) { if (p.role === "candidate" && stage >= 3) box(p.corners, ZONE[d.zone], lw * 1.8, []); });
+      G = ctx;
+    }
+    function on(sel) { Array.prototype.forEach.call(document.querySelectorAll(sel), function (n) { n.classList.add("on"); }); }
+    function play() {
+      var card = el("proof"), steps = card.querySelectorAll("#proof-lines [data-step]"), target = Math.round(d.p * 100);
+      card.classList.add("anim"); paint(0);
+      el("proof-head").classList.remove(d.zone); el("proof-p").textContent = "\u2014";
+      var t = [
+        [450, function () { paint(1); steps[0].classList.add("on"); }],
+        [1050, function () { paint(2); steps[1].classList.add("on"); }],
+        [1650, function () {
+          paint(3); steps[2].classList.add("on");
+          var t0 = performance.now();
+          (function count() {
+            var k = Math.min(1, (performance.now() - t0) / 800);
+            el("proof-p").textContent = Math.round(target * (1 - Math.pow(1 - k, 3))) + "%";
+            if (k < 1) requestAnimationFrame(count);
+          })();
+        }],
+        [2550, function () { el("proof-head").classList.add(d.zone); on("#proof-head [data-step]"); steps[3].classList.add("on"); }],
+        [3250, function () { paint(4); on("#proof-safe"); }]
+      ];
+      t.forEach(function (x) { setTimeout(x[1], x[0]); });
+    }
+    img.onload = function () {
+      var still = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      if (still || !window.IntersectionObserver) { paint(4); return; }
+      paint(0);
+      el("proof").classList.add("anim");
+      el("proof-head").classList.remove(d.zone); el("proof-p").textContent = "—";
+      var io = new IntersectionObserver(function (es) {
+        if (es[0].isIntersecting) { io.disconnect(); play(); }
+      }, { threshold: 0.4 });
+      io.observe(el("proof"));
+    };
+    img.src = photoUrl(s);
+    // the same check, run live on AWS Lambda
+    el("proof-run").addEventListener("click", function (e) {
+      e.preventDefault();
+      if (state.busy) return;
+      if (state.sample !== s) selectSample(s);
+      el("h-try").scrollIntoView({ behavior: "smooth", block: "start" });
+      analyze(REC.offset_cm, true);
+    });
+  }
+
   fetch("samples/samples.json", { cache: "no-cache" }).then(function (r) { return r.json(); }).then(function (meta) {
     state.meta = meta;
     meta.samples.forEach(function (s) {
@@ -800,6 +912,7 @@
       el("samples").appendChild(b);
     });
     selectSample(meta.samples[0]);
+    startProof();
   }).catch(function () {
     el("result").innerHTML = '<div class="pad"><span class="err-title">Could not load the sample list.</span>' +
       '<span class="err-text">Reload the page.</span></div>';

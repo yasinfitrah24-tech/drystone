@@ -199,3 +199,17 @@ def test_direct_invoke_unchanged():
     assert out["statusCode"] == 200 and r["decision"]["zone"] == "GREEN"
     bad = service.lambda_handler({"mode": "decide", "images": ["bm90IGFuIGltYWdl"]})
     assert bad["statusCode"] == 400 and "cannot be decoded" in json.loads(bad["body"])["problem"]
+
+
+def test_hero_replay_matches_service():
+    """The hero card replays one recorded check; it must still be what the service answers."""
+    with open(os.path.join(ROOT, "web", "index.html"), encoding="utf-8") as f:
+        html = f.read()
+    start = html.index("var REC = ") + len("var REC = ")
+    rec = json.loads(html[start:html.index(";\n", start)])
+    status, r, _ = call("POST", "/", {"sample": rec["sample"], "offset_cm": rec["offset_cm"]})
+    assert status == 200 and r["ok"]
+    assert r["decision"] == rec["decision"]
+    assert r["box_id"] == rec["box_id"]
+    assert [m["id"] for m in r["markers"]] == [m["id"] for m in rec["markers"]]
+    assert [p["role"] for p in r["polygons"]] == [p["role"] for p in rec["polygons"]]
