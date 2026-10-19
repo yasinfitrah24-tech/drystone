@@ -55,6 +55,7 @@
   .hero-main { display: grid; grid-template-columns: minmax(0, 1fr) minmax(320px, 440px); align-items: center; gap: clamp(32px, 5vw, 72px); padding: clamp(24px, 3vw, 40px) 0; }
   /* first screen: headline, buttons and the whole proof card, without scrolling */
   @media (min-width: 861px) { .hero-main { min-height: calc(100svh - 57px); } }
+  .try { scroll-margin-top: 64px; }
   .hero-cta { display: flex; flex-wrap: wrap; gap: 12px; margin-top: clamp(20px, 2.4vw, 32px); }
   .hero .btn-solid, .hero .btn-line { display: inline-flex; align-items: center; min-height: 48px; padding: 0 22px; border-radius: 999px; font-size: 15px; font-weight: 600; text-decoration: none; }
   .hero .btn-solid { background: var(--brand); color: #fff; border: 1px solid var(--brand-edge); }
@@ -109,9 +110,9 @@
   @media (max-width: 860px) { .try-grid { grid-template-columns: minmax(0, 1fr); } }
   .card { min-width: 0; background: var(--surface); border: 1px solid var(--border); box-shadow: var(--shadow); border-radius: 12px; }
   .card-left { padding: clamp(14px, 2vw, 24px); display: flex; flex-direction: column; gap: clamp(14px, 1.8vw, 20px); }
-  .card-right { overflow: hidden; scroll-margin-top: 12px; }
+  .card-right { overflow: hidden; scroll-margin-top: 72px; }
   /* desktop: the decision stays in view next to the photo and ruler */
-  @media (min-width: 861px) { .card-right { position: sticky; top: 16px; } }
+  @media (min-width: 861px) { .card-right { position: sticky; top: 72px; } }
 
   .thumbs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(8px, 1vw, 12px); }
   .thumb { all: unset; box-sizing: border-box; cursor: pointer; display: flex; flex-direction: column; gap: 6px; padding: 5px; min-height: 44px; min-width: 0; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); }
@@ -282,23 +283,108 @@
   .foot-small { font-size: 13px; line-height: 1.55; color: var(--muted); max-width: 70ch; margin: 0; }
   .foot-links { display: flex; gap: 20px; }
   .foot-links a { display: flex; align-items: center; min-height: 44px; font-size: 15px; font-weight: 500; }
+
+  /* ---------- site header with tabs ---------- */
+  .topbar { position: sticky; top: 0; z-index: 20; background: #0F2240; border-bottom: 1px solid var(--band-border); color: #fff; }
+  .topbar .wrap { display: flex; align-items: center; gap: 12px 28px; height: 56px; }
+  .topbar .brand { color: #fff; text-decoration: none; flex: none; }
+  .tabs { display: flex; gap: 4px; margin-left: auto; }
+  .tabs a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 12px; color: var(--hero-sub); text-decoration: none; font-size: 15px; font-weight: 500; border-bottom: 2px solid transparent; }
+  .tabs a[aria-current="page"] { color: #fff; border-bottom-color: var(--brand-edge); font-weight: 600; }
+  @media (hover: hover) { .tabs a:hover { color: #fff; } }
+  .topbar .toplink { color: var(--hero-body); flex: none; }
+  @media (max-width: 760px) {
+    .topbar .wrap { height: auto; flex-wrap: wrap; padding-top: 6px; }
+    .tabs { order: 3; width: calc(100% + 16px); margin: 0 -8px; justify-content: space-between; overflow-x: auto; scrollbar-width: none; }
+    .tabs::-webkit-scrollbar { display: none; }
+    .tabs a { flex: none; padding: 0 7px; font-size: 14px; }
+    .topbar .toplink { margin-left: auto; }
+  }
+  .view[hidden] { display: none; }
+  /* ---------- page heads on the inner tabs ---------- */
+  .band { background-color: var(--band); --g: rgba(143,176,240,0.13); background-image: var(--grid); background-size: 28px 28px; color: #fff; }
+  .page-head { padding: clamp(36px, 5vw, 64px) var(--gutter) clamp(32px, 4vw, 52px); }
+  .hero-demo .page-head { padding-bottom: 0; }
+  .page-title { margin: 8px 0 0; font-size: clamp(30px, 3.6vw, 48px); line-height: 1.1; letter-spacing: -0.02em; color: #fff; max-width: 24ch; }
+  .page-lead { margin: 14px 0 0; max-width: 70ch; font-size: 16px; line-height: 1.6; color: var(--hero-body); }
+  .page-lead code, .block-lead code, .tech code, .cp code, .fine code { font: 0.92em var(--mono); }
+  /* ---------- content blocks ---------- */
+  .block { padding: clamp(36px, 4.5vw, 64px) 0 0; }
+  .block:last-child { padding-bottom: clamp(40px, 5vw, 72px); }
+  .block h2 { margin: 0 0 14px; }
+  .block-lead { margin: 0 0 16px; max-width: 72ch; font-size: 16px; line-height: 1.6; color: var(--body); }
+  .fine { margin: 12px 0 0; max-width: 80ch; font-size: 14px; line-height: 1.6; color: var(--muted); }
+  .facts { margin: 20px 0 0; font-size: 14px; color: var(--brand); letter-spacing: 0.02em; }
+  .ev-grid { grid-template-columns: 1.4fr repeat(3, minmax(0, 1fr)); }
+  @media (max-width: 900px) { .ev-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 520px) { .ev-grid { grid-template-columns: minmax(0, 1fr); } }
+  .ev-big .num { font-size: clamp(56px, 6vw, 80px); }
+  .tech-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+  @media (max-width: 1000px) { .tech-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 560px) { .tech-grid { grid-template-columns: minmax(0, 1fr); } }
+  .tech { background: var(--surface); border: 1px solid var(--border); border-top: 3px solid var(--brand); border-radius: 10px; padding: 16px; }
+  .tech-k { font-weight: 700; font-size: 16px; }
+  .tech p { margin: 8px 0 0; font-size: 14px; line-height: 1.5; color: var(--body); }
+  .cps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
+  @media (max-width: 1000px) { .cps { grid-template-columns: minmax(0, 1fr); } }
+  .cp { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 8px; }
+  .cp b { font-size: 17px; }
+  .cp p { margin: 0; font-size: 14px; line-height: 1.5; color: var(--body); }
+  .seg { display: inline-flex; border: 1px solid var(--btn-border); border-radius: 999px; padding: 3px; background: var(--surface); margin-bottom: 14px; }
+  .seg-b { all: unset; box-sizing: border-box; cursor: pointer; min-height: 40px; padding: 0 16px; border-radius: 999px; font-size: 14px; font-weight: 600; color: var(--body); display: inline-flex; align-items: center; }
+  .seg-b[aria-pressed="true"] { background: var(--brand); color: #fff; }
+  .seg-b:focus-visible { outline: 3px solid var(--brand); outline-offset: 2px; }
+  .cam { border-radius: 10px; overflow: hidden; background: var(--photo-bg); max-width: 900px; }
+  .cam canvas { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; }
+  .cam-cap { margin: 10px 0 0; max-width: 900px; font-size: 14px; line-height: 1.6; color: var(--muted); }
+  .two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(20px, 3vw, 40px); }
+  @media (max-width: 860px) { .two { grid-template-columns: minmax(0, 1fr); } }
+  .trace-box { margin: 0; padding: 14px 16px; background: #0F2240; color: #DCE5F5; border-radius: 10px; overflow-x: auto; font: 12.5px/1.6 var(--mono); }
+  .flow { margin: 0; padding: 0; list-style: none; counter-reset: f; display: grid; gap: 8px; }
+  .flow li { counter-increment: f; display: flex; align-items: center; flex-wrap: wrap; gap: 6px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; font-size: 15px; }
+  .flow li::before { content: counter(f); font: 600 12px var(--mono); color: #fff; background: var(--brand); border-radius: 50%; width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; margin-right: 4px; }
+  .z { display: inline-block; padding: 1px 7px; border-radius: 5px; font: 600 12px var(--mono); letter-spacing: 0.03em; }
+  .z-g { background: var(--green); color: #fff; } .z-y { background: var(--yellow); color: var(--yellow-ink); } .z-r { background: var(--red); color: #fff; }
+  .table-wrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { text-align: left; vertical-align: top; padding: 10px 14px; border-bottom: 1px solid var(--soft); line-height: 1.5; }
+  thead th { font: 600 12px var(--mono); letter-spacing: 0.04em; color: var(--muted); background: #FAFAF8; }
+  tbody tr:last-child th, tbody tr:last-child td { border-bottom: 0; }
+  tbody th { font-weight: 600; }
+  .verdict { font: 600 12px var(--mono); padding: 2px 8px; border-radius: 5px; }
+  .v-pass { background: var(--green-tint); color: var(--green-text); } .v-fail { background: var(--red-tint); color: var(--red-text); }
+  .verdict-banner { margin: 0 0 24px; padding: 14px 16px; border: 1.5px solid var(--red); background: var(--red-tint); border-radius: 10px; color: var(--text); line-height: 1.55; max-width: 90ch; }
+  .verdict-banner b { color: var(--red-text); }
+  ul.plain { margin: 0; padding-left: 18px; display: grid; gap: 8px; font-size: 15px; line-height: 1.55; color: var(--body); }
+  .fig { margin: 0 0 20px; max-width: 1000px; }
+  .fig img { display: block; width: 100%; height: auto; border: 1px solid var(--border); border-radius: 10px; background: #fff; }
+  .fig figcaption { margin-top: 8px; font-size: 14px; color: var(--muted); }
+  .level { position: relative; padding-left: 52px; }
+  .lvl { position: absolute; left: 0; top: clamp(36px, 4.5vw, 64px); width: 36px; height: 36px; border-radius: 50%; background: var(--brand); color: #fff; display: flex; align-items: center; justify-content: center; font: 600 16px var(--mono); }
+  @media (max-width: 560px) { .level { padding-left: 0; } .lvl { position: static; margin-bottom: 10px; } }
+  .code { display: flex; align-items: stretch; margin: 8px 0; max-width: 900px; background: #0F2240; border-radius: 8px; overflow: hidden; }
+  .code pre { flex: 1; min-width: 0; margin: 0; padding: 12px 14px; color: #DCE5F5; overflow-x: auto; font: 13px/1.5 var(--mono); }
+  .copy { flex: none; align-self: center; margin: 0 6px; min-height: 32px; padding: 0 12px; border-radius: 6px; border: 1px solid rgba(185,203,238,0.45); background: transparent; color: #fff; font: 600 12px var(--sans); cursor: pointer; }
+  .copy:focus-visible { outline: 3px solid var(--brand-edge); outline-offset: 2px; }
 </style>
 </head>
 <body>
+<header class="topbar">
+  <div class="wrap">
+    <a class="brand" href="#home"><span class="logo" aria-hidden="true"><i></i><i></i><i></i></span>Drystone</a>
+    <nav class="tabs" aria-label="Sections"><a href="#home" data-view="home">Home</a><a href="#how" data-view="how">How it works</a><a href="#demo" data-view="demo">Demo</a><a href="#evidence" data-view="evidence">Evidence</a><a href="#setup" data-view="setup">Setup</a></nav>
+    <a class="toplink" data-link="repo" href="#" aria-label="GitHub repository" title="GitHub repository"><svg viewBox="0 0 16 16" width="20" height="20" aria-hidden="true" focusable="false"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg></a>
+  </div>
+</header>
+<div class="view" id="view-home" data-title="Drystone">
 <div class="hero">
-  <header class="topbar">
-    <div class="wrap">
-      <div class="brand"><span class="logo" aria-hidden="true"><i></i><i></i><i></i></span>Drystone</div>
-      <a class="toplink" data-link="repo" href="#" aria-label="GitHub repository" title="GitHub repository"><svg viewBox="0 0 16 16" width="20" height="20" aria-hidden="true" focusable="false"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg></a>
-    </div>
-  </header>
   <div class="wrap">
     <section class="hero-main">
       <div class="hero-copy">
         <h1>Know before you stack.</h1>
         <p class="hero-sub">No mortar. Just placement.</p>
         <p class="hero-body">A camera reads the box stack, a physics simulation estimates the chance of a fall, and fixed rules decide.</p>
-        <div class="hero-cta"><a class="btn-solid" href="#h-try">Try the demo</a><a class="btn-line" href="#h-how">How it decides</a></div>
+        <div class="hero-cta"><a class="btn-solid" href="#demo">Try the demo</a><a class="btn-line" data-link="repo" href="#">View on GitHub</a></div>
       </div>
       <figure class="proof" id="proof" aria-label="Replay of a real check: sample s1, next box at +16 cm">
         <div class="proof-cmd"><span id="proof-cmd">check &middot; sample s1 &middot; next box +16 cm</span><span class="proof-tag">real check</span></div>
@@ -306,7 +392,7 @@
         <div class="proof-head RED" id="proof-head"><span class="proof-zone" id="proof-zone" data-step>RED</span><span class="pill" id="proof-action" data-step>REJECT</span><span class="proof-p">P(fall) <b id="proof-p">73%</b></span></div>
         <ol class="proof-lines" id="proof-lines"></ol>
         <div class="proof-safe" id="proof-safe" data-step></div>
-        <figcaption class="proof-foot"><span>Replay of a real check &middot; OpenCV 5 &middot; MuJoCo</span><a href="#h-try" id="proof-run">Run it yourself &rarr;</a></figcaption>
+        <figcaption class="proof-foot"><span>Replay of a real check &middot; OpenCV 5 &middot; MuJoCo</span><a href="#demo" id="proof-run">Run it yourself &rarr;</a></figcaption>
       </figure>
     </section>
     <section class="problem" aria-labelledby="h-problem">
@@ -329,7 +415,103 @@
     </section>
   </div>
 </div>
+<div class="wrap">
+  <section class="block" aria-labelledby="h-ev-short">
+    <h2 id="h-ev-short">Locked evaluation, 25 real trials</h2>
+    <p class="block-lead">Settings and pass criteria were locked in git before any data. Every outcome was confirmed by the person at the stack.</p>
+    <div class="ev-grid">
+      <div class="ev ev-big"><span class="num g">0/8</span><span><b>GREEN</b> trials fell</span></div>
+      <div class="ev"><span class="num r">8/8</span><span><b>RED</b> trials fell</span></div>
+      <div class="ev"><span class="num">25/25</span><span><b>Check after placement</b> agreed with the outcome</span></div>
+      <div class="ev gap"><span class="num y">4/9</span><span><b>Known gap:</b> YELLOW trials fell more often than predicted</span></div>
+    </div>
+    <p class="ev-note">One locked criterion failed: 12 boxes fell where the model predicted 8.5 (90% interval 6&ndash;11). We report it and did not tune on the evaluation data.</p>
+    <a class="more" href="#evidence">Full evidence &rarr;</a>
+  </section>
 
+  <section class="block" aria-labelledby="h-gate">
+    <h2 id="h-gate">The rules are the gate, not the model.</h2>
+    <p class="block-lead">Fixed rules in one file (<code>drystone_core.py</code>) turn P(fall) into an action. No language model makes a decision. The same code runs on the laptop and on AWS Lambda.</p>
+    <div class="tech-grid">
+      <div class="tech"><span class="tech-k">OpenCV 5</span><p>80 mm ArUco markers (DICT_4X4_50), sub-pixel corners, <code>solvePnPGeneric</code>. ChArUco calibration: 61 views, RMS 0.37 px.</p></div>
+      <div class="tech"><span class="tech-k">MuJoCo</span><p>Monte Carlo, 150&ndash;600 simulated drops with 1 cm position and 2 cm load uncertainty; more runs near a zone line.</p></div>
+      <div class="tech"><span class="tech-k">AWS Lambda + ECR + CloudWatch</span><p>Container image (2048 MB, 60 s) tagged with the git commit; supervisor choices are one JSON line in CloudWatch Logs.</p></div>
+      <div class="tech"><span class="tech-k">Budget alarm</span><p>A zero-spend budget alarm sends an email at the first cent. 60 GET and 20 POST a minute per IP.</p></div>
+    </div>
+    <p class="facts mono">53 tests &middot; 25 locked trials &middot; every decision logged</p>
+  </section>
+</div>
+<section class="roles" aria-label="Who does what">
+  <div class="wrap">
+    <p><span>The camera measures.</span> <span>The simulation estimates.</span> <span>The rules decide.</span> <span>The supervisor signs.</span></p>
+  </div>
+</section>
+</div>
+<div class="view" id="view-how" data-title="How it works" hidden>
+<div class="band"><div class="wrap page-head">
+  <span class="problem-label">HOW IT WORKS</span>
+  <h1 class="page-title">Five checkpoints between the camera and the next box.</h1>
+  <p class="page-lead">The camera measures. The simulation estimates. The rules decide. A person places every box.</p>
+</div></div>
+<div class="wrap">
+  <section class="block" aria-label="Checkpoints">
+    <ol class="cps"><li class="cp"><span class="stage-n">1</span><b>Perceive</b><p>10 frames; 80 mm ArUco markers with sub-pixel corners; pose with <code>solvePnPGeneric</code>. A shaky reading is taken again (up to 3 times).</p></li><li class="cp"><span class="stage-n">2</span><b>Digital twin</b><p>The stack is built by contact, from the bottom box up, with the measured box sizes and weights from <code>config/boxes.json</code>.</p></li><li class="cp"><span class="stage-n">3</span><b>Simulate</b><p>MuJoCo Monte Carlo: 150&ndash;600 drops of the next box with 1 cm position and 2 cm load uncertainty.</p></li><li class="cp"><span class="stage-n">4</span><b>Decide</b><p>GREEN under 10% guides, YELLOW 10&ndash;50% asks a supervisor, RED over 50% rejects and suggests a safer spot.</p></li><li class="cp"><span class="stage-n">5</span><b>Check</b><p>After placement the camera reads the stack again: OK, OFF_PLAN (more than 1.5 cm off) or FELL.</p></li></ol>
+  </section>
+
+  <section class="block" aria-labelledby="h-camera">
+    <h2 id="h-camera">What the camera reads</h2>
+    <div class="seg" role="group" aria-label="Photo view">
+      <button type="button" class="seg-b" data-cam="photo" aria-pressed="false">What you see</button>
+      <button type="button" class="seg-b" data-cam="read" aria-pressed="true">What the camera reads</button>
+    </div>
+    <div class="cam"><canvas id="cam-view" width="1280" height="720" aria-label="Sample s2 with and without the camera reading"></canvas></div>
+    <p class="cam-cap" id="cam-cap"></p>
+  </section>
+
+  <section class="block" aria-labelledby="h-red">
+    <h2 id="h-red">RED is not the end. Get a safer spot.</h2>
+    <div class="two">
+      <div>
+        <p class="block-lead">A suggested spot must be green where it is <em>and</em> 1 cm further out, because real placements landed 0.0&ndash;1.3 cm from the plan. A real trace from the final practice (18 Oct, decision on Lambda):</p>
+        <pre class="trace-box"><code>150 simulations: P(fall) = 93% +- 4%
+not green -&gt; searching the nearest safe position
+try +12 cm (+41%): P = 15%
+try +11 cm (+38%): P = 12%
+try +10 cm (+34%): P = 4%, but 1 cm further out (+11 cm P = 12%) is not green -&gt; no margin, keep looking
+try +9 cm (+31%): P = 1%; 1 cm further out (+10 cm P = 4%) also green -&gt; suggestion</code></pre>
+      </div>
+      <div>
+        <p class="block-lead">If a box falls anyway, the check sees it on the floor and the agent plans it again. The final scene of the practice:</p>
+        <ol class="flow">
+          <li><span class="z z-r">RED</span> 93% &rarr; override (name and reason logged)</li>
+          <li>The box fell &rarr; check: <b>FELL</b></li>
+          <li>&ldquo;Pick it up&rdquo; &rarr; the same box is planned again</li>
+          <li><span class="z z-r">RED</span> again &rarr; suggestion +9 cm</li>
+          <li>Check <b>OK</b> (&minus;0.3 cm), stack <span class="z z-g">GREEN</span> 1%</li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" aria-labelledby="h-rules">
+    <h2 id="h-rules">Decision rules</h2>
+    <div class="table-wrap"><table class="rules-table"><thead><tr><th scope="col">Situation</th><th scope="col">When</th><th scope="col">What the agent does</th></tr></thead>
+    <tbody><tr><th scope="row"><span class="z z-g">GREEN</span></th><td>P(fall) under 10%</td><td>GUIDE: the box goes in the outline, no approval needed</td></tr><tr><th scope="row"><span class="z z-y">YELLOW</span></th><td>P(fall) 10&ndash;50%</td><td>ASK SUPERVISOR: approve, use the suggestion, or reject</td></tr><tr><th scope="row"><span class="z z-r">RED</span></th><td>P(fall) over 50%</td><td>REJECT: suggest the nearest safe spot</td></tr><tr><th scope="row">Near a zone line</th><td>still unsure after more simulations</td><td>takes the safer zone</td></tr><tr><th scope="row">Suggestion margin</th><td>every suggested spot</td><td>green there and 1 cm further out</td></tr><tr><th scope="row">Going on after RED</th><td>override</td><td>needs a name (2&ndash;60 characters) and a reason (5&ndash;300); logged, never changes the risk</td></tr><tr><th scope="row">Setup gate (evaluation mode)</th><td>a setup box missing, or more than 1.5 cm from its planned shift</td><td>refuses to decide and says what to fix</td></tr><tr><th scope="row">Placed box off the plan</th><td>more than 1.5 cm</td><td>OFF_PLAN: risk computed again, warning if not green</td></tr><tr><th scope="row">Box on the floor next to the stack</th><td>after placement</td><td>FELL: pick it up, the same box is planned again</td></tr><tr><th scope="row">Box not visible, stack intact</th><td>after placement</td><td>asks the person: f = fell out of view, p = not placed yet</td></tr></tbody></table></div>
+  </section>
+
+  <section class="block" aria-labelledby="h-diagrams">
+    <h2 id="h-diagrams">Architecture and agent loop</h2>
+    <figure class="fig"><img src="img/architecture.png" alt="Drystone system architecture: laptop agent and judges' page call one AWS Lambda function behind a Function URL; image in Amazon ECR; logs in CloudWatch" loading="lazy" width="1920" height="1080"><figcaption>Architecture: the laptop agent and this page call the same Lambda function.</figcaption></figure>
+    <figure class="fig"><img src="img/agent_loop.png" alt="Drystone agent loop: read the stack, decide, guide or ask or reject, place, check, and the failure branches" loading="lazy" width="1920" height="1080"><figcaption>The agent loop with its failure branches.</figcaption></figure>
+  </section>
+</div>
+</div>
+<div class="view" id="view-demo" data-title="Demo" hidden>
+<div class="hero hero-demo"><div class="wrap page-head">
+  <span class="problem-label">DEMO</span>
+  <h1 class="page-title">Run a real check on a real photo.</h1>
+  <p class="page-lead">Three photos from our calibrated webcam. Every check runs OpenCV and MuJoCo on AWS Lambda. The first run can take ~10 s.</p>
+</div></div>
 <main class="wrap">
   <section class="try" aria-labelledby="h-try">
     <div class="try-head">
@@ -383,7 +565,6 @@
     </div>
   </section>
 </main>
-
 <section class="how" aria-labelledby="h-how">
   <div class="wrap">
     <div class="sec-head"><h2 id="h-how">How it decided</h2><span class="mono" id="total">total &mdash; ms</span></div>
@@ -391,27 +572,106 @@
     <ol class="stages" id="trace"></ol>
   </div>
 </section>
-
+</div>
+<div class="view" id="view-evidence" data-title="Evidence" hidden>
+<div class="band"><div class="wrap page-head">
+  <span class="problem-label">EVIDENCE</span>
+  <h1 class="page-title">Locked evaluation, 25 new trials.</h1>
+  <p class="page-lead">Protocol locked in git before any data (commit <code>8a953e4</code>): 25 pre-set trials in a shuffled order, settings frozen, every outcome confirmed by the worker. All 25 ran on 18 Oct in 26 minutes.</p>
+</div></div>
 <div class="wrap">
-  <section class="evidence" aria-labelledby="h-ev">
-    <h2 id="h-ev">Locked evaluation, 25 real trials</h2>
-    <div class="ev-grid">
-      <div class="ev"><span class="num g">0/8</span><span><b>GREEN</b> &middot; 0 of 8 fell</span></div>
-      <div class="ev"><span class="num r">8/8</span><span><b>RED</b> &middot; 8 of 8 fell</span></div>
-      <div class="ev"><span class="num">25/25</span><span><b>Check after placement</b> correct</span></div>
-      <div class="ev gap"><span class="num y">4/9</span><span><b>Known gap:</b> YELLOW under-predicts (4 of 9 fell)</span></div>
+  <section class="block" aria-labelledby="h-crit">
+    <div class="verdict-banner"><b>Verdict: FAIL</b> under the locked criteria, because of C2b: one fall more than the upper end of the interval (z = 1.96). The model under-predicts falls. Four of five criteria passed.</div>
+    <h2 id="h-crit">Locked criteria</h2>
+    <div class="table-wrap"><table><thead><tr><th scope="col">Criterion (locked)</th><th scope="col">Result</th><th scope="col">Target</th><th scope="col"></th></tr></thead><tbody><tr><th scope="row">C1 falls in the GREEN zone</th><td><b>0 of 8</b> GREEN trials</td><td>0</td><td><span class="verdict v-pass">PASS</span></td></tr><tr><th scope="row">C2a accuracy on clear trials (P &lt; 10% or &gt; 70%)</th><td><b>14/14 (100%)</b></td><td>&ge; 85%</td><td><span class="verdict v-pass">PASS</span></td></tr><tr><th scope="row">C2b total falls inside the 90% interval of the predicted number</th><td><b>12 falls</b>; &Sigma;p = 8.537, sd 1.772, interval 5.62&ndash;11.45 &rarr; 6&ndash;11</td><td>inside</td><td><span class="verdict v-fail">FAIL</span></td></tr><tr><th scope="row">C3 Brier score</th><td><b>0.125</b></td><td>&le; 0.20</td><td><span class="verdict v-pass">PASS</span></td></tr><tr><th scope="row">C4 trials with an outcome</th><td><b>25 of 25</b></td><td>&ge; 20</td><td><span class="verdict v-pass">PASS</span></td></tr></tbody></table></div>
+    <p class="fine">A calibrated model with these P would see 12 or more falls only 4.7% of the time. Overall accuracy (P &ge; 50% predicts a fall), not a criterion: 84% (21/25), against 82% in Test 2.</p>
+  </section>
+
+  <section class="block" aria-labelledby="h-zones">
+    <h2 id="h-zones">By zone</h2>
+    <div class="table-wrap"><table><thead><tr><th scope="col">Zone</th><th scope="col">Trials</th><th scope="col">Falls</th><th scope="col">Fall rate</th><th scope="col">Mean P(fall)</th></tr></thead><tbody><tr><th scope="row"><span class="z z-g">GREEN</span></th><td>8</td><td>0</td><td>0%</td><td>3%</td></tr><tr><th scope="row"><span class="z z-y">YELLOW</span></th><td>9</td><td>4</td><td>44%</td><td>25%</td></tr><tr><th scope="row"><span class="z z-r">RED</span></th><td>8</td><td>8</td><td>100%</td><td>75%</td></tr></tbody></table></div>
+    <p class="fine">The check after placement agreed with the outcome the worker confirmed in 25/25 trials, and detected 12/12 falls as FELL (7/7 in the practice). Decisions on AWS Lambda: median 7.6 s, max 11.1 s.</p>
+  </section>
+
+  <section class="block" aria-labelledby="h-fails">
+    <h2 id="h-fails">Failure cases</h2>
+    <p class="block-lead">The four wrong predictions are all YELLOW trials that fell:</p>
+    <div class="table-wrap"><table><thead><tr><th scope="col">Trial</th><th scope="col">Stack</th><th scope="col">Shift</th><th scope="col">Centre-of-mass margin</th><th scope="col">P(fall)</th><th scope="col">Outcome</th></tr></thead><tbody><tr><th scope="row">T16</th><td>3 boxes, ID 1 at &minus;4.6 cm</td><td>+12 cm</td><td>+2.5 cm</td><td>14%</td><td>fell</td></tr><tr><th scope="row">T17</th><td>3 boxes, ID 1 at &minus;0.2 cm</td><td>&minus;12 cm</td><td>+2.5 cm</td><td>17%</td><td>fell</td></tr><tr><th scope="row">T01</th><td>2 boxes</td><td>+14 cm</td><td>+0.5 cm</td><td>35%</td><td>fell</td></tr><tr><th scope="row">T25</th><td>3 boxes, ID 1 at +5.2 cm</td><td>+14 cm</td><td>+0.5 cm</td><td>43%</td><td>fell</td></tr></tbody></table></div>
+    <p class="fine">Every trial with a margin of &minus;0.5 cm or less fell (8/8, all predicted RED); every trial with +3.5 cm or more stood (9/9). In between, from +0.5 to +2.5 cm, 4 of 8 fell while the model predicted 12&ndash;43%: the model ranks the risk correctly and keeps GREEN safe, but it is too optimistic in the middle band. A post-hoc check of nine other simulation settings (not used by the system) found no setting that fixes it: Brier 0.121&ndash;0.132.</p>
+  </section>
+
+  <section class="block" aria-labelledby="h-limits">
+    <h2 id="h-limits">Limits &amp; responsible use</h2>
+    <div class="two">
+      <ul class="plain">
+        <li>Markers are required on every box; faded markers in dim light can be missed.</li>
+        <li>One calibration per camera and resolution; the service is calibrated for one webcam at 1280&times;720.</li>
+        <li>Three measured boxes of one type (29 &times; 17 &times; 19.4&ndash;19.6 cm, 1.0 kg, load in the middle); other boxes, uneven or soft loads are untested.</li>
+        <li>The model under-predicts falls near the edge. Treat YELLOW as more dangerous than its number says.</li>
+        <li>On the evaluation trials the simulation is no more accurate than a static centre-of-mass check (both 84%); it is better calibrated (Brier 0.125 vs 0.160).</li>
+        <li>Small samples: Test 2 has 11 counted trials; the evaluation has 25.</li>
+      </ul>
+      <ul class="plain">
+        <li>Use Drystone to support a person&rsquo;s judgement, never as the only safeguard. It is not certified for safety.</li>
+        <li>Keep people, hands and the laptop out of the direction a box can fall when testing risky placements.</li>
+        <li>Overrides exist so that a person stays in charge; they are logged with a name and a reason.</li>
+        <li>Logs and photos show people and rooms; they stay on the laptop. Published data has no photos and no names.</li>
+      </ul>
     </div>
-    <p class="ev-note">Settings and pass criteria were locked in git before any data. One criterion failed: 12 boxes fell
-      where the model predicted 8.5 (90% interval 6&ndash;11). We report it and did not tune on the evaluation data.</p>
-    <a class="more" data-link="report" href="#">Full report &amp; failure cases &rarr;</a>
+    <a class="more" data-link="report" href="#">Full report, post-hoc analysis &amp; sources &rarr;</a>
   </section>
 </div>
-
-<section class="roles" aria-label="Who does what">
-  <div class="wrap">
-    <p><span>The camera measures.</span> <span>The simulation estimates.</span> <span>The rules decide.</span> <span>The supervisor signs.</span></p>
-  </div>
-</section>
+</div>
+<div class="view" id="view-setup" data-title="Setup" hidden>
+<div class="band"><div class="wrap page-head">
+  <span class="problem-label">SETUP</span>
+  <h1 class="page-title">Four ways to run Drystone.</h1>
+  <p class="page-lead">Windows Command Prompt, Python 3.12, from the repository folder. One command per line.</p>
+</div></div>
+<div class="wrap">
+  <section class="block level" aria-labelledby="h-l1">
+    <span class="lvl">1</span><h2 id="h-l1">On the web, nothing to install</h2>
+    <p class="block-lead">Open the <a href="#demo">Demo</a> tab: pick a sample photo and tap a spot on the ruler. The check runs on AWS Lambda.</p>
+  </section>
+  <section class="block level" aria-labelledby="h-l2">
+    <span class="lvl">2</span><h2 id="h-l2">On your laptop, with the sample photos</h2>
+    <p class="block-lead">Same handler as Lambda, no camera needed.</p>
+    <div class="code"><pre><code>git clone <span data-clone>&lt;repository URL&gt;</span></code></pre><button type="button" class="copy" aria-label="Copy command">Copy</button></div>
+    <div class="code"><pre><code>cd drystone</code></pre><button type="button" class="copy" aria-label="Copy command">Copy</button></div>
+    <div class="code"><pre><code>python -m venv .venv</code></pre><button type="button" class="copy" aria-label="Copy command">Copy</button></div>
+    <div class="code"><pre><code>.venv\Scripts\activate</code></pre><button type="button" class="copy" aria-label="Copy command">Copy</button></div>
+    <div class="code"><pre><code>pip install -r requirements-dev.txt</code></pre><button type="button" class="copy" aria-label="Copy command">Copy</button></div>
+    <div class="code"><pre><code>python tools/web_local.py</code></pre><button type="button" class="copy" aria-label="Copy command">Copy</button></div>
+    <p class="fine">Then open http://127.0.0.1:8000/. Run the tests with:</p>
+    <div class="code"><pre><code>python -m pytest tests -q</code></pre><button type="button" class="copy" aria-label="Copy command">Copy</button></div>
+  </section>
+  <section class="block level" aria-labelledby="h-l3">
+    <span class="lvl">3</span><h2 id="h-l3">Full: webcam, real boxes and printed markers</h2>
+    <p class="block-lead">This level needs real things: cardboard boxes, a printed 80 mm ArUco marker (DICT_4X4_50, IDs 0&ndash;11) in the middle of each box&rsquo;s front face, and a webcam. Print <code>assets/opencv_marker_kalibrasi.pdf</code>, glue the ChArUco board to a flat hard board and measure the square size. List your boxes (size and weight per marker ID) in <code>config/boxes.json</code>.</p>
+    <p class="fine">Calibrate your camera; repeat until the verdict is LAYAK:</p>
+    <div class="code"><pre><code>python tools/calibrate.py --name laptop --square-mm 29.8 --auto</code></pre><button type="button" class="copy" aria-label="Copy command">Copy</button></div>
+    <p class="fine">Run the agent on the laptop:</p>
+    <div class="code"><pre><code>python tools/agent.py --calib data/camera_laptop.yaml --marker-mm 80</code></pre><button type="button" class="copy" aria-label="Copy command">Copy</button></div>
+    <p class="fine">Or with decisions on AWS Lambda (your own deployment, level 4):</p>
+    <div class="code"><pre><code>set DRYSTONE_URL=&lt;your Function URL&gt;</code></pre><button type="button" class="copy" aria-label="Copy command">Copy</button></div>
+    <div class="code"><pre><code>python tools/agent.py --calib data/camera_laptop.yaml --marker-mm 80 --aws %DRYSTONE_URL%</code></pre><button type="button" class="copy" aria-label="Copy command">Copy</button></div>
+  </section>
+  <section class="block level" aria-labelledby="h-l4">
+    <span class="lvl">4</span><h2 id="h-l4">Deploy your own Lambda</h2>
+    <p class="block-lead">Container image in Amazon ECR, Lambda x86_64, 2048 MB, 60 s, Function URL. First time: create the ECR repository <code>drystone-service</code>, then create the function from the image in the console. Docker Desktop must be running.</p>
+    <div class="code"><pre><code>docker build --provenance=false -f aws/Dockerfile -t drystone-service .</code></pre><button type="button" class="copy" aria-label="Copy command">Copy</button></div>
+    <div class="code"><pre><code>for /f %i in ('aws sts get-caller-identity --query Account --output text') do set ACC=%i</code></pre><button type="button" class="copy" aria-label="Copy command">Copy</button></div>
+    <div class="code"><pre><code>for /f %i in ('git rev-parse --short HEAD') do set TAG=%i</code></pre><button type="button" class="copy" aria-label="Copy command">Copy</button></div>
+    <div class="code"><pre><code>set REPO=%ACC%.dkr.ecr.ap-southeast-1.amazonaws.com/drystone-service</code></pre><button type="button" class="copy" aria-label="Copy command">Copy</button></div>
+    <div class="code"><pre><code>aws ecr get-login-password --region ap-southeast-1 | docker login --username AWS --password-stdin %ACC%.dkr.ecr.ap-southeast-1.amazonaws.com</code></pre><button type="button" class="copy" aria-label="Copy command">Copy</button></div>
+    <div class="code"><pre><code>docker tag drystone-service:latest %REPO%:%TAG%</code></pre><button type="button" class="copy" aria-label="Copy command">Copy</button></div>
+    <div class="code"><pre><code>docker push %REPO%:%TAG%</code></pre><button type="button" class="copy" aria-label="Copy command">Copy</button></div>
+    <div class="code"><pre><code>aws lambda update-function-code --function-name drystone --image-uri %REPO%:%TAG% --region ap-southeast-1 --query LastUpdateStatus</code></pre><button type="button" class="copy" aria-label="Copy command">Copy</button></div>
+    <div class="code"><pre><code>aws lambda wait function-updated --function-name drystone --region ap-southeast-1</code></pre><button type="button" class="copy" aria-label="Copy command">Copy</button></div>
+    <p class="fine">The account is billed above the always-free quota: keep a zero-spend budget alarm on. Full notes: <code>aws/README.md</code>.</p>
+  </section>
+</div>
+</div>
 
 <footer>
   <div class="wrap">
@@ -942,10 +1202,75 @@
       e.preventDefault();
       if (state.busy) return;
       if (state.sample !== s) selectSample(s);
-      el("h-try").scrollIntoView({ behavior: "smooth", block: "start" });
+      if (location.hash !== "#demo") location.hash = "#demo"; else showView("demo");
       analyze(REC.offset_cm, true);
     });
   }
+
+  /* ---------- tabs: hash routing, one file ---------- */
+  var VIEWS = ["home", "how", "demo", "evidence", "setup"];
+  function showView(name) {
+    if (VIEWS.indexOf(name) < 0) name = "home";
+    VIEWS.forEach(function (v) { el("view-" + v).hidden = v !== name; });
+    Array.prototype.forEach.call(document.querySelectorAll(".tabs a"), function (a) {
+      if (a.dataset.view === name) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current");
+    });
+    var t = el("view-" + name).dataset.title;
+    document.title = name === "home" ? "Drystone demo" : t + " \u00b7 Drystone";
+    window.scrollTo(0, 0);
+    if (name === "how") drawCam();
+    if (name === "demo") draw();
+  }
+  window.addEventListener("hashchange", function () { showView(location.hash.slice(1)); });
+
+  /* ---------- copy buttons ---------- */
+  Array.prototype.forEach.call(document.querySelectorAll(".copy"), function (b) {
+    b.addEventListener("click", function () {
+      var text = b.parentNode.querySelector("code").textContent;
+      function done(ok) { b.textContent = ok ? "Copied" : "Select it"; setTimeout(function () { b.textContent = "Copy"; }, 1500); }
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(function () { done(true); }, function () { done(false); });
+      else done(false);
+    });
+  });
+  if (LINKS.repo) Array.prototype.forEach.call(document.querySelectorAll("[data-clone]"), function (n) { n.textContent = LINKS.repo.replace(/\/$/, "") + ".git"; });
+
+  /* ---------- what the camera reads (sample s2, a recorded check) ---------- */
+  // Recorded from tools/service.py for sample s2 at +13 cm; tests/test_web.py checks it against the service.
+  var REC2 = {"sample":"s2","offset_cm":13,"box_id":2,"markers":[{"id":0,"corners":[[572.6,523.9],[643.3,525.6],[642.4,592.6],[571.7,590.5]]},{"id":1,"corners":[[570.4,348.3],[645.7,347.0],[645.1,419.3],[572.6,419.9]]}],"polygons":[{"role":"stack","id":0,"corners":[[501.8,575.5],[482.1,636.7],[498.3,434.2],[477.0,474.7],[718.3,576.6],[732.9,638.0],[722.2,435.2],[738.2,476.0]]},{"role":"stack","id":1,"corners":[[498.5,429.6],[477.2,469.5],[495.4,278.6],[472.6,293.7],[723.5,430.6],[739.7,470.8],[727.1,279.6],[744.8,294.9]]},{"role":"candidate","id":2,"corners":[[599.2,278.9],[594.5,294.1],[599.3,120.5],[594.4,107.6],[830.2,280.4],[865.5,295.9],[836.0,122.8],[873.6,110.6]]},{"role":"suggestion","id":2,"corners":[[567.2,278.8],[556.9,294.0],[566.5,120.5],[555.7,107.5],[798.6,280.1],[828.5,295.6],[803.6,122.4],[835.4,110.0]]}],"decision":{"zone":"YELLOW","action":"ASK_SUPERVISOR","p":0.267,"ci":0.071,"n":150,"overhang_pct":44.83,"static_margin_cm":1.5,"alternative":{"offset_cm":9.0,"overhang_pct":31.03,"p":0.013,"n":150,"further_offset_cm":10.0,"p_further":0.027}}};
+  var camMode = "read", camImg = null;
+  function drawCam() {
+    var cv = el("cam-view"), g = cv.getContext("2d");
+    if (!camImg) {
+      if (!state.meta) return;
+      var s2 = state.meta.samples.filter(function (x) { return x.id === REC2.sample; })[0];
+      if (!s2) return;
+      camImg = new Image(); camImg.onload = drawCam; camImg.src = photoUrl(s2); return;
+    }
+    if (!camImg.complete) return;
+    cv.width = camImg.naturalWidth; cv.height = camImg.naturalHeight;
+    g.drawImage(camImg, 0, 0);
+    var d = REC2.decision, a = d.alternative;
+    if (camMode === "read") {
+      G = g;
+      var lw = Math.max(2, cv.width / 400);
+      REC2.markers.forEach(function (m) { poly(m.corners, MARKER, lw); label("ID " + m.id, m.corners[0][0], m.corners[0][1] - 6, MARKER, Math.round(cv.width / 64)); });
+      REC2.polygons.forEach(function (p) {
+        if (p.role === "stack") box(p.corners, "#ffffff", lw, []);
+        if (p.role === "suggestion") box(p.corners, BRAND, lw * 1.4, [10, 8]);
+      });
+      REC2.polygons.forEach(function (p) { if (p.role === "candidate") box(p.corners, ZONE[d.zone], lw * 1.8, []); });
+      G = ctx;
+      el("cam-cap").textContent = "Sample " + REC2.sample + ", next box at " + signed(REC2.offset_cm) + " cm. Light blue: the ArUco markers with their IDs. " +
+        "White: the digital twin of the stack. Solid " + d.zone.toLowerCase() + ": the planned box, " + d.zone + " (P(fall) " + pct(d.p) + "). " +
+        "Dashed blue: the suggested spot, " + signed(Math.round(a.offset_cm)) + " cm.";
+    } else {
+      el("cam-cap").textContent = "The raw photo from the calibrated laptop webcam (1280\u00d7720): two boxes, one marker each.";
+    }
+    Array.prototype.forEach.call(document.querySelectorAll(".seg-b"), function (b) { b.setAttribute("aria-pressed", String(b.dataset.cam === camMode)); });
+  }
+  Array.prototype.forEach.call(document.querySelectorAll(".seg-b"), function (b) {
+    b.addEventListener("click", function () { camMode = b.dataset.cam; drawCam(); });
+  });
 
   fetch("samples/samples.json", { cache: "no-cache" }).then(function (r) { return r.json(); }).then(function (meta) {
     state.meta = meta;
@@ -960,6 +1285,7 @@
     });
     selectSample(meta.samples[0]);
     startProof();
+    showView(location.hash.slice(1));
   }).catch(function () {
     el("result").innerHTML = '<div class="pad"><span class="err-title">Could not load the sample list.</span>' +
       '<span class="err-text">Reload the page.</span></div>';

@@ -15,6 +15,7 @@ AWS Lambda: handler = service.lambda_handler, JSON body:
 Judges' web page on the same Function URL (web/index.html, no photo upload):
     GET /                    the page
     GET /samples/<id>.jpg    sample photo listed in web/samples/samples.json
+    GET /img/<name>.png      architecture and agent-loop diagrams (fixed list, web/img/)
     POST {"sample": "s2", "offset_cm": 14}                         decision for a sample photo (cached)
     POST /log {"sample", "offset_cm", "choice", "name", "reason"}  approve / override etc., one JSON line
                                                                    in CloudWatch Logs; it never changes the decision
@@ -208,6 +209,7 @@ WEB_MAX_BODY = 16 * 1024          # bytes: web JSON (decision / log)
 PHOTO_MAX_BODY = 2 * 1024 * 1024  # bytes: photo POST from the agent (3 JPEG ~ 450 KB)
 RATE_WINDOW_S = 60.0
 RATE_LIMITS = {"GET": 60, "POST": 20}
+WEB_IMAGES = ("architecture", "agent_loop")   # diagrams on the page's How it works tab
 NAME_LEN = (2, 60)
 REASON_LEN = (5, 300)
 # Buttons per zone, as in the laptop agent. GREEN needs no approval (the agent guides the placement).
@@ -410,6 +412,10 @@ def _http(event, http):
         if path == "/samples/samples.json":
             # small, and it carries photos_version: always revalidated so a replaced photo shows at once
             return _response(200, _web_file("samples/samples.json").decode("utf-8"), cache="no-cache")
+        m = re.fullmatch(r"/img/([a-z_]{1,20})\.png", path)
+        if m and m.group(1) in WEB_IMAGES:
+            return _response(200, _web_file(f"img/{m.group(1)}.png"), "image/png", "public, max-age=86400",
+                             binary=True)
         m = re.fullmatch(r"/samples/([a-z0-9_-]{1,20})\.jpg", path)
         if m and m.group(1) in _web_setup()["samples"]:
             return _response(200, _web_file(f"samples/{m.group(1)}.jpg"), "image/jpeg", "public, max-age=86400",

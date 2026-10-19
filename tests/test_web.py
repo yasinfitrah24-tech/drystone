@@ -61,6 +61,15 @@ def test_sample_photo_200_and_unknown_404():
     assert status == 200 and out["headers"]["Cache-Control"] == "no-cache"
 
 
+def test_diagram_images_200_and_unknown_404():
+    status, body, out = call("GET", "/img/architecture.png")
+    assert status == 200 and out["isBase64Encoded"] and out["headers"]["Content-Type"] == "image/png"
+    assert base64.b64decode(body)[:8] == b"\x89PNG\r\n\x1a\n"
+    assert call("GET", "/img/agent_loop.png")[0] == 200
+    assert call("GET", "/img/web_desktop.png")[0] == 404             # only the listed diagrams
+    assert call("GET", "/img/../index.html")[0] == 404
+
+
 @pytest.mark.parametrize("sample,zone,offset", EXAMPLES)
 def test_example_zones(sample, zone, offset):
     status, r, _ = call("POST", "/", {"sample": sample, "offset_cm": offset})
@@ -202,14 +211,15 @@ def test_direct_invoke_unchanged():
 
 
 def test_hero_replay_matches_service():
-    """The hero card replays one recorded check; it must still be what the service answers."""
+    """The page replays recorded checks; they must still be what the service answers."""
     with open(os.path.join(ROOT, "web", "index.html"), encoding="utf-8") as f:
         html = f.read()
-    start = html.index("var REC = ") + len("var REC = ")
-    rec = json.loads(html[start:html.index(";\n", start)])
-    status, r, _ = call("POST", "/", {"sample": rec["sample"], "offset_cm": rec["offset_cm"]})
-    assert status == 200 and r["ok"]
-    assert r["decision"] == rec["decision"]
-    assert r["box_id"] == rec["box_id"]
-    assert [m["id"] for m in r["markers"]] == [m["id"] for m in rec["markers"]]
-    assert [p["role"] for p in r["polygons"]] == [p["role"] for p in rec["polygons"]]
+    for var in ("REC", "REC2"):                      # hero card, and the camera view on How it works
+        start = html.index(f"var {var} = ") + len(f"var {var} = ")
+        rec = json.loads(html[start:html.index(";\n", start)])
+        status, r, _ = call("POST", "/", {"sample": rec["sample"], "offset_cm": rec["offset_cm"]})
+        assert status == 200 and r["ok"]
+        assert r["decision"] == rec["decision"]
+        assert r["box_id"] == rec["box_id"]
+        assert [m["id"] for m in r["markers"]] == [m["id"] for m in rec["markers"]]
+        assert [p["role"] for p in r["polygons"]] == [p["role"] for p in rec["polygons"]]

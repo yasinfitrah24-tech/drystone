@@ -71,8 +71,9 @@ not change. From China, PyPI can be very slow; build with
 4. Configuration → Function URL: auth type NONE (public demo), CORS allow POST.
 
 ## Routes on the Function URL
-- `GET /`: the judges' page (`web/index.html`). `GET /samples/<id>.jpg`: sample photos listed in
-  `web/samples/samples.json`.
+- `GET /`: the judges' page (`web/index.html`, five tabs with hash routing: `#home`, `#how`, `#demo`, `#evidence`,
+  `#setup`). `GET /samples/<id>.jpg`: sample photos listed in `web/samples/samples.json`. `GET /img/<name>.png`: the
+  two diagrams in `web/img/` (`architecture`, `agent_loop`; fixed list).
 - `POST /` with `{"sample": "s2", "offset_cm": 14}`: decision for a sample photo (OpenCV + `drystone_core`, fixed
   seed, cached per container and marked `"cached": true`).
 - `POST /log` with `{"sample", "offset_cm", "choice", "name", "reason"}`: one JSON line `web_supervisor_choice` in

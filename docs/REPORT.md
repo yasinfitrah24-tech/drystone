@@ -157,7 +157,7 @@ flowchart LR
 - **Same code on both sides.** If AWS fails, the laptop computes the decision with the same code and logs that it
   did.
 - **Deploys** are tagged with the git commit hash; the live version and the rollback target are written in
-  `docs/STATUS.md` before each deploy. Live now: `drystone-service:3b023a4`. An ECR lifecycle policy keeps the two
+  `docs/STATUS.md` before each deploy (the live tag is listed there). An ECR lifecycle policy keeps the two
   newest tagged images and removes untagged images after 14 days, so the rollback target is always the previous
   version.
 - **Speed.** Stopping each simulation as soon as a box falls or every box is at rest gave identical results on
@@ -308,9 +308,10 @@ boxes; measure box-on-box and box-on-floor friction with a tilt test; model the 
 tilt when the box is let go); then lock new settings and test them on new trials again.
 
 ### 7.5 Software tests and live checks
-- **52 automated tests** (pytest). Synthetic camera photos are rendered through the real calibration, so the same
+- **53 automated tests** (pytest). Synthetic camera photos are rendered through the real calibration, so the same
   OpenCV code runs as on real photos:
-  - the web endpoint: page, sample photos, the zone and suggestion of every example (with the 1 cm margin), cache,
+  - the web endpoint: page, sample photos, the two diagrams, the zone and suggestion of every example (with the 1 cm
+    margin), the recorded checks replayed on the page, cache,
     request limits (400, 413, 429), the photo API used by the agent;
   - the check after placement, on the laptop and through the Lambda handler: a box fallen upright or lying next to
     the stack, a box out of view, a box placed as planned, a box 3 cm off, a turned fallen box;
