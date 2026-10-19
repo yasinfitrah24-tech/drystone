@@ -22,7 +22,7 @@
     --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Consolas, monospace;
     --gutter: clamp(16px, 5vw, 96px);
-    --overlap: clamp(140px, 20vw, 300px);
+    --overlap: clamp(96px, 11vw, 160px);
     --grid: linear-gradient(var(--g) 1px, transparent 1px), linear-gradient(90deg, var(--g) 1px, transparent 1px);
   }
   * { box-sizing: border-box; }
@@ -52,13 +52,14 @@
   .toplink { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; margin-right: -12px; border-radius: 8px; color: var(--hero-body); }
   .hero .toplink { color: var(--hero-body); }
   @media (hover: hover) { .hero .toplink:hover { color: #fff; background: rgba(255,255,255,0.08); } }
-  .hero-main { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: clamp(28px, 4vw, 64px); padding: clamp(24px, 5vw, 64px) 0 clamp(18px, 2.5vw, 28px); }
-  .hero-copy { flex: 1 1 480px; min-width: 0; }
-  h1 { margin: 0; font-size: clamp(42px, 6.4vw, 88px); line-height: 0.98; font-weight: 700; letter-spacing: -0.03em; text-wrap: balance; }
+  .hero-main { display: grid; grid-template-columns: minmax(0, 1fr) minmax(320px, 440px); align-items: center; gap: clamp(32px, 5vw, 72px); padding: clamp(32px, 5vw, 64px) 0 clamp(28px, 3.5vw, 48px); }
+  .hero-copy { min-width: 0; }
+  @media (max-width: 860px) { .hero-main { grid-template-columns: minmax(0, 1fr); } }
+  h1 { margin: 0; font-size: clamp(40px, 5.6vw, 80px); line-height: 0.98; font-weight: 700; letter-spacing: -0.03em; text-wrap: balance; }
   .hero-sub { margin: clamp(8px, 1.2vw, 16px) 0 0; font-size: clamp(20px, 2.4vw, 32px); line-height: 1.2; color: var(--hero-sub); font-weight: 500; }
   .hero-body { max-width: 46ch; margin: clamp(16px, 2vw, 28px) 0 0; font-size: clamp(16px, 1.4vw, 19px); line-height: 1.5; color: var(--hero-body); text-wrap: pretty; }
   /* hero proof: a replay of one real check */
-  .proof { flex: 1 1 360px; max-width: 470px; margin: 0; background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow); overflow: hidden; }
+  .proof { width: 100%; margin: 0; background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow); overflow: hidden; }
   .proof-cmd { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 10px 14px; font: 12px var(--mono); color: var(--muted); border-bottom: 1px solid var(--soft); }
   .proof-tag { flex: none; font: 600 11px var(--mono); color: var(--brand); background: rgba(36,87,197,0.08); border: 1px solid rgba(36,87,197,0.25); padding: 2px 8px; border-radius: 999px; }
   .proof canvas { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; background: var(--photo-bg); }
@@ -77,23 +78,37 @@
   /* the replay only hides steps once the script runs, so the card is complete without it */
   .proof.anim [data-step] { opacity: 0; transform: translateY(4px); transition: opacity 0.35s ease-out, transform 0.35s ease-out; }
   .proof.anim [data-step].on { opacity: 1; transform: none; }
-  @media (max-width: 860px) { .proof { max-width: none; } }
-  .why { margin: 0 0 clamp(24px, 4vw, 48px); padding-top: 14px; border-top: 1px solid var(--band-border); max-width: 70ch; font-size: 15px; line-height: 1.65; letter-spacing: 0.005em; color: var(--hero-sub); }
-  .why strong { color: #fff; font-weight: 600; }
-  .why a { color: #fff; }
+  /* the problem, in the band between the hero and the try-it cards */
+  .problem { padding: clamp(8px, 2vw, 24px) 0 clamp(40px, 5vw, 72px); }
+  .problem-label { font: 600 12px var(--mono); letter-spacing: 0.12em; color: var(--brand-edge); }
+  .problem h2 { margin: 10px 0 0; font-size: clamp(30px, 4vw, 52px); line-height: 1.08; letter-spacing: -0.02em; color: #fff; text-wrap: balance; }
+  .problem h2 span { display: block; color: var(--brand-edge); }
+  .problem-lead { margin: 16px 0 0; max-width: 62ch; font-size: clamp(16px, 1.3vw, 18px); line-height: 1.6; color: var(--hero-body); }
+  .stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(20px, 3vw, 40px); margin: clamp(28px, 4vw, 48px) 0 0; padding: 0; list-style: none; }
+  @media (max-width: 760px) { .stats { grid-template-columns: minmax(0, 1fr); } }
+  .stats li { border-top: 1px solid var(--band-border); padding-top: clamp(16px, 2vw, 24px); }
+  /* captions start on one line across the three columns, whatever the height of the figure above */
+  @media (min-width: 761px) { .stats { grid-template-rows: auto auto; } .stats li { display: grid; grid-row: span 2; grid-template-rows: subgrid; align-items: end; } }
+  .stats li p { align-self: start; }
+  .stat-num { display: block; font-size: clamp(48px, 6vw, 80px); line-height: 1; font-weight: 700; letter-spacing: -0.03em; color: var(--brand-edge); font-variant-numeric: tabular-nums; }
+  .stat-num.quote { font-size: clamp(30px, 3.4vw, 44px); line-height: 1.1; padding-top: 0.15em; }
+  .stats p { margin: 14px 0 0; max-width: 36ch; font-size: 15px; line-height: 1.55; color: #fff; }
+  .problem-note { margin: clamp(24px, 3vw, 36px) 0 0; max-width: 80ch; font-size: 13px; line-height: 1.6; color: var(--hero-sub); }
+  .hero .problem-note a { color: var(--hero-sub); }
 
   /* try it */
-  .try { position: relative; margin-top: calc(-1 * var(--overlap)); padding: clamp(20px, 3vw, 40px) 0 clamp(40px, 6vw, 88px); }
+  .try { position: relative; margin-top: calc(-1 * var(--overlap)); padding: clamp(8px, 1.5vw, 20px) 0 clamp(40px, 6vw, 88px); }
   .try-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 16px; margin-bottom: 14px; }
   h2 { margin: 0; font-size: clamp(22px, 2.2vw, 28px); font-weight: 700; letter-spacing: -0.01em; }
   .try-head h2 { color: #fff; }
   .try-head span { font-size: 15px; color: var(--hero-sub); }
-  .try-grid { display: flex; flex-wrap: wrap; gap: clamp(16px, 2vw, 24px); align-items: flex-start; }
+  .try-grid { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(300px, 1fr); gap: clamp(16px, 2vw, 24px); align-items: start; }
+  @media (max-width: 860px) { .try-grid { grid-template-columns: minmax(0, 1fr); } }
   .card { min-width: 0; background: var(--surface); border: 1px solid var(--border); box-shadow: var(--shadow); border-radius: 12px; }
-  .card-left { flex: 1 1 600px; padding: clamp(14px, 2vw, 24px); display: flex; flex-direction: column; gap: clamp(14px, 1.8vw, 20px); }
-  .card-right { flex: 1 1 380px; overflow: hidden; scroll-margin-top: 12px; }
+  .card-left { padding: clamp(14px, 2vw, 24px); display: flex; flex-direction: column; gap: clamp(14px, 1.8vw, 20px); }
+  .card-right { overflow: hidden; scroll-margin-top: 12px; }
   /* desktop: the decision stays in view next to the photo and ruler */
-  @media (min-width: 1000px) { .card-right { position: sticky; top: 16px; } }
+  @media (min-width: 861px) { .card-right { position: sticky; top: 16px; } }
 
   .thumbs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(8px, 1vw, 12px); }
   .thumb { all: unset; box-sizing: border-box; cursor: pointer; display: flex; flex-direction: column; gap: 6px; padding: 5px; min-height: 44px; min-width: 0; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); }
@@ -290,9 +305,24 @@
         <figcaption class="proof-foot"><span>Replay of a real check &middot; OpenCV 5 &middot; MuJoCo</span><a href="#h-try" id="proof-run">Run it yourself &rarr;</a></figcaption>
       </figure>
     </section>
-    <p class="why"><strong>Why it matters:</strong> in 2020, US transportation and warehousing had 99,800 injuries with
-      days away from work; 12,100 of them were &ldquo;struck by object or equipment&rdquo;. That category is broader than
-      falling stacks. <a href="https://www.bls.gov/iif/snapshots/isn-transportation-and-warehousing-2016-20.htm" target="_blank" rel="noopener">Source: US Bureau of Labor Statistics</a></p>
+    <section class="problem" aria-labelledby="h-problem">
+      <span class="problem-label">THE PROBLEM</span>
+      <h2 id="h-problem">Every stack is a judgement call,<span>made by eye.</span></h2>
+      <p class="problem-lead">How far can the next box hang over the one below before the stack falls? When boxes are
+        stacked by hand, a person answers that by eye, one box at a time. A wrong guess only shows when the stack comes down.</p>
+      <ul class="stats">
+        <li><span class="stat-num">12,100</span><p>of the 99,800 injuries with days away from work in US transportation and
+          warehousing in 2020 were &ldquo;struck by object or equipment&rdquo;</p></li>
+        <li><span class="stat-num">65</span><p>deaths from &ldquo;contact with objects and equipment&rdquo; in the same
+          industries in 2020 (62&ndash;75 a year, 2016&ndash;2020)</p></li>
+        <li><span class="stat-num quote">&ldquo;Stable and secure&rdquo;</span><p>is what US OSHA requires of materials stored
+          in tiers: stacked, blocked, interlocked or limited in height, against sliding or collapse</p></li>
+      </ul>
+      <p class="problem-note">The BLS categories cover all objects and equipment, not only falling stacks: they show the scale of
+        the risk, not how many people falling stacks hurt. Sources:
+        <a href="https://www.bls.gov/iif/snapshots/isn-transportation-and-warehousing-2016-20.htm" target="_blank" rel="noopener">US Bureau of Labor Statistics, transportation and warehousing 2016&ndash;20</a> &middot;
+        <a href="https://www.osha.gov/laws-regs/regulations/standardnumber/1910/1910.176" target="_blank" rel="noopener">OSHA 29 CFR 1910.176(b)</a></p>
+    </section>
   </div>
 </div>
 
@@ -611,11 +641,11 @@
     var s = state.sample, h;
     el("dmeta-top").textContent = s ? s.id + (state.shift !== null ? " · " + signed(state.shift) + " cm" : "") : "";
     if (state.status === "idle") {
-      var red = s && s.examples.RED !== undefined ? s.examples.RED : null;
+      var yel = s && s.examples.YELLOW !== undefined ? s.examples.YELLOW : null;
       h = '<div class="pad"><span class="idle">Tap a marker on the ruler to run the check.</span>' +
-        (red !== null ? '<span class="soft-text">Not sure where to start? The ' + signed(red) + ' cm marker is expected to be RED, ' +
-          'so you see a rejection and the safer spot the agent suggests.</span>' +
-          '<button type="button" class="cta" data-act="try-red">Check <span class="mono">' + signed(red) + ' cm</span></button>' : "") +
+        (yel !== null ? '<span class="soft-text">Not sure where to start? The ' + signed(yel) + ' cm marker is expected to be YELLOW, ' +
+          'so a supervisor has to decide: approve, use the safer spot, or reject.</span>' +
+          '<button type="button" class="cta" data-act="try-example">Check <span class="mono">' + signed(yel) + ' cm</span></button>' : "") +
         "</div>";
     } else if (state.status === "loading") {
       h = '<div class="pad"><span class="load-title">Running Monte Carlo on AWS Lambda…</span>' +
@@ -810,7 +840,7 @@
     if (!b || state.busy) return;
     var act = b.dataset.act;
     if (act === "retry") { analyze(state.shift === null ? 0 : state.shift); return; }
-    if (act === "try-red") { analyze(state.sample.examples.RED, true); return; }
+    if (act === "try-example") { analyze(state.sample.examples.YELLOW, true); return; }
     if (act === "override-open") {
       state.overrideOpen = true; state.note = null; renderDecision();
       var n = el("sup-name"); if (n) n.focus();
