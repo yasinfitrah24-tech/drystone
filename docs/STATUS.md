@@ -2,7 +2,7 @@
 
 Salinan status untuk repo (dibaca Yasin, Vincent, dan Claude masing-masing). Update di commit yang sama setiap ada keputusan atau hasil tes baru. Semua jam = waktu China.
 
-Terakhir diperbarui: 19 Okt 2026. Live: `drystone-service:368b0d5` (halaman juri Blueprint + Impeccable + header tipis, sejak 19 Okt 16.01; rollback `e622387`). **Evaluasi 25 percobaan baru selesai: FAIL (C2b, kelebihan 1 roboh); C1, C2a, C3, C4 lulus.**
+Terakhir diperbarui: 19 Okt 2026. Live: `drystone-service:9a67671` (halaman juri Blueprint + Impeccable + header tipis + kartu hero "real check", sejak 19 Okt 16.45; rollback `368b0d5`). **Evaluasi 25 percobaan baru selesai: FAIL (C2b, kelebihan 1 roboh); C1, C2a, C3, C4 lulus.**
 
 ## Ringkasan
 - **Lomba:** OpenCV AI Competition 2026 (https://opencv26.devpost.com/). Deadline **27 Okt, 14.45** (target submit 26 Okt malam). Penjurian 27 Okt–10 Nov, endpoint harus tetap hidup.
@@ -227,7 +227,9 @@ Latihan final 18 Okt 13.36–13.41, `agent.py --aws`, Lambda `drystone-service:3
 - Di kanan hero ada kartu yang memutar ulang **satu keputusan asli**: s1, kardus berikutnya +16 cm → RED 73% (± 7%, 150 simulasi), usulan +10 cm 3% GREEN. Data direkam dari `tools/service.py` (seed 0, kode dan jawaban sama dengan Lambda) dan disimpan di `web/index.html` (`REC`, ±0,8 KB); foto diambil dari `samples/s1.jpg`. Animasi ±3 dtk sekali jalan (marker → kerangka → kardus berikutnya + P(fall) naik → RED → usulan); *reduced motion* langsung hasil akhir. "Run it yourself →" menjalankan cek yang sama secara live. Label: "real check", "Replay of a real check".
 - Tes baru `test_hero_replay_matches_service`: rekaman harus sama dengan jawaban service (zona, P, CI, n, usulan, marker, poligon). **52 tes lulus** (README/REPORT/DEVPOST ikut diperbarui).
 - Foto "diperjelas" dari ChatGPT (gpt-image, C2PA `trainedAlgorithmicMedia`, 1672×941, marker s2/s3 bergeser 28–36 px) **tidak dipakai**: foto sampel tetap foto webcam asli. File AI dipindah ke luar repo (`Downloads\drystone_ai_photos`).
-- Screenshot `docs/img/web_desktop.png` dan `web_mobile.png` diperbarui. Deploy: lihat di bawah.
+- Screenshot `docs/img/web_desktop.png` dan `web_mobile.png` diperbarui.
+- **Deploy 19 Okt 16.45:** image `drystone-service:9a67671` (+ `:latest`, digest `sha256:7d48cf7b…9057`), Lambda `Successful`/`Active`, Function URL tetap. **Rollback target: `drystone-service:368b0d5`** (perintah rollback seperti di bagian deploy 18 Okt, dengan tag `368b0d5`).
+- **Tes live (16.46):** `GET /` 200 (4,5 dtk), kartu hero ada · `samples.json` 200 `no-cache` · **s1 +16 cm (cek kartu hero) → RED 73%, usulan +10 cm; jawaban Lambda sama persis dengan rekaman di halaman** (5,8 dtk) · s2 +16 cm → RED 69%, usulan +9 cm (9,1 dtk) · `aws/test_endpoint.py` s2 +6 cm → GREEN GUIDE (4,2 dtk) · `POST /log` cancel → 200, baris `web_supervisor_choice` di CloudWatch · override tanpa alasan → 400 · 0 baris ERROR.
 
 ### Header tipis (19 Okt sore)
 - Header jadi bar tipis selebar layar (tinggi 56 px, seperti contoh Atlas): logo dan nama lebih kecil, tautan "GitHub repo" jadi ikon GitHub (target 44 px, `aria-label` "GitHub repository", tetap memakai `LINKS.repo`). Hanya tampilan; 51 tes lulus. `docs/img/web_desktop.png` dan `web_mobile.png` diperbarui.
@@ -312,7 +314,7 @@ Latihan final 18 Okt 13.36–13.41, `agent.py --aws`, Lambda `drystone-service:3
 - **Diagram final (18 Okt):** `docs/img/architecture.png` dan `docs/img/agent_loop.png` (dari Claude Design, 1920×1080, ±0,23 MB tiap file, dicek: tanpa Function URL atau nomor akun, metadata PNG kosong). Dipasang di REPORT §4 dan §8.1 (Mermaid tetap ada di bawahnya sebagai versi teks) dan di README. **Saat submit:** unggah ke galeri gambar Devpost, architecture dulu, lalu agent_loop.
 - **Sabtu 24 Okt:** rekam video (Yasin + Vincent), adegan sesuai "Alur video final".
 - **Minggu 25 Okt:** edit video, finalisasi laporan, isi Devpost.
-- **Senin 26 Okt:** isi `LINKS` di awal skrip `web/index.html` (repo, video, REPORT; sekarang sengaja masih `#`) → deploy ulang dengan tag hash baru (rollback = `368b0d5`) → tes live (`GET /`, link terbuka, s2 +16 → RED, `aws/test_endpoint.py`, `/log` di CloudWatch). Lalu jadikan repo publik + cek ulang tidak ada secret, nomor akun AWS, atau Function URL di seluruh riwayat git (bukan hanya commit terakhir), cek akhir halaman juri dari HP, submit (deadline 27 Okt 14.45).
+- **Senin 26 Okt:** isi `LINKS` di awal skrip `web/index.html` (repo, video, REPORT; sekarang sengaja masih `#`) → deploy ulang dengan tag hash baru (rollback = `9a67671`) → tes live (`GET /`, link terbuka, s2 +16 → RED, `aws/test_endpoint.py`, `/log` di CloudWatch). Lalu jadikan repo publik + cek ulang tidak ada secret, nomor akun AWS, atau Function URL di seluruh riwayat git (bukan hanya commit terakhir), cek akhir halaman juri dari HP, submit (deadline 27 Okt 14.45).
 
 ## Bonus (hanya kalau inti selesai)
 - S3 (foto bukti per keputusan) + DynamoDB (log keputusan, approval, override). Log approve/override dari halaman juri **sudah** tercatat di CloudWatch Logs (satu baris JSON `web_supervisor_choice`).
