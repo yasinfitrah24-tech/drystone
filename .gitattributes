@@ -1,2 +1,4 @@
 # The evaluation trial list is checked by its sha256 (docs/EVAL_PROTOCOL.md): keep it byte-for-byte LF
 config/eval_plan.json text eol=lf
+# Print sheets: vector PDFs with byte offsets in their xref table; never convert line endings
+*.pdf binary
