@@ -29,7 +29,7 @@ where the page follows REPORT or the code instead of the draft.
 - Accent: One guess per box.
 - Body: Boxes have no mortar either. Whether a stack stays up depends on where each box lands, and that call is usually made by eye, with the next box already in hand.
 - Three numbers:
-  - 99,800 · injuries with days away from work in US transportation and warehousing (2020)
+  - 99,800 · nonfatal cases with days away from work in US transportation and warehousing (2020)
   - 12,100 · of them "struck by object or equipment", a category broader than falling stacks
   - 65 · fatal injuries from "contact with objects and equipment" in 2020 (62–75 a year, 2016–2020)
 - Source: U.S. Bureau of Labor Statistics, *Injuries, illnesses, and fatalities in transportation and warehousing,
@@ -178,8 +178,8 @@ Place it once. Place it right. [button: Try the demo →]
 - MIT License (Video and GitHub are icons in the header; the report is the hero button "View report"; all via LINKS)
 
 ## Notes: where the page follows REPORT or the code instead of this draft
-1. Problem, first number: REPORT §1 says "99,800 nonfatal cases with days away from work", not "injuries". The page
-   says "nonfatal cases".
+1. Problem, first number: REPORT §1 says "99,800 nonfatal cases with days away from work"; the draft said
+   "injuries". This copy now says "nonfatal cases", the same as the page.
 2. Rules table, OVERRIDE: in the code a YELLOW placement goes ahead by approval (name optional on the page), not by an
    override; only RED needs an override with a name (2–60 characters) and a reason (5–300 characters). The page says
    "Going ahead on RED"; YELLOW approval is in the YELLOW row.
