@@ -2,7 +2,7 @@
 
 Salinan status untuk repo (dibaca Yasin, Vincent, dan Claude masing-masing). Update di commit yang sama setiap ada keputusan atau hasil tes baru. Semua jam = waktu China.
 
-Terakhir diperbarui: 23 Okt 2026. Live: `drystone-service:f031add` (halaman juri, angka besar menghitung naik, sejak 23 Okt 11.27; rollback `3f9eff9`). **Evaluasi 25 percobaan baru selesai: FAIL (C2b, kelebihan 1 roboh); C1, C2a, C3, C4 lulus.**
+Terakhir diperbarui: 23 Okt 2026. Live: `drystone-service:4a2676b` (halaman juri, animasi pipeline How it works, sejak 23 Okt 11.39; rollback `f031add`). **Evaluasi 25 percobaan baru selesai: FAIL (C2b, kelebihan 1 roboh); C1, C2a, C3, C4 lulus.**
 
 ## Ringkasan
 - **Lomba:** OpenCV AI Competition 2026 (https://opencv26.devpost.com/). Deadline **27 Okt, 14.45** (target submit 26 Okt malam). Penjurian 27 Okt–10 Nov, endpoint harus tetap hidup.
@@ -231,6 +231,13 @@ Latihan final 18 Okt 13.36–13.41, `agent.py --aws`, Lambda `drystone-service:3
 - **Deploy 23 Okt 08.34:** image `drystone-service:b0f4b7f` (+ `:latest`, digest `sha256:52ecb387…baa4`), Lambda `Successful`/`Active`. **Rollback target: `drystone-service:3ca4c46`.**
 - **Tes live (08.35–08.37):** `GET /` 200, copy baru ada (judul, kata zona place it/ask/move it, teks "can take ~10 s", ikon copy, logo OpenCV dan MuJoCo, ikon GitHub, tombol "View report") · lima tab, kedua diagram 200, `/img/web_desktop.png` → 404 · s1 +16 cm → RED 73% dan s2 +13 cm → YELLOW 27%, sama persis dengan rekaman · s2 +16 cm → RED 69%, usulan +9 cm · `aws/test_endpoint.py` → GREEN GUIDE · `/log` → 200 + CloudWatch · override tanpa alasan → 400 · 0 baris ERROR.
 
+### Pipeline How it works bergerak seperti situs Subtext (23 Okt)
+- Permintaan Yasin: animasi lima langkah How it works dibuat mirip https://subtext-sable.vercel.app/how-it-works. Dari CSS Subtext: langkah muncul naik (0,7 dtk, jeda 0,3 dtk), lingkaran berpendar bergantian (siklus 6 dtk, jeda 1,2 dtk), garis putus-putus berjalan (1,1 dtk), vertikal di layar sempit, diam dengan reduced motion. Diterapkan dengan warna biru Drystone (bukan oranye Subtext); Decide tetap disorot dengan cincinnya sendiri. Hanya CSS + satu baris di `showView`; markup, service, API tidak berubah. Catatan di `docs/SITE_COPY.md` GLOBAL.
+- Animasi dipicu saat tab How it works dibuka (langkah yang sama yang menampilkan tab), jadi tidak ada yang disembunyikan sebelumnya dan tidak ada kedipan.
+- Uji browser lokal: desktop 1440×900, muncul bergiliran 1→5, pendar berurutan 1→2→3→4→5, garis bergerak; HP 390×844, garis vertikal bergerak, kelima langkah tampil, tanpa scroll ke samping. 56 tes lulus.
+- **Deploy 23 Okt 11.39:** image `drystone-service:4a2676b` (+ `:latest`, digest `sha256:f9187aec…7021`), Lambda `Successful`/`Active`. **Rollback target: `drystone-service:f031add`.**
+- **Tes live (11.40–11.42):** `GET /` 200 (3,8 dtk), HTML identik (sha256) dengan `web/index.html`, keyframes pp-rise/pp-ring/pp-march + pemicu ada, 10 angka `data-count` · teks batch UX tetap ada, 4/4 link kosong tersembunyi · kedua diagram 200, `/img/web_desktop.png` 404, `samples.json` `no-cache`, `s1.jpg` 200 · s1 +16 → RED 73% usulan +10 · s2 +13 → YELLOW 27% usulan +9 · s2 +16 → RED 69% usulan +9 · `aws/test_endpoint.py` → GREEN GUIDE · `/log` → 200 + baris CloudWatch · override tanpa alasan → 400 · 0 baris ERROR.
+
 ### Angka besar menghitung naik dari 0 (23 Okt)
 - Permintaan Yasin: 10 angka besar (The problem 99,800 / 12,100 / 65; ringkasan evidence Home 0/8 · 8/8 · 25/25; Evidence "The agent, under test" 25/25 · 12/12 · 4 · 0) menghitung naik dari 0 sekali, ±1,2 dtk, saat pertama masuk layar. Hanya tampilan (`web/index.html` + catatan di `docs/SITE_COPY.md` GLOBAL); angka, service, API tidak berubah.
 - Mulai 80 px sebelum angka masuk layar, sehingga tidak ada kedipan. Angka tertulis tetap tampil sampai hitungan mulai (tidak pernah tertahan di 0; dicek di pane tersembunyi tempat observer/animasi tidak jalan) · bagian setelah garis miring tetap ("/8") · koma tetap · lebar dikunci selama menghitung · pembaca layar membaca angka akhir · reduced motion atau tanpa skrip → angka akhir langsung.
@@ -374,7 +381,7 @@ Latihan final 18 Okt 13.36–13.41, `agent.py --aws`, Lambda `drystone-service:3
 - **Diagram final (18 Okt):** `docs/img/architecture.png` dan `docs/img/agent_loop.png` (dari Claude Design, 1920×1080, ±0,23 MB tiap file, dicek: tanpa Function URL atau nomor akun, metadata PNG kosong). Dipasang di REPORT §4 dan §8.1 (Mermaid tetap ada di bawahnya sebagai versi teks) dan di README. **Saat submit:** unggah ke galeri gambar Devpost, architecture dulu, lalu agent_loop.
 - **Sabtu 24 Okt:** rekam video (Yasin + Vincent), adegan sesuai "Alur video final".
 - **Minggu 25 Okt:** edit video, finalisasi laporan, isi Devpost.
-- **Senin 26 Okt:** isi `LINKS` di awal skrip `web/index.html` (repo, video, REPORT; sekarang sengaja masih `#`) → deploy ulang dengan tag hash baru (rollback = `f031add`) → tes live (`GET /`, link terbuka, s2 +16 → RED, `aws/test_endpoint.py`, `/log` di CloudWatch). **Sebelum repo dibuat publik: scan ulang seluruh riwayat git** (bukan hanya commit terakhir) untuk secret, access key, nomor akun AWS, dan Function URL; REPORT §6 menyebut scan 18 Okt bersih, commit sesudahnya belum di-scan. Lalu jadikan repo publik, cek akhir halaman juri dari HP, submit (deadline 27 Okt 14.45).
+- **Senin 26 Okt:** isi `LINKS` di awal skrip `web/index.html` (repo, video, REPORT; sekarang sengaja masih `#`) → deploy ulang dengan tag hash baru (rollback = `4a2676b`) → tes live (`GET /`, link terbuka, s2 +16 → RED, `aws/test_endpoint.py`, `/log` di CloudWatch). **Sebelum repo dibuat publik: scan ulang seluruh riwayat git** (bukan hanya commit terakhir) untuk secret, access key, nomor akun AWS, dan Function URL; REPORT §6 menyebut scan 18 Okt bersih, commit sesudahnya belum di-scan. Lalu jadikan repo publik, cek akhir halaman juri dari HP, submit (deadline 27 Okt 14.45).
 
 ## Bonus (hanya kalau inti selesai)
 - S3 (foto bukti per keputusan) + DynamoDB (log keputusan, approval, override). Log approve/override dari halaman juri **sudah** tercatat di CloudWatch Logs (satu baris JSON `web_supervisor_choice`).
