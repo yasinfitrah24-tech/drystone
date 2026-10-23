@@ -54,7 +54,7 @@ Pastikan muncul `(.venv)` di awal baris sebelum menjalankan pip atau python. Pyt
 
 ## Kalibrasi
 - Papan ChArUco wajib ditempel di bidang keras dan rata. Kertas yang dipegang langsung melengkung dan merusak kalibrasi (percobaan 11 Okt: RMS 1.18 px, fx meleset +-75 px).
-- Kalibrasi hanya dipakai kalau vonisnya LAYAK: RMS <= 1.0 px (bagus < 0.5), ketidakpastian fx/fy <= 1%, cakupan >= 9 dari 12 kotak gambar, minimal 10 posisi papan berbeda. Hasil ULANGI disimpan sebagai `camera_<nama>_draft.yaml`.
+- Kalibrasi hanya dipakai kalau vonisnya PASS: RMS <= 1.0 px (bagus < 0.5), ketidakpastian fx/fy <= 1%, cakupan >= 9 dari 12 kotak gambar, minimal 10 posisi papan berbeda. Hasil RETRY disimpan sebagai `camera_<nama>_draft.yaml`. Di YAML nilai `quality` tetap `LAYAK` / `ULANGI` (data, dibaca `common.CALIB_PASS`; file lama tetap bisa dimuat); pengguna hanya melihat PASS / RETRY (`common.VERDICT_TEXT`). Teks yang dilihat pengguna di tools/ semuanya bahasa Inggris.
 - Kamera sendirian: pakai `--auto`. Frame kembar ditolak otomatis.
 
 ## Aturan kerja

@@ -179,7 +179,7 @@ markers, DICT_5X5_100, A4 landscape). Both are made by `python tools/make_print_
 `tools/common.py`. Measure what you printed.
 
 Calibrate your camera: glue the ChArUco board to a flat hard board, measure one printed square, and repeat until the
-verdict is LAYAK (passes); it then saves `data/camera_mycam.yaml`. `data/camera_laptop.yaml` is our own webcam;
+verdict is PASS; it then saves `data/camera_mycam.yaml`. `data/camera_laptop.yaml` is our own webcam;
 calibrate yours.
 ```
 python tools/calibrate.py --name mycam --square-mm 30 --auto

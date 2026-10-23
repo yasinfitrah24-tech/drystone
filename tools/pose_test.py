@@ -1,20 +1,20 @@
-r"""Tes 1 Drystone: seberapa akurat posisi kardus terbaca dari marker ArUco.
+r"""Drystone Test 1: how accurately a box position is read from its ArUco marker.
 
-Persiapan:
-- Kalibrasi dulu kamera yang sama di resolusi yang sama (tools/calibrate.py).
-- Tempel marker ID 0 di tengah sisi depan kardus, rata. Ukur sisi hitam marker hasil cetak
-  setelit mungkin (misalnya 79.5 mm): galat 1 mm di sini = galat 1.25% di semua jarak.
-- Kamera diam di penyangga, jarak sekitar 1 m, sedikit menunduk (10-20 derajat), menghadap sisi depan kardus.
-- Taruh penggaris di meja, sejajar sisi depan kardus. Tempelkan satu sisi kardus ke pinggir buku/papan
-  supaya kardus bergeser lurus ke kiri/kanan tanpa berputar.
+Setup:
+- Calibrate the same camera at the same resolution first (tools/calibrate.py).
+- Stick marker ID 0 flat in the middle of the box's front face. Measure the black side of the printed marker
+  as exactly as you can (for example 79.5 mm): 1 mm off here = 1.25% off in every distance.
+- Camera still on a stand, about 1 m away, tilted down a little (10-20 degrees), facing the box's front face.
+- Put a ruler on the table, parallel to the box's front face. Keep one side of the box against the edge of a
+  book or board so the box slides straight left/right without turning.
 
 Webcam:
     python tools/pose_test.py --calib data/camera_laptop.yaml --marker-mm 79.5
-Foto HP (1 foto per posisi, urutan nama file = urutan posisi):
+Phone photos (1 photo per position, file name order = position order):
     python tools/pose_test.py --calib data/camera_hp.yaml --marker-mm 79.5 --images "data/pose_hp/*.jpg"
 
-Posisi default 0, 5, 10, ..., 45 cm: taruh kardus di tiap tanda penggaris lalu tekan SPASI.
-Tombol: SPASI = rekam posisi, U = batalkan rekaman terakhir, Q = selesai dan tampilkan hasil.
+Default positions 0, 5, 10, ..., 45 cm: put the box at each ruler mark and press SPACE.
+Keys: SPACE = record position, U = undo the last recording, Q = finish and show the result.
 """
 import argparse
 import csv
@@ -80,12 +80,12 @@ def record_step(cap, detector, args, obj, K, dist, prev_rvec):
             amb += int(a)
             prev_rvec = r
         view = frame.copy()
-        cv2.putText(view, f"merekam... {len(ts)}/{args.frames}", (10, 30),
+        cv2.putText(view, f"recording... {len(ts)}/{args.frames}", (10, 30),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 200, 255), 2)
-        cv2.imshow("Tes pose Drystone", view)
+        cv2.imshow("Drystone pose test", view)
         cv2.waitKey(1)
     if len(ts) < max(3, args.frames // 2):
-        print("Gagal merekam: marker kurang sering terbaca. Cek cahaya dan jarak, lalu coba lagi.")
+        print("Recording failed: the marker was not read often enough. Check light and distance, then try again.")
         return None
     ts, rs = np.array(ts), np.array(rs)
     t_med = np.median(ts, axis=0)
@@ -116,25 +116,25 @@ def analyse(steps_cm, records):
 
 def report(steps_cm, records, args):
     if len(records) < 3:
-        print("Butuh minimal 3 posisi untuk menilai akurasi.")
+        print("At least 3 positions are needed to judge the accuracy.")
         return
     a, along, err_along, cross, err_total, rot, scale, T = analyse(steps_cm, records)
-    print("\n=== Hasil Tes 1: akurasi posisi kardus (relatif terhadap posisi pertama) ===")
-    print(f"Jarak kamera ke marker: sekitar {np.linalg.norm(T[0]):.0f} cm")
-    print(f"{'Penggaris':>9} {'Terukur':>8} {'Galat':>7} {'Samping':>8} {'Total':>7} {'Rotasi':>7} {'Jitter':>7}")
+    print("\n=== Test 1 result: box position accuracy (relative to the first position) ===")
+    print(f"Camera to marker: about {np.linalg.norm(T[0]):.0f} cm")
+    print(f"{'Ruler':>9} {'Measured':>8} {'Error':>7} {'Sideways':>8} {'Total':>7} {'Turn':>7} {'Jitter':>7}")
     print(f"{'(cm)':>9} {'(cm)':>8} {'(cm)':>7} {'(cm)':>8} {'(cm)':>7} {'(deg)':>7} {'(mm)':>7}")
     for i, rec in enumerate(records):
         print(f"{a[i]:9.1f} {along[i]:8.2f} {err_along[i]:+7.2f} {cross[i]:8.2f} {err_total[i]:7.2f} "
               f"{rot[i]:7.2f} {rec['jitter_mm']:7.1f}")
     pos_ok = err_total.max() <= TARGET_POS_CM
     rot_ok = rot.max() <= TARGET_ROT_DEG
-    print(f"\nSkala terukur/penggaris : {scale:.3f}  (ideal 1.000; meleset > 1% -> cek --marker-mm atau ulang kalibrasi)")
-    print(f"Galat posisi maks       : {err_total.max():.2f} cm  (target <= {TARGET_POS_CM}) -> {'LULUS' if pos_ok else 'BELUM'}")
-    print(f"Galat rotasi maks       : {rot.max():.2f} deg (target <= {TARGET_ROT_DEG}) -> {'LULUS' if rot_ok else 'BELUM'}")
+    print(f"\nScale measured/ruler    : {scale:.3f}  (ideal 1.000; off by > 1% -> check --marker-mm or calibrate again)")
+    print(f"Max position error      : {err_total.max():.2f} cm  (target <= {TARGET_POS_CM}) -> {'PASS' if pos_ok else 'NOT YET'}")
+    print(f"Max turn error          : {rot.max():.2f} deg (target <= {TARGET_ROT_DEG}) -> {'PASS' if rot_ok else 'NOT YET'}")
     amb = sum(rec["amb"] for rec in records)
     if amb:
-        print(f"Catatan: {amb} frame ambigu (marker terlihat hampir tegak lurus). "
-              "Miringkan kamera 10-20 derajat ke bawah supaya rotasi lebih stabil.")
+        print(f"Note: {amb} ambiguous frames (marker seen almost head-on). "
+              "Tilt the camera 10-20 degrees down for a steadier rotation.")
     os.makedirs(common.DATA_DIR, exist_ok=True)
     name = os.path.splitext(os.path.basename(args.calib))[0].replace("camera_", "")
     out = os.path.join(common.DATA_DIR, f"pose_{name}_{time.strftime('%Y%m%d_%H%M%S')}.csv")
@@ -146,21 +146,21 @@ def report(steps_cm, records, args):
             w.writerow([f"{a[i]:.1f}", f"{along[i]:.3f}", f"{err_along[i]:.3f}", f"{cross[i]:.3f}",
                         f"{err_total[i]:.3f}", f"{rot[i]:.3f}", f"{rec['jitter_mm']:.2f}",
                         rec["frames"], rec["amb"], *[f"{v:.3f}" for v in T[i]]])
-    print(f"Tersimpan: {out}\n")
+    print(f"Saved: {out}\n")
 
 
 def run_images(args, steps, obj, K, dist, calib_size):
     detector = common.make_marker_detector()
     paths = common.list_images(args.images)
     if len(paths) > len(steps):
-        sys.exit(f"Ada {len(paths)} foto tapi cuma {len(steps)} posisi di --steps.")
+        sys.exit(f"{len(paths)} photos but only {len(steps)} positions in --steps.")
     records, prev = [], None
     for p in paths:
         img = common.read_image(p)
         common.check_size(img, calib_size, os.path.basename(p))
         est = estimate(detector, img, args.id, obj, K, dist, prev)
         if not est:
-            sys.exit(f"Marker ID {args.id} tidak terbaca di {os.path.basename(p)}.")
+            sys.exit(f"Marker ID {args.id} not found in {os.path.basename(p)}.")
         r, t, _, amb = est
         prev = r
         records.append({"t": t, "r": r, "jitter_mm": float("nan"), "frames": 1, "amb": int(amb)})
@@ -173,13 +173,13 @@ def run_camera(args, steps, obj, K, dist, calib_size):
     cap = common.open_camera(args.source, calib_size[0], calib_size[1])
     ok, frame = cap.read()
     if ok:
-        common.check_size(frame, calib_size, "kamera")
+        common.check_size(frame, calib_size, "the camera")
     records, prev = [], None
-    print("SPASI = rekam posisi, U = batalkan rekaman terakhir, Q = selesai")
+    print("SPACE = record position, U = undo the last recording, Q = finish")
     while True:
         ok, frame = cap.read()
         if not ok:
-            print("Kamera berhenti mengirim gambar.")
+            print("The camera stopped sending images.")
             break
         est = estimate(detector, frame, args.id, obj, K, dist, prev)
         view = frame.copy()
@@ -188,26 +188,26 @@ def run_camera(args, steps, obj, K, dist, calib_size):
             prev = r
             cv2.polylines(view, [c.astype(np.int32)], True, (0, 255, 0), 2)
             cv2.drawFrameAxes(view, K, dist, r, t, obj[1, 0])
-            info = f"jarak {np.linalg.norm(t) * 100:.1f} cm"
+            info = f"distance {np.linalg.norm(t) * 100:.1f} cm"
             if records:
-                info += f" | geser dari posisi 1: {np.linalg.norm(t - records[0]['t']) * 100:.1f} cm"
+                info += f" | moved from position 1: {np.linalg.norm(t - records[0]['t']) * 100:.1f} cm"
         else:
-            info = f"marker ID {args.id} tidak terlihat"
+            info = f"marker ID {args.id} not visible"
         nxt = steps[len(records)] if len(records) < len(steps) else None
-        todo = f"taruh di {nxt:g} cm lalu SPASI" if nxt is not None else "semua posisi terekam - tekan Q"
+        todo = f"put it at {nxt:g} cm, then SPACE" if nxt is not None else "all positions recorded - press Q"
         cv2.putText(view, info, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0) if est else (0, 0, 255), 2)
-        cv2.putText(view, f"[{len(records)}/{len(steps)}] {todo} | U batal | Q selesai", (10, 60),
+        cv2.putText(view, f"[{len(records)}/{len(steps)}] {todo} | U undo | Q finish", (10, 60),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.65, (255, 255, 255), 2)
-        cv2.imshow("Tes pose Drystone", view)
+        cv2.imshow("Drystone pose test", view)
         key = cv2.waitKey(1) & 0xFF
         if key == ord(" ") and nxt is not None:
             rec = record_step(cap, detector, args, obj, K, dist, prev)
             if rec:
                 records.append(rec)
-                print(f"Posisi {nxt:g} cm terekam ({rec['frames']} frame, jitter {rec['jitter_mm']:.1f} mm)")
+                print(f"Position {nxt:g} cm recorded ({rec['frames']} frames, jitter {rec['jitter_mm']:.1f} mm)")
         elif key in (ord("u"), ord("U")) and records:
             records.pop()
-            print("Rekaman terakhir dibatalkan.")
+            print("Last recording undone.")
         elif key in (ord("q"), ord("Q"), 27):
             break
     cap.release()
@@ -216,19 +216,19 @@ def run_camera(args, steps, obj, K, dist, calib_size):
 
 
 def main():
-    ap = argparse.ArgumentParser(description="Tes akurasi posisi kardus dari marker ArUco")
-    ap.add_argument("--calib", required=True, help="file kalibrasi, misalnya data/camera_laptop.yaml")
+    ap = argparse.ArgumentParser(description="Test how accurately a box position is read from its ArUco marker")
+    ap.add_argument("--calib", required=True, help="calibration file, for example data/camera_laptop.yaml")
     ap.add_argument("--marker-mm", type=float, default=common.BOX_MARKER_MM,
-                    help="sisi hitam marker hasil cetak, dalam mm")
-    ap.add_argument("--id", type=int, default=0, help="ID marker di kardus (default 0)")
+                    help="black side of the printed marker, in mm")
+    ap.add_argument("--id", type=int, default=0, help="marker ID on the box (default 0)")
     ap.add_argument("--steps", default="0,5,10,15,20,25,30,35,40,45",
-                    help="posisi penggaris dalam cm, dipisah koma")
-    ap.add_argument("--frames", type=int, default=20, help="jumlah frame yang dirata-rata per posisi")
-    ap.add_argument("--images", help='pola file foto, misalnya "data/pose_hp/*.jpg"')
-    ap.add_argument("--source", default="0", help="indeks webcam (0, 1, ...) atau URL kamera")
+                    help="ruler positions in cm, comma-separated")
+    ap.add_argument("--frames", type=int, default=20, help="number of frames averaged per position")
+    ap.add_argument("--images", help='photo file pattern, for example "data/pose_hp/*.jpg"')
+    ap.add_argument("--source", default="0", help="webcam index (0, 1, ...) or camera URL")
     args = ap.parse_args()
     if args.marker_mm == common.BOX_MARKER_MM:
-        print("Catatan: --marker-mm tidak diisi, dipakai 80.0 mm. Ukur hasil cetak supaya akurat.")
+        print("Note: --marker-mm not given, using 80.0 mm. Measure your print for accurate results.")
     steps = [float(s) for s in args.steps.split(",") if s.strip()]
     K, dist, calib_size = common.load_calibration(args.calib)
     obj = marker_points(args.marker_mm / 1000.0)

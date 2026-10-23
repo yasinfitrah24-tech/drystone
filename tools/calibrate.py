@@ -1,29 +1,29 @@
-r"""Kalibrasi kamera dengan papan ChArUco (halaman 1 opencv_marker_kalibrasi.pdf).
+r"""Camera calibration with the ChArUco board (docs/print/charuco_A4.pdf).
 
-Siapkan papan dulu: tempel kertasnya di bidang keras dan rata (sampul buku hardcover, papan klip,
-karton tebal) dengan selotip di keempat sisi, lalu ukur sisi satu kotak hitam (misalnya 29.8 mm).
-Kertas yang melengkung membuat kalibrasi gagal, dan tidak bisa diperbaiki oleh model lensa apa pun.
+Prepare the board first: tape the sheet on all four sides to something hard and flat (a hardcover book, a
+clipboard, thick card), then measure the side of one black square (for example 29.8 mm).
+A bent sheet makes the calibration fail, and no lens model can fix that.
 
-Webcam laptop, sendirian (disarankan): frame tersimpan sendiri tiap papan ditahan diam +-1 detik
+Laptop webcam, on your own (recommended): a frame is saved by itself each time the board is held still for ~1 s
     python tools/calibrate.py --name laptop --square-mm 29.8 --auto
 
-Webcam laptop, ada yang menekan SPASI:
+Laptop webcam, with someone pressing SPACE:
     python tools/calibrate.py --name laptop --square-mm 29.8
 
-Foto dari HP (15-25 foto papan, zoom 1x, orientasi sama, taruh di data/calib_hp/):
+Phone photos (15-25 photos of the board, zoom 1x, same orientation, in data/calib_hp/):
     python tools/calibrate.py --name hp --square-mm 29.8 --images "data/calib_hp/*.jpg"
 
-Panduan di jendela kamera:
-  - kotak hijau = bagian gambar yang sudah terisi sudut papan. Isi minimal 9 dari 12 kotak,
-    terutama pojok dan tepi gambar.
-  - miring = perkiraan sudut papan terhadap kamera. Usahakan tiap arah (kiri, kanan, atas, bawah)
-    punya frame dengan papan miring 20-40 derajat.
-  - frame yang hampir sama dengan frame yang sudah tersimpan ditolak.
-Tombol: SPASI = simpan frame, C = hitung kalibrasi, Q = keluar.
+Guide in the camera window:
+  - green cells = parts of the image already covered by board corners. Cover at least 9 of the 12 cells,
+    especially the corners and edges of the image.
+  - tilt = estimated angle of the board to the camera. For each side (left, right, top, bottom), try to
+    have a frame with the board tilted 20-40 degrees.
+  - a frame almost the same as a saved one is rejected.
+Keys: SPACE = save frame, C = calibrate, Q = quit.
 
-Setiap hasil diberi vonis. LAYAK disimpan ke data/camera_<nama>.yaml. ULANGI disimpan ke
-data/camera_<nama>_draft.yaml beserta daftar perbaikannya, supaya kalibrasi LAYAK yang lama
-tidak tertimpa.
+Every result gets a verdict. PASS is saved to data/camera_<name>.yaml. RETRY is saved to
+data/camera_<name>_draft.yaml with its list of fixes, so an older calibration that passed
+is not overwritten. (In the YAML, `quality` keeps the values LAYAK / ULANGI: see common.CALIB_PASS.)
 """
 import argparse
 import os
@@ -47,7 +47,7 @@ MAX_F_SD_PCT = 1.0       # 1-sigma uncertainty of fx and fy, in percent
 MIN_CELLS = 9
 STILL_PX = 2.0           # auto mode: corners moving less than this per frame count as held still
 STILL_SEC = 0.8          # ... for this long before the frame is saved
-SIDES = ("kiri", "kanan", "atas", "bawah")
+SIDES = ("left", "right", "top", "bottom")
 
 
 class BoardView:
@@ -108,8 +108,8 @@ def tilt_sides(normal):
 
 def tilt_text(normal):
     yaw, pitch = turn(normal)
-    return (f"miring {'kiri' if yaw < 0 else 'kanan'} {abs(yaw):.0f}, "
-            f"{'atas' if pitch < 0 else 'bawah'} {abs(pitch):.0f} derajat")
+    return (f"tilt {'left' if yaw < 0 else 'right'} {abs(yaw):.0f}, "
+            f"{'top' if pitch < 0 else 'bottom'} {abs(pitch):.0f} degrees")
 
 
 def find_repeat(view, saved):
@@ -140,7 +140,7 @@ def coverage(views, size):
 
 def calibrate(views, size):
     if len(views) < MIN_VIEWS:
-        print(f"Baru {len(views)} posisi papan yang berbeda, butuh minimal {MIN_VIEWS}.")
+        print(f"Only {len(views)} different board positions so far, at least {MIN_VIEWS} needed.")
         return None
     obj = [v.obj for v in views]
     img = [v.img for v in views]
@@ -158,48 +158,48 @@ def assess(views, size, rms, K, sd):
     missing = [s for s in SIDES if s not in sides]
     fixes = []
     if rms > MAX_RMS_PX:
-        fixes.append("RMS terlalu besar: papan belum rata atau gambar blur. Tempel papan di bidang keras, "
-                     "tahan diam saat frame diambil, cahaya cukup.")
+        fixes.append("RMS too high: the board is not flat or the image is blurred. Fix the board to something hard, "
+                     "hold it still while a frame is taken, and use enough light.")
     if f_sd > MAX_F_SD_PCT:
         # with a bent board the focal length drifts too; then the RMS fix above comes first
         if missing:
-            fixes.append("Fokus kamera belum terkunci: miringkan papan 20-40 derajat, terutama ke arah "
+            fixes.append("Focal length not certain yet: tilt the board 20-40 degrees, especially toward the "
                          + ", ".join(missing) + ".")
         elif rms <= MAX_RMS_PX:
-            fixes.append("Fokus kamera belum terkunci: miringkan papan lebih jauh (30-40 derajat) dan tambah frame.")
+            fixes.append("Focal length not certain yet: tilt the board further (30-40 degrees) and add frames.")
     if cells.sum() < MIN_CELLS:
-        fixes.append("Cakupan kurang: taruh papan di bagian '.' pada peta cakupan (pojok dan tepi gambar).")
+        fixes.append("Not enough coverage: put the board in the '.' cells of the coverage map (corners and edges of the image).")
     return ("ULANGI" if fixes else "LAYAK"), fixes, f_sd, cells, sides
 
 
 def report_and_save(views, size, result, args, frames_dir):
     rms, K, dist, sd, per_view = result
     verdict, fixes, f_sd, cells, sides = assess(views, size, rms, K, sd)
-    mark = lambda good: "OK" if good else "KURANG"
-    print("\n=== Hasil kalibrasi ===")
-    print(f"View dipakai   : {len(views)} posisi papan berbeda")
-    print(f"RMS error      : {rms:.3f} px  {mark(rms <= MAX_RMS_PX)}  (maks {MAX_RMS_PX}, bagus < 0.5)")
-    print(f"Ketidakpastian : fx {100 * sd[0] / K[0, 0]:.2f}%, fy {100 * sd[1] / K[1, 1]:.2f}%  "
-          f"{mark(f_sd <= MAX_F_SD_PCT)}  (maks {MAX_F_SD_PCT}%)")
-    print(f"Cakupan gambar : {cells.sum()}/{cells.size} kotak  {mark(cells.sum() >= MIN_CELLS)}  "
-          f"(min {MIN_CELLS}; # = terisi, . = kosong)")
+    mark = lambda good: "OK" if good else "TOO LOW"
+    print("\n=== Calibration result ===")
+    print(f"Views used     : {len(views)} different board positions")
+    print(f"RMS error      : {rms:.3f} px  {mark(rms <= MAX_RMS_PX)}  (max {MAX_RMS_PX}, good < 0.5)")
+    print(f"Uncertainty    : fx {100 * sd[0] / K[0, 0]:.2f}%, fy {100 * sd[1] / K[1, 1]:.2f}%  "
+          f"{mark(f_sd <= MAX_F_SD_PCT)}  (max {MAX_F_SD_PCT}%)")
+    print(f"Image coverage : {cells.sum()}/{cells.size} cells  {mark(cells.sum() >= MIN_CELLS)}  "
+          f"(min {MIN_CELLS}; # = covered, . = empty)")
     for row in cells:
         print("                 " + " ".join("#" if c else "." for c in row))
-    print(f"Arah miring    : {', '.join(s for s in SIDES if s in sides) or 'belum ada'}  "
-          f"(perkiraan, >= {MIN_TILT_DEG:.0f} derajat)")
+    print(f"Tilt sides     : {', '.join(s for s in SIDES if s in sides) or 'none yet'}  "
+          f"(estimate, >= {MIN_TILT_DEG:.0f} degrees)")
     print(f"fx, fy         : {K[0, 0]:.1f}, {K[1, 1]:.1f}  (+- {sd[0]:.1f}, {sd[1]:.1f})")
-    print(f"cx, cy         : {K[0, 2]:.1f}, {K[1, 2]:.1f}  (+- {sd[2]:.1f}, {sd[3]:.1f}; gambar {size[0]}x{size[1]})")
-    print("Distorsi       : " + ", ".join(f"{v:.4f}" for v in dist.ravel()[:5]))
+    print(f"cx, cy         : {K[0, 2]:.1f}, {K[1, 2]:.1f}  (+- {sd[2]:.1f}, {sd[3]:.1f}; image {size[0]}x{size[1]})")
+    print("Distortion     : " + ", ".join(f"{v:.4f}" for v in dist.ravel()[:5]))
     worst = np.argsort(per_view)[::-1][:3]
-    print("View terburuk  : " + ", ".join(f"{views[i].name} ({per_view[i]:.2f} px)" for i in worst))
-    print(f"VONIS          : {verdict}")
+    print("Worst views    : " + ", ".join(f"{views[i].name} ({per_view[i]:.2f} px)" for i in worst))
+    print(f"VERDICT        : {common.VERDICT_TEXT[verdict]}")
     for fix in fixes:
         print("  - " + fix)
-    if verdict == "LAYAK" and rms > 0.5:
+    if verdict == common.CALIB_PASS and rms > 0.5:
         # simulated: a board sagging 1 mm still passes at ~0.6 px but shifts fx by ~2.5%
-        print("  Catatan: RMS di atas 0.5 px biasanya tanda papan kurang rata atau gambar kurang tajam. "
-              "Masih boleh dipakai; hasil Tes 1 yang menentukan.")
-    name = args.name if verdict == "LAYAK" else f"{args.name}_draft"
+        print("  Note: RMS above 0.5 px usually means the board is not quite flat or the image not quite sharp. "
+              "It can still be used; the pose test (tools/pose_test.py) decides.")
+    name = args.name if verdict == common.CALIB_PASS else f"{args.name}_draft"
     out = os.path.join(common.DATA_DIR, f"camera_{name}.yaml")
     try:
         frames_dir = os.path.relpath(frames_dir, common.ROOT)
@@ -208,9 +208,9 @@ def report_and_save(views, size, result, args, frames_dir):
     common.save_calibration(out, K, dist, size, rms, len(views), args.square_mm, extra={
         "quality": verdict, "f_sd_pct": float(f_sd), "coverage_cells": int(cells.sum()),
         "tilt_sides": ",".join(s for s in SIDES if s in sides), "frames": frames_dir})
-    print(f"Tersimpan      : {out}")
-    if verdict != "LAYAK":
-        print(f"                 (draft; data/camera_{args.name}.yaml tidak ditimpa)")
+    print(f"Saved          : {out}")
+    if verdict != common.CALIB_PASS:
+        print(f"                 (draft; data/camera_{args.name}.yaml is not overwritten)")
     print()
     return verdict
 
@@ -223,20 +223,20 @@ def run_images(args, board, detector):
         if size is None:
             size = s
         elif s != size:
-            sys.exit(f"Ukuran {os.path.basename(p)} beda ({s[0]}x{s[1]} vs {size[0]}x{size[1]}). "
-                     "Semua foto harus dari kamera, zoom, dan orientasi yang sama.")
+            sys.exit(f"{os.path.basename(p)} has a different size ({s[0]}x{s[1]} vs {size[0]}x{size[1]}). "
+                     "All photos must come from the same camera, zoom and orientation.")
         name = os.path.basename(p)
         corners, ids, n = detect(detector, img)
         if n < MIN_CORNERS:
-            print(f"{name}: {n} sudut, dilewati (butuh minimal {MIN_CORNERS})")
+            print(f"{name}: {n} corners, skipped (at least {MIN_CORNERS} needed)")
             continue
         view = BoardView(board, corners, ids, size, name)
         same = find_repeat(view, views)
         if same:
-            print(f"{name}: {n} sudut, hampir sama dengan {same.name}, dilewati")
+            print(f"{name}: {n} corners, almost the same as {same.name}, skipped")
             continue
         views.append(view)
-        print(f"{name}: {n} sudut, {tilt_text(view.normal)}")
+        print(f"{name}: {n} corners, {tilt_text(view.normal)}")
     result = calibrate(views, size)
     if result:
         report_and_save(views, size, result, args, os.path.dirname(os.path.abspath(args.images)))
@@ -282,24 +282,24 @@ def draw_guide(frame, views, cur, corners, ids, n, size, status, keys):
         cv2.aruco.drawDetectedCornersCharuco(canvas, np.asarray(corners).reshape(-1, 1, 2).astype(np.float32),
                                              np.asarray(ids).reshape(-1, 1).astype(np.int32), (255, 160, 0))
     sides = set().union(*(tilt_sides(v.normal) for v in views)) if views else set()
-    put(canvas, f"sudut: {n}  tersimpan: {len(views)}  cakupan: {cells.sum()}/{cells.size}  {keys}",
+    put(canvas, f"corners: {n}  saved: {len(views)}  coverage: {cells.sum()}/{cells.size}  {keys}",
         0, (0, 220, 0) if n >= MIN_CORNERS else (0, 0, 255))
     if cur is not None:
         tilted = bool(tilt_sides(cur.normal))
         put(canvas, tilt_text(cur.normal), 1, (0, 230, 0) if tilted else (255, 255, 255))
-    put(canvas, f"arah >= {MIN_TILT_DEG:.0f}: " + "  ".join(f"{s} [{'x' if s in sides else ' '}]" for s in SIDES), 2, (255, 255, 255))
+    put(canvas, f"tilt >= {MIN_TILT_DEG:.0f}: " + "  ".join(f"{s} [{'x' if s in sides else ' '}]" for s in SIDES), 2, (255, 255, 255))
     if not status:
         missing = [s for s in SIDES if s not in sides]
         if cur is not None and cur.outline is not None and cv2.contourArea(cur.outline) < 0.05 * size[0] * size[1]:
-            status = "papan terlalu kecil di gambar: dekatkan"
+            status = "board too small in the image: move it closer"
         elif missing:
-            status = f"belum ada papan miring ke: {', '.join(missing)}"
+            status = f"no board tilted toward: {', '.join(missing)} yet"
         elif cells.sum() < cells.size:
-            status = "geser papan ke kotak yang belum hijau (pojok dan tepi)"
+            status = "move the board to cells that are not green yet (corners and edges)"
         elif len(views) < MIN_VIEWS:
-            status = f"tambah frame di posisi lain (minimal {MIN_VIEWS})"
+            status = f"add frames at other positions (at least {MIN_VIEWS})"
         else:
-            status = "cakupan dan arah lengkap, tekan C untuk hitung"
+            status = "coverage and tilts complete: press C to calibrate"
     if status:
         put(canvas, status, 3, (0, 220, 255))
     return canvas
@@ -309,13 +309,13 @@ def run_camera(args, board, detector):
     cap = common.open_camera(args.source, args.width, args.height)
     frames_dir = os.path.join(common.DATA_DIR, f"calib_{args.name}", time.strftime("%Y%m%d_%H%M%S"))
     os.makedirs(frames_dir, exist_ok=True)
-    print(f"Frame disimpan di: {frames_dir}")
+    print(f"Frames are saved in: {frames_dir}")
     if args.auto:
-        print(f"Mode otomatis: tahan papan diam di posisi baru, frame tersimpan sendiri. "
-              f"Setelah {args.target} frame, kalibrasi dihitung otomatis. C = hitung, Q = keluar")
+        print(f"Auto mode: hold the board still at a new position and the frame is saved by itself. "
+              f"After {args.target} frames the calibration runs by itself. C = calibrate, Q = quit")
     else:
-        print("SPASI = simpan frame, C = hitung kalibrasi, Q = keluar")
-    keys = "C hitung | Q keluar" if args.auto else "SPASI simpan | C hitung | Q keluar"
+        print("SPACE = save frame, C = calibrate, Q = quit")
+    keys = "C calibrate | Q quit" if args.auto else "SPACE save | C calibrate | Q quit"
     views, size = [], None
     prev, still_since, auto_done, flash = {}, None, False, 0
 
@@ -323,17 +323,17 @@ def run_camera(args, board, detector):
         view.name = f"{len(views) + 1:02d}.png"
         views.append(view)
         cv2.imwrite(os.path.join(frames_dir, view.name), frame)
-        print(f"{view.name} disimpan ({len(view.img)} sudut, {tilt_text(view.normal)})")
+        print(f"{view.name} saved ({len(view.img)} corners, {tilt_text(view.normal)})")
 
     def compute():
         result = calibrate(views, size)
-        if result and report_and_save(views, size, result, args, frames_dir) != "LAYAK":
-            print("Tambah frame sesuai saran di atas, lalu tekan C untuk hitung ulang.")
+        if result and report_and_save(views, size, result, args, frames_dir) != common.CALIB_PASS:
+            print("Add frames as suggested above, then press C to calibrate again.")
 
     while True:
         ok, frame = cap.read()
         if not ok:
-            print("Kamera berhenti mengirim gambar.")
+            print("The camera stopped sending images.")
             break
         size = (frame.shape[1], frame.shape[0])
         corners, ids, n = detect(detector, frame)
@@ -343,9 +343,9 @@ def run_camera(args, board, detector):
         if same is None:
             status = ""
         elif same is views[-1]:
-            status = f"{same.name} tersimpan. Pindah ke posisi atau kemiringan baru"
+            status = f"{same.name} saved. Move to a new position or tilt"
         else:
-            status = f"mirip {same.name}: pindahkan atau miringkan papan"
+            status = f"like {same.name}: move or tilt the board"
         if args.auto and (cur is None or same):
             still_since = None
         elif args.auto:
@@ -358,19 +358,19 @@ def run_camera(args, board, detector):
                     auto_done = True
                     compute()
             else:
-                status = "tahan diam..."
+                status = "hold still..."
         prev = positions
         canvas = draw_guide(frame, views, cur, corners, ids, n, size, status, keys)
         if flash:
             cv2.rectangle(canvas, (0, 0), (size[0] - 1, size[1] - 1), (255, 255, 255), 12)
             flash -= 1
-        cv2.imshow("Kalibrasi ChArUco", canvas)
+        cv2.imshow("ChArUco calibration", canvas)
         key = cv2.waitKey(1) & 0xFF
         if key == ord(" "):
             if cur is None:
-                print(f"Belum disimpan: baru {n} sudut terbaca, butuh minimal {MIN_CORNERS}.")
+                print(f"Not saved: only {n} corners found, at least {MIN_CORNERS} needed.")
             elif same:
-                print(f"Belum disimpan: hampir sama dengan {same.name}. Pindahkan atau miringkan papan dulu.")
+                print(f"Not saved: almost the same as {same.name}. Move or tilt the board first.")
             else:
                 save(frame, cur)
                 flash = 4
@@ -383,20 +383,20 @@ def run_camera(args, board, detector):
 
 
 def main():
-    ap = argparse.ArgumentParser(description="Kalibrasi kamera dengan papan ChArUco")
-    ap.add_argument("--name", required=True, help="nama kamera, misalnya laptop atau hp")
+    ap = argparse.ArgumentParser(description="Camera calibration with the ChArUco board")
+    ap.add_argument("--name", required=True, help="camera name, for example mycam; saves data/camera_<name>.yaml")
     ap.add_argument("--square-mm", type=float, default=common.BOARD_SQUARE_MM,
-                    help="sisi satu kotak papan hasil cetak, dalam mm")
-    ap.add_argument("--images", help='pola file foto, misalnya "data/calib_hp/*.jpg"')
-    ap.add_argument("--source", default="0", help="indeks webcam (0, 1, ...) atau URL kamera")
+                    help="side of one printed board square, in mm (measure your print)")
+    ap.add_argument("--images", help='photo file pattern, for example "data/calib_hp/*.jpg"')
+    ap.add_argument("--source", default="0", help="webcam index (0, 1, ...) or camera URL")
     ap.add_argument("--width", type=int, default=1280)
     ap.add_argument("--height", type=int, default=720)
     ap.add_argument("--auto", action="store_true",
-                    help="simpan frame otomatis saat papan diam di posisi baru (tanpa menekan SPASI)")
-    ap.add_argument("--target", type=int, default=20, help="mode otomatis: jumlah frame sebelum kalibrasi dihitung")
+                    help="save a frame by itself when the board is held still at a new position (no SPACE needed)")
+    ap.add_argument("--target", type=int, default=20, help="auto mode: number of frames before the calibration runs")
     args = ap.parse_args()
     if args.square_mm == common.BOARD_SQUARE_MM:
-        print("Catatan: --square-mm tidak diisi, dipakai 30.0 mm. Ukur hasil cetak supaya akurat.")
+        print("Note: --square-mm not given, using 30.0 mm. Measure your print for accurate results.")
     board = common.make_board(args.square_mm)
     detector = cv2.aruco.CharucoDetector(board)
     if args.images:

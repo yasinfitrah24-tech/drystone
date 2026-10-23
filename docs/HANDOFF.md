@@ -19,7 +19,7 @@ Baca file ini setelah `CLAUDE.md` dan `docs/STATUS.md`. Isinya cara kerja yang s
 ## Kebiasaan teknis yang sudah terbukti
 - **Uji dulu sebelum diberikan ke user.** Script baru diuji di gambar sintetis dengan kamera yang diketahui (render ChArUco/ArUco + distorsi), dan untuk mode kamera dipakai "kamera palsu" (patch `cv2.VideoCapture`, `imshow`, `waitKey`). Baru setelah lulus, file dikirim.
 - OpenCV 5 (opencv-python 5.0.0.93) beda bentuk array dari OpenCV 4: `CharucoDetector.detectBoard` mengembalikan corners (N,2) dan ids (N,); `drawDetectedCornersCharuco` butuh (N,1,2) float32 dan (N,1) int32. `matchImagePoints` mengembalikan (N,3)/(N,2).
-- Kalibrasi berlaku **per kamera dan per resolusi**. `common.load_calibration` memberi PERINGATAN kalau kalibrasi belum LAYAK.
+- Kalibrasi berlaku **per kamera dan per resolusi**. `common.load_calibration` memberi WARNING kalau kalibrasi belum PASS (`quality` di YAML bukan `LAYAK`).
 - Analisis hasil tes dari CSV di `data/` (kolom tx_cm, ty_cm, tz_cm per posisi) untuk membedakan galat acak vs bias sistematis.
 
 ## Pelajaran dari tes 11 Okt

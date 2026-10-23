@@ -6,7 +6,11 @@ import sys
 import cv2
 import numpy as np
 
-# These match the print sheet opencv_marker_kalibrasi.pdf
+# These match the print sheet docs/print/charuco_A4.pdf
+# Calibration verdict: stored as `quality` in camera_<name>.yaml with the original values (LAYAK / ULANGI), so
+# files made before the English text still load; the user sees PASS / RETRY.
+CALIB_PASS = "LAYAK"
+VERDICT_TEXT = {"LAYAK": "PASS", "ULANGI": "RETRY"}
 BOARD_SQUARES = (7, 5)               # ChArUco board: columns, rows
 BOARD_SQUARE_MM = 30.0               # nominal square size; pass the measured value with --square-mm
 BOARD_MARKER_RATIO = 22.0 / 30.0     # board marker size / square size
@@ -33,13 +37,13 @@ def make_marker_detector():
 def open_camera(source, width, height):
     cap = cv2.VideoCapture(int(source) if str(source).isdigit() else source)
     if not cap.isOpened():
-        sys.exit(f"Kamera '{source}' tidak bisa dibuka.")
+        sys.exit(f"Camera '{source}' cannot be opened.")
     if width and height:
         cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
         cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
     ok, frame = cap.read()
     if not ok:
-        sys.exit("Kamera terbuka tapi tidak mengirim gambar.")
+        sys.exit("The camera is open but sends no images.")
     print(f"Camera on: {frame.shape[1]}x{frame.shape[0]}")
     return cap
 
@@ -47,7 +51,7 @@ def open_camera(source, width, height):
 def list_images(pattern):
     paths = sorted(glob.glob(pattern))
     if not paths:
-        sys.exit(f"Tidak ada file yang cocok dengan: {pattern}")
+        sys.exit(f"No files match: {pattern}")
     return paths
 
 
@@ -55,7 +59,7 @@ def read_image(path):
     # cv2.imread fails on Windows paths with non-ASCII characters, so decode from bytes instead
     img = cv2.imdecode(np.fromfile(path, dtype=np.uint8), cv2.IMREAD_COLOR)
     if img is None:
-        sys.exit(f"Gagal membaca gambar: {path}")
+        sys.exit(f"Could not read the image: {path}")
     return img
 
 
@@ -76,7 +80,7 @@ def save_calibration(path, K, dist, size, rms, views, square_mm, extra=None):
 
 def load_calibration(path):
     if not os.path.exists(path):
-        sys.exit(f"File kalibrasi tidak ada: {path}. Jalankan tools/calibrate.py dulu.")
+        sys.exit(f"Calibration file not found: {path}. Run tools/calibrate.py first.")
     fs = cv2.FileStorage(path, cv2.FILE_STORAGE_READ)
     K = fs.getNode("camera_matrix").mat()
     dist = fs.getNode("dist_coeffs").mat()
@@ -84,15 +88,15 @@ def load_calibration(path):
     node = fs.getNode("quality")
     quality = "" if node.isNone() else node.string()
     fs.release()
-    if quality != "LAYAK":
-        print(f"PERINGATAN: {os.path.basename(path)} belum lolos cek kualitas kalibrasi "
-              f"({quality or 'belum dicek'}). Angka posisi bisa meleset. "
-              "Ulangi tools/calibrate.py sampai vonisnya LAYAK.")
+    if quality != CALIB_PASS:
+        print(f"WARNING: {os.path.basename(path)} has not passed the calibration quality check "
+              f"({VERDICT_TEXT.get(quality, quality) or 'not checked'}). Positions may be off. "
+              "Run tools/calibrate.py again until the verdict is PASS.")
     return K, dist, size
 
 
 def check_size(img, calib_size, what):
     size = (img.shape[1], img.shape[0])
     if size != tuple(calib_size):
-        sys.exit(f"Resolusi {what} {size[0]}x{size[1]} beda dengan kalibrasi {calib_size[0]}x{calib_size[1]}. "
-                 "Pakai kamera dan resolusi yang sama, atau kalibrasi ulang.")
+        sys.exit(f"Resolution of {what} {size[0]}x{size[1]} differs from the calibration {calib_size[0]}x{calib_size[1]}. "
+                 "Use the same camera and resolution, or calibrate again.")
