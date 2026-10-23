@@ -63,7 +63,7 @@ where the page follows REPORT or the code instead of the draft.
   - OpenCV 5: Calibrated camera, ArUco markers, pose averaged over 10 frames.
   - MuJoCo: 150 to 600 simulated placements per check, with 1 cm position and 2 cm load uncertainty.
   - AWS Lambda: Same decision code as the laptop agent. Supervisor choices logged in CloudWatch.
-- Mono line: 66 tests · 25 locked trials · every decision logged
+- Mono line: 67 tests · 25 locked trials · every decision logged
 
 ### Closing band
 The camera measures. The simulation estimates. The rules decide. The supervisor signs.
@@ -111,6 +111,38 @@ The camera measures. The simulation estimates. The rules decide. The supervisor 
 - H2: The whole system, on one page.
 - Architecture caption: Laptop agent with OpenCV 5, AWS Lambda running the same decision code, CloudWatch logs and a zero-spend budget alarm.
 - Agent loop caption: Perceive, twin, simulate, decide, act, check, and what happens when perception fails.
+- Since 23 Oct both are live diagrams on the page (inline SVG; a vertical list on phones), styled like the hero card, each with a small "Open as image" link to the PNG. Tap or hover a node for one line from REPORT. Default line: Tap or hover a step to see what it does.
+- Architecture (REPORT section 4 + section 6). Motion: a data packet runs from the webcam to the decision and back through Check; the run alternates between "computed on the laptop" and "--aws: computed on AWS Lambda, same code".
+  Nodes (title · sub · tap line):
+  - Webcam · 1280×720 / ChArUco calibration · Live agent · tools/agent.py: camera loop, wireframes, human control, JSONL log with photos.
+  - OpenCV 5 · ArUco + pose / 10 frames, median · Perception · tools/agent.py (read_scene, build_stack): markers → box poses → the stack, by contact.
+  - Digital twin · stack by contact / box catalogue · Perception: the stack is built from the bottom box up, by contact; boxes off the stack are not part of it.
+  - MuJoCo · Monte Carlo / 150–600 simulations · Decision core · tools/drystone_core.py: static check, Monte Carlo P(fall), zones, suggestion search.
+  - Agent rules · GREEN/YELLOW/RED / 1 cm margin · Decision core: fixed rules turn P(fall) into GUIDE, ASK_SUPERVISOR or REJECT; no language model decides.
+  - Supervisor · approve · suggest / override + reason · A person approves a YELLOW placement or rejects it, and can override a RED rejection only with a name and a reason.
+  - Box placed · by a person · The agent never moves a box; a person places every one.
+  - Check again · OK/OFF_PLAN/FELL · Check after placement (drystone_core.py): the camera reads the stack again and compares it with the plan.
+  - Amazon ECR · drystone-service / tag = git commit · The container image lives in Amazon ECR; every deploy is tagged with the git commit hash.
+  - AWS Lambda + Function URL · same decision code / container image · 2048 MB · 60 s · Service · tools/service.py: AWS Lambda handler: photo API for the agent, judges' web page and its API.
+  - CloudWatch Logs · decisions, / supervisor choices · Supervisor choices are one JSON line in CloudWatch Logs, without the IP address.
+  - If AWS fails · the same code runs / on the laptop · If AWS fails, the laptop computes the decision with the same code and logs that it did.
+  Step labels: a frame from the webcam · ArUco markers + pose, 10 frames, median · the stack, by contact · 150–600 simulations · zone + suggestion with a 1 cm margin · the supervisor decides · a person places the box · check again: OK / OFF_PLAN / FELL · read the stack again
+- Agent loop (REPORT section 8.1, every branch). Motion: one real run, the final practice of 18 Oct (STATUS "Alur video final").
+  Nodes (title · sub · tap line):
+  - Read the stack · 10 frames · pose / stack by contact · The agent reads the stack; it retakes a shaky reading (up to 3 times).
+  - Replan · standing box missing · The agent notices a changed stack ("stack changed: ID 1 is missing") and plans in ID order.
+  - Decide · P(fall) + zone / on Lambda or laptop · The agent computes P(fall), zone and the action; it runs more simulations near a zone line and takes the safer zone if unsure.
+  - Guide · GREEN · GREEN → GUIDE: place the box in the outline, no approval needed.
+  - Ask · YELLOW · reject → Read · A person approves a YELLOW placement (or uses the suggestion), or rejects it.
+  - Reject · RED · cancel → Read · The agent searches the nearest safe spot with a 1 cm margin; a person uses it, or overrides with a name and a reason.
+  - Place · worker places it, SPACE · A person places every box, then presses SPACE.
+  - Check · compare with the plan · The agent checks the result: OK / OFF_PLAN / FELL.
+  - Warn · OFF_PLAN: > 1.5 cm off · After an OFF_PLAN placement the risk is computed again; fix it if it is not green.
+  - Ask f / p · not visible, stack intact · A person answers f (it fell out of view) or p (not placed yet, look again).
+  - Fell · on the floor / gone · The agent plans a fallen box again; a person picks it up and keeps it out of view.
+  - Wait · tell the worker · A box off the stack or a wrong setup: one message, no automatic retake; the worker fixes it and presses SPACE.
+  Step labels: 1 · box ID 1 at +6 cm, SPACE · decide on Lambda: GREEN 0% (5.0 s) · GREEN → GUIDE: green outline · box ID 1 placed · check: OK (−0.4 cm), stack GREEN · 2 · box ID 2 at +18 cm, SPACE · decide: RED 93% (Lambda 10.0 s) · RED → REJECT · suggestion +9 cm (1%) · override: name + reason, logged · placed at +18 cm, the box fell · FELL: box ID 2 is on the floor next to the stack · pick it up, keep it out of view, SPACE · planning box ID 2 again after it fell · decide again: RED 93%, suggestion +9 cm · use suggestion: green outline at +9 cm · box ID 2 placed at +9 cm · check: OK (−0.3 cm), stack GREEN 1% · final practice, 18 Oct · decisions 3 · override 1 · fell 1
+- Reduced motion or no script: both diagrams static, every node readable.
 
 ### Closing
 Place it once. Place it right. [button: Try the demo →]

@@ -290,3 +290,15 @@ def test_ghost_boxes_match_the_service():
         status, r, _ = call("POST", "/", {"sample": sample, "offset_cm": off})
         cand = next(p["corners"] for p in r["polygons"] if p["role"] == "candidate")
         assert page[sample][str(off)] == cand
+
+
+def test_live_diagrams_link_to_their_images():
+    """How it works draws both diagrams on the page; each keeps a link to its PNG, which the service still serves."""
+    html = _page_html()
+    for fid, img in (("dg-arch", "img/architecture.png"), ("dg-loop", "img/agent_loop.png")):
+        start = html.index('<figure class="dg" id="%s">' % fid)
+        fig = html[start:html.index("</figure>", start)]
+        assert "<svg" in fig and '<ol class="dg-list"' in fig
+        assert '<a href="%s"' % img in fig and "Open as image" in fig
+        status, _, out = call("GET", "/" + img)
+        assert status == 200 and out["headers"]["Content-Type"] == "image/png"
