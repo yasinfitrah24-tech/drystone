@@ -10,8 +10,9 @@ suggest a safer spot. After the box is placed, the agent looks again and checks 
 > always makes the final call. Do not use it to protect people or property.
 
 Why: US OSHA requires stacked materials to be "stable and secure against sliding or collapse", and in US
-transportation and warehousing alone 12,100 injuries with days away from work in 2020 were "struck by object or
-equipment" (a broader category than falling stacks); see the sources in [docs/REPORT.md](docs/REPORT.md).
+transportation and warehousing alone there were 99,800 nonfatal cases with days away from work in 2020, of which
+12,100 were "struck by object or equipment" (a broader category than falling stacks); see the sources in
+[docs/REPORT.md](docs/REPORT.md).
 
 Built for the OpenCV AI Competition 2026.
 
@@ -125,7 +126,8 @@ What happened next, all driven by what the camera saw:
 
 GREEN stayed safe (0/8 fell) and every RED trial fell (8/8), but YELLOW trials fell 4 times out of 9 against a
 mean predicted P of 25%: the model is too optimistic close to the edge. Overall accuracy (not a criterion) 84%,
-against 82% in Test 2. Decisions on AWS Lambda: median 7.6 s; placement error of boxes that stood: median 0.6 cm.
+against 82% in Test 2. Falls detected as FELL: 12/12 in the evaluation (7/7 in practice). Decisions on AWS Lambda:
+median 7.6 s; placement error of boxes that stood: median 0.6 cm.
 Details, failure cases and a post-hoc analysis (not used by the system): [docs/REPORT.md](docs/REPORT.md),
 per-trial data: [data/eval_report/trials.csv](data/eval_report/trials.csv).
 
