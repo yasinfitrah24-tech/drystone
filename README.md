@@ -142,7 +142,7 @@ the first-time AWS steps, including `aws configure` and the function name `dryst
 
 Get the code and install (`requirements-dev.txt` includes `requirements.txt` and adds pytest):
 ```
-git clone <repository URL>
+git clone https://github.com/yasinfitrah24-tech/drystone.git
 ```
 ```
 cd drystone
@@ -182,8 +182,9 @@ Calibrate your camera: glue the ChArUco board to a flat hard board, measure one 
 verdict is LAYAK (passes); it then saves `data/camera_mycam.yaml`. `data/camera_laptop.yaml` is our own webcam;
 calibrate yours.
 ```
-python tools/calibrate.py --name mycam --square-mm <your measured square> --auto
+python tools/calibrate.py --name mycam --square-mm 30 --auto
 ```
+Replace 30 with the square you measured (ours: 29.8).
 
 Run the agent on the laptop (boxes listed in `config/boxes.json`, 80 mm markers):
 ```
@@ -193,14 +194,14 @@ python tools/agent.py --calib data/camera_mycam.yaml --marker-mm 80
 Run the agent with decisions on your own AWS Lambda (see `aws/README.md`; the Lambda image uses the calibration in
 `data/camera_laptop.yaml`, so put yours in that file before you build it). Windows (cmd):
 ```
-set DRYSTONE_URL=<your Function URL>
+for /f %i in ('aws lambda get-function-url-config --function-name drystone --region ap-southeast-1 --query FunctionUrl --output text') do set DRYSTONE_URL=%i
 ```
 ```
 python tools/agent.py --calib data/camera_mycam.yaml --marker-mm 80 --aws %DRYSTONE_URL%
 ```
 macOS / Linux:
 ```
-export DRYSTONE_URL=<your Function URL>
+export DRYSTONE_URL=$(aws lambda get-function-url-config --function-name drystone --region ap-southeast-1 --query FunctionUrl --output text)
 ```
 ```
 python tools/agent.py --calib data/camera_mycam.yaml --marker-mm 80 --aws "$DRYSTONE_URL"

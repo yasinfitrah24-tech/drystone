@@ -236,11 +236,23 @@ def _page_html():
         return f.read()
 
 
+def _page_links(html):
+    line = re.search(r"var LINKS = \{(.*?)\};", html).group(1)
+    return dict(re.findall(r'(\w+): "([^"]*)"', line))
+
+
 def test_links_start_hidden():
-    """Links whose LINKS value is still empty are hidden in the HTML itself, before any script runs."""
+    """Links whose LINKS value is still empty are hidden in the HTML itself, before any script runs; filled ones are not."""
     html = _page_html()
+    links = _page_links(html)
     tags = re.findall(r"<a [^>]*data-link=[^>]*>", html)
-    assert len(tags) == 6 and all(" hidden" in t for t in tags)   # video, repo, report x2, markers, board
+    assert len(tags) == 6                                          # video, repo, report x2, markers, board
+    for t in tags:
+        u = links[re.search(r'data-link="(\w+)"', t).group(1)]
+        filled = u not in ("", "#")
+        assert (" hidden" in t) is not filled
+        if filled:
+            assert 'href="%s"' % u in t
 
 
 @pytest.mark.parametrize("links, shown", [
@@ -315,4 +327,18 @@ def test_setup_git_clone_is_always_the_first_command():
     block = section[section.rindex('<div class="code"', 0, clone):clone]
     assert "hidden" not in block and "data-need" not in block
     assert "data-need=" not in html                                   # no command depends on a link any more
-    assert section.index("<code>git clone ") < section.index('data-no="repo">Repository link: on the submission page.')
+    assert section.index("<code>git clone ") < section.index('data-no="repo" hidden>Repository link: on the submission page.')
+    repo = _page_links(html)["repo"]
+    assert repo.startswith("https://github.com/")
+    assert "<code>git clone <span data-clone>%s.git</span></code>" % repo in section   # same as applyLinks writes
+
+
+def test_copy_commands_have_no_placeholders():
+    """Every command with a copy button runs as it is: no <...> placeholder (cmd reads < > as redirects)."""
+    import html as htmllib
+    page = _page_html()
+    cmds = [htmllib.unescape(re.sub(r"<[^>]+>", "", c))
+            for c in re.findall(r'<div class="code"><pre><code>(.*?)</code></pre><button type="button" class="copy"', page, re.S)]
+    assert len(cmds) > 20
+    bad = [c for c in cmds if "<" in c or ">" in c]
+    assert not bad, bad

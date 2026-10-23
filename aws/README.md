@@ -75,7 +75,10 @@ Before you start: Docker Desktop (running) and AWS CLI v2.
    `--function-name drystone`). Image: `drystone-service` with your tag; architecture x86_64. Configuration →
    General: 2048 MB, 60 s.
 6. Configuration → Function URL: auth type NONE (public demo), CORS allow POST. Keep the URL in `DRYSTONE_URL`, not
-   in the repository.
+   in the repository. To read it back (Windows cmd):
+   ```
+   for /f %i in ('aws lambda get-function-url-config --function-name drystone --region ap-southeast-1 --query FunctionUrl --output text') do set DRYSTONE_URL=%i
+   ```
 
 The image uses the calibration in `data/camera_laptop.yaml` (our webcam). For your own camera, put your calibration
 in that file before you build.
@@ -116,6 +119,6 @@ Answer:
 - Without AWS: `python tools/web_local.py` (same handler, fake Function URL events), then http://127.0.0.1:8000/,
   and `python -m pytest tests -q`.
 - The Docker image on the laptop: `docker run -p 9000:8080 drystone-service`, then
-  `python aws/test_endpoint.py --image <photo> --offset-cm 12`.
+  `python aws/test_endpoint.py --image web\samples\s2.jpg --offset-cm 12`.
 - The live Function URL: `python aws/test_endpoint.py --url %DRYSTONE_URL% --image web\samples\s2.jpg --offset-cm 6`.
 - Logs: `aws logs tail /aws/lambda/drystone --since 15m --region ap-southeast-1`.
