@@ -320,7 +320,7 @@ boxes; measure box-on-box and box-on-floor friction with a tilt test; model the 
 tilt when the box is let go); then lock new settings and test them on new trials again.
 
 ### 7.5 Software tests and live checks
-- **67 automated tests** (pytest). Synthetic camera photos are rendered through the real calibration, so the same
+- **68 automated tests** (pytest). Synthetic camera photos are rendered through the real calibration, so the same
   OpenCV code runs as on real photos:
   - the web endpoint: page, sample photos, the two diagrams, the zone and suggestion of every example (with the 1 cm
     margin), the recorded checks replayed on the page, cache,
@@ -331,7 +331,8 @@ tilt when the box is let go); then lock new settings and test them on new trials
     the stack, a box out of view, a box placed as planned, a box 3 cm off, a turned fallen box;
   - the whole agent loop with a fake camera, on the laptop and through the Lambda handler: fall → FELL → pick up →
     re-plan → suggestion → OK; the f/p question (both answers); a box taken off the stack;
-  - the evaluation mode and the report metrics.
+  - the evaluation mode and the report metrics, and the published summary rebuilt from the published
+    `data/eval_report/trials.csv` (identical except its source line).
 - **Live checks after each deploy** (all passed for the live image): page and photos load; the zone and suggestion
   of every judges' example; a RED decision; the agent's photo API; a supervisor choice appears in CloudWatch; a
   check through Lambda with a fallen box returns FELL; no error line in CloudWatch.

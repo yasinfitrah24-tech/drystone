@@ -132,19 +132,39 @@ Details, failure cases and a post-hoc analysis (not used by the system): [docs/R
 per-trial data: [data/eval_report/trials.csv](data/eval_report/trials.csv).
 
 ## Run it yourself
-Windows Command Prompt, Python 3.12, from the repository folder. One command per line.
-Commands are for Windows cmd (tested). On macOS/Linux: `source .venv/bin/activate` and
-`export DRYSTONE_URL=...`.
+Python 3.12, one command per line. Where Windows (cmd) and macOS/Linux differ, both are shown. Each command was run
+in a fresh clone on Windows cmd.
 
-Set up:
+Get the code and install (`requirements-dev.txt` includes `requirements.txt` and adds pytest):
 ```
-python -m venv .venv
+git clone <repository URL>
+```
+```
+cd drystone
+```
+Windows (cmd):
+```
+py -3.12 -m venv .venv
 ```
 ```
 .venv\Scripts\activate
 ```
+macOS / Linux:
+```
+python3.12 -m venv .venv
+```
+```
+source .venv/bin/activate
+```
+Then, on any system:
 ```
 pip install -r requirements-dev.txt
+```
+
+Run the judges' page locally (same handler as Lambda), then open http://127.0.0.1:8000/ (the address it prints;
+another port: `--port 8080`):
+```
+python tools/web_local.py
 ```
 
 Print the sheets at 100% (actual size, not "fit to page"): [`docs/print/markers_A4.pdf`](docs/print/markers_A4.pdf)
@@ -153,28 +173,32 @@ Print the sheets at 100% (actual size, not "fit to page"): [`docs/print/markers_
 markers, DICT_5X5_100, A4 landscape). Both are made by `python tools/make_print_sheets.py` from the settings in
 `tools/common.py`. Measure what you printed.
 
-Calibrate your camera (glue the ChArUco board to a flat hard board and measure the square size; repeat until the
-verdict is LAYAK):
+Calibrate your camera: glue the ChArUco board to a flat hard board, measure one printed square, and repeat until the
+verdict is LAYAK (passes); it then saves `data/camera_mycam.yaml`. `data/camera_laptop.yaml` is our own webcam;
+calibrate yours.
 ```
-python tools/calibrate.py --name laptop --square-mm 29.8 --auto
+python tools/calibrate.py --name mycam --square-mm <your measured square> --auto
 ```
 
 Run the agent on the laptop (boxes listed in `config/boxes.json`, 80 mm markers):
 ```
-python tools/agent.py --calib data/camera_laptop.yaml --marker-mm 80
+python tools/agent.py --calib data/camera_mycam.yaml --marker-mm 80
 ```
 
-Run the agent with decisions on AWS Lambda (set the URL of your own deployment first; see `aws/README.md`):
+Run the agent with decisions on your own AWS Lambda (see `aws/README.md`; the Lambda image uses the calibration in
+`data/camera_laptop.yaml`, so put yours in that file before you build it). Windows (cmd):
 ```
 set DRYSTONE_URL=<your Function URL>
 ```
 ```
-python tools/agent.py --calib data/camera_laptop.yaml --marker-mm 80 --aws %DRYSTONE_URL%
+python tools/agent.py --calib data/camera_mycam.yaml --marker-mm 80 --aws %DRYSTONE_URL%
 ```
-
-Run the judges' page locally (same handler as Lambda), then open http://127.0.0.1:8000/:
+macOS / Linux:
 ```
-python tools/web_local.py
+export DRYSTONE_URL=<your Function URL>
+```
+```
+python tools/agent.py --calib data/camera_mycam.yaml --marker-mm 80 --aws "$DRYSTONE_URL"
 ```
 
 Run the tests (web endpoint, check after placement, the whole agent loop with a fake camera):
@@ -182,13 +206,14 @@ Run the tests (web endpoint, check after placement, the whole agent loop with a 
 python -m pytest tests -q
 ```
 
-Rebuild the evaluation report from an evaluation log (`agent.py --eval-plan`, see `docs/EVAL_PROTOCOL.md`); it writes
-`data/eval_report/trials.csv` and `summary.md`:
+Rebuild the evaluation summary from the published per-trial table; it writes
+`data/eval_report/from_trials/summary.md`, which matches `data/eval_report/summary.md` except its first line:
 ```
-python tools/eval_report.py --logs data/agent_20261018_152640/log.jsonl
+python tools/eval_report.py --trials data/eval_report/trials.csv
 ```
-The agent logs stay on our laptop (their photos show people), so this reproduces our report only with the log; the
-published `trials.csv` holds every per-trial number.
+Our agent logs stay on our laptop (their photos show people). With an evaluation log of your own
+(`agent.py --eval-plan`, see `docs/EVAL_PROTOCOL.md`), `--logs <path to log.jsonl>` writes both `trials.csv` and
+`summary.md`.
 
 ## Limitations and responsible use
 - **Markers are required.** Every box needs a printed ArUco marker in the middle of its front face. Faded markers

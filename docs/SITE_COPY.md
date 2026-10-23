@@ -63,7 +63,7 @@ where the page follows REPORT or the code instead of the draft.
   - OpenCV 5: Calibrated camera, ArUco markers, pose averaged over 10 frames.
   - MuJoCo: 150 to 600 simulated placements per check, with 1 cm position and 2 cm load uncertainty.
   - AWS Lambda: Same decision code as the laptop agent. Supervisor choices logged in CloudWatch.
-- Mono line: 67 tests · 25 locked trials · every decision logged
+- Mono line: 68 tests · 25 locked trials · every decision logged
 
 ### Closing band
 The camera measures. The simulation estimates. The rules decide. The supervisor signs.
@@ -209,13 +209,13 @@ Place it once. Place it right. [button: Try the demo →]
 - H1: Lay the first stone.
 - Accent: Start with zero install. End with a real camera.
 - Body: Pinned versions throughout (Python 3.12, OpenCV 5.0, MuJoCo 3.15). Every command below is copied from the README.
-- OS note: Commands are for Windows cmd (tested). On macOS/Linux: `source .venv/bin/activate` and `export DRYSTONE_URL=...`.
+- OS note: Where Windows and macOS/Linux differ, both are shown. Each command was run in a fresh clone on Windows cmd.
 - [icon: globe] No install · The Demo tab runs the full decision on AWS Lambda with three real photos. [link: Open the demo →]
-- [icon: laptop] On your laptop, with our photos · Clone the repo, install, and run the same page locally. [code from README, copy button; the clone line uses LINKS.repo once it is filled, until then: Repository link: on the submission page]
-- [icon: camera] The full agent: camera + markers · You need a webcam, printed ArUco markers (DICT_4X4_50, 80 mm, IDs 0–2), a ChArUco board on something rigid and flat, and boxes listed in config/boxes.json. Measure what you printed. A calibration is only used if it passes the built-in quality check. [calibration + agent code from README; "Calibrate: print assets/opencv_marker_kalibrasi.pdf, then repeat until the verdict is LAYAK (passes)."; Lambda URL as <your-function-url>]
+- [icon: laptop] On your laptop, with our photos · Clone the repo, make a Python 3.12 environment, install, and run the same page locally. [git clone (LINKS.repo once it is filled, until then: Repository link: on the submission page), cd drystone; Windows (cmd): py -3.12 -m venv .venv, .venv\Scripts\activate; macOS / Linux: python3.12 -m venv .venv, source .venv/bin/activate; then pip install -r requirements-dev.txt (includes requirements.txt and adds pytest), python tools/web_local.py; "Then open http://127.0.0.1:8000/ (the address it prints; another port: --port 8080)."]
+- [icon: camera] The full agent: camera + markers · You need a webcam, printed ArUco markers (DICT_4X4_50, 80 mm, IDs 0–2), a ChArUco board on something rigid and flat, and boxes listed in config/boxes.json. Measure what you printed. A calibration is only used if it passes the built-in quality check. ["Print both sheets at 100% (actual size), not fit to page." While the PDF links are empty: "The PDFs are in the repository: docs/print/markers_A4.pdf … and docs/print/charuco_A4.pdf …". "Calibrate your camera. Measure one printed square and use your own name. Repeat until the verdict is LAYAK (passes); it then saves data/camera_mycam.yaml. data/camera_laptop.yaml is our own webcam; calibrate yours." Code: calibrate.py --name mycam --square-mm <your measured square> --auto; agent.py --calib data/camera_mycam.yaml. AWS: "The Lambda image uses the calibration in data/camera_laptop.yaml, so put yours in that file before you build it." Windows (cmd): set DRYSTONE_URL=<your-function-url>, --aws %DRYSTONE_URL%; macOS / Linux: export DRYSTONE_URL=…, --aws "$DRYSTONE_URL"]
   - Links (via LINKS `markers` and `board`, GitHub file links, filled on Monday; hidden until then): Download printable markers (PDF) → `docs/print/markers_A4.pdf` · Download calibration board (PDF) → `docs/print/charuco_A4.pdf`. Both made by `tools/make_print_sheets.py`.
-- [icon: cloud] Your own AWS Lambda · Build the container, push it to ECR, and put a Lambda Function URL in front of it. Set a budget alarm first. Full steps are in aws/README.md. [short code from aws/README.md, account as <account>]
-- [icon: shield with check] Check our work · Run the test suite and rebuild the evaluation summary from the raw trials. [pytest + eval_report code from README]
+- [icon: cloud] Your own AWS Lambda · Build the container, push it to ECR, and put a Lambda Function URL in front of it. Region ap-southeast-1; write your AWS account ID where it says <account>. Docker must be running. Full steps are in aws/README.md. [First-time setup (from aws/README.md): 1 zero-spend budget with an email alert, 2 aws ecr create-repository, 3 build/tag/push (the first six Update commands), 4 Lambda from the container image, x86_64, 2048 MB, 60 s, 5 Function URL auth NONE, CORS POST, URL kept in DRYSTONE_URL. Update: Windows (cmd) and macOS / Linux blocks, tagged with the commit hash, account as <account>]
+- [icon: shield with check] Check our work · Run the test suite, and rebuild the evaluation summary from the published per-trial table, data/eval_report/trials.csv. It writes data/eval_report/from_trials/summary.md, the same as our summary.md except its first line. Our raw logs stay on our laptop (their photos show people). [python -m pytest tests -q · python tools/eval_report.py --trials data/eval_report/trials.csv]
 
 ## FOOTER
 - Drystone · a decision aid prototype for box stacking, not a certified safety device.
