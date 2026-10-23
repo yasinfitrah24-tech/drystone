@@ -494,23 +494,26 @@
     .dg-svg .de.on { animation: none; } .dg-svg rect, .dg-list > li { transition: none; }
   }
   /* ---------- how it works: five checks as a pipeline ---------- */
-  .pipe { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
-  .pipe li { position: relative; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 6px; }
-  .pipe li:not(:last-child)::after { content: ""; position: absolute; top: 36px; left: calc(50% + 48px); right: calc(-50% + 48px); height: 2px; opacity: 0.8;
+  /* Subtext ratios: step = 2 x circle, icon = 1/2 circle, connector = 1/4 circle and only the gap between two steps */
+  .pipe { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 136px)); column-gap: 16px; justify-content: center; }
+  .pipe li { position: relative; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 8px; }
+  .pipe li:not(:last-child)::after { content: ""; position: absolute; top: 31px; left: 100%; width: 16px; height: 2px;
     background-image: repeating-linear-gradient(90deg, var(--tick) 0 8px, transparent 8px 12px); background-size: 24px 2px; }
-  .pp-dot { width: 72px; height: 72px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 8px;
+  .pp-dot { width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 2px;
     background: var(--surface); border: 1px solid var(--border); color: var(--brand); box-shadow: 0 6px 18px rgba(19,41,75,0.08); }
+  .pp-dot svg { width: 32px; height: 32px; }
   .pp-n { font-size: 12px; font-weight: 600; color: var(--brand); }
-  .pipe b { font-size: 17px; }
-  .pp-sub { font-size: 14px; line-height: 1.4; color: var(--muted); }
-  .pipe .key .pp-dot { border: 2px solid var(--brand); box-shadow: 0 0 0 6px rgba(36,87,197,0.10), 0 6px 18px rgba(19,41,75,0.10); }
+  .pipe b { font-size: 15px; font-weight: 600; line-height: 1.3; }
+  .pp-sub { font-size: 13px; line-height: 1.4; color: var(--muted); }
+  .pipe .key .pp-dot { border: 2px solid var(--brand); background: var(--how-band);
+    box-shadow: 0 0 0 6px rgba(36,87,197,0.12), 0 0 24px rgba(36,87,197,0.28), 0 6px 18px rgba(19,41,75,0.10); }
   .pipe .key b { color: var(--brand); }
   /* motion: steps rise in once, circles glow in turn, connectors march toward the next step */
   @keyframes pp-rise { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
   @keyframes pp-ring { 0%, 18%, 100% { box-shadow: 0 6px 18px rgba(19,41,75,0.08); }
     8% { box-shadow: 0 0 0 8px rgba(36,87,197,0.16), 0 0 24px rgba(36,87,197,0.30), 0 6px 18px rgba(19,41,75,0.08); } }
-  @keyframes pp-ring-key { 0%, 18%, 100% { box-shadow: 0 0 0 6px rgba(36,87,197,0.10), 0 6px 18px rgba(19,41,75,0.10); }
-    8% { box-shadow: 0 0 0 10px rgba(36,87,197,0.20), 0 0 28px rgba(36,87,197,0.38), 0 6px 18px rgba(19,41,75,0.10); } }
+  @keyframes pp-ring-key { 0%, 18%, 100% { box-shadow: 0 0 0 6px rgba(36,87,197,0.12), 0 0 24px rgba(36,87,197,0.28), 0 6px 18px rgba(19,41,75,0.10); }
+    8% { box-shadow: 0 0 0 10px rgba(36,87,197,0.20), 0 0 32px rgba(36,87,197,0.40), 0 6px 18px rgba(19,41,75,0.10); } }
   @keyframes pp-march { to { background-position: 24px 0; } }
   @keyframes pp-march-v { to { background-position: 0 24px; } }
   .pipe.go li { animation: pp-rise 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
@@ -526,15 +529,81 @@
     .pipe.go li, .pipe.go .pp-dot, .pipe.go li:not(:last-child)::after { animation: none; }
   }
   @media (max-width: 760px) {
-    .pipe { grid-template-columns: minmax(0, 1fr); gap: 18px; }
-    .pipe li { display: grid; grid-template-columns: 60px 1fr; grid-template-rows: auto auto auto; column-gap: 14px; row-gap: 2px; text-align: left; align-items: start; }
-    .pp-dot { grid-row: 1 / span 3; width: 56px; height: 56px; margin: 0; }
-    .pipe li:not(:last-child)::after { top: 62px; left: 28px; right: auto; bottom: -16px; width: 2px; height: auto;
+    .pipe { grid-template-columns: minmax(0, 1fr); justify-content: stretch; row-gap: 16px; }
+    .pipe li { display: grid; grid-template-columns: 52px 1fr; grid-template-rows: auto auto auto; column-gap: 14px; row-gap: 2px; text-align: left; align-items: start; }
+    .pp-dot { grid-row: 1 / span 3; width: 52px; height: 52px; margin: 0; }
+    .pp-dot svg { width: 26px; height: 26px; }
+    .pipe li:not(:last-child)::after { top: 100%; left: 25px; width: 2px; height: 16px;
       background-image: repeating-linear-gradient(180deg, var(--tick) 0 8px, transparent 8px 12px); background-size: 2px 24px; }
     .pipe.go li:not(:last-child)::after { animation-name: pp-march-v; }
   }
   .dl-links { display: flex; flex-wrap: wrap; gap: 4px 24px; margin: 0 0 4px; }
   .dl-links .more[hidden] { display: none; }
+
+  /* ---------- hover, cards, logo, toggle, reveal: the Subtext pattern in Drystone colours ----------
+     Subtext: buttons 0.18s ease, primary translateY(-2px) + 0 12px 30px glow at 0.35 in its own colour, secondary
+     border lights up; cards 0.2s ease, translateY(-3px) + a lighter border; reveal 0.7s cubic-bezier(.2,.7,.2,1)
+     from translateY(18px), stagger .08s + .12s; page fade 0.4s ease-out from translateY(8px); toggle slider
+     0.25s cubic-bezier(.4,0,.2,1). Here: a 1 px lift and a softer glow for the light page. */
+  :root { --ease-out: cubic-bezier(0.2, 0.7, 0.2, 1); --ease-std: cubic-bezier(0.4, 0, 0.2, 1);
+    --glow: 0 10px 26px rgba(36,87,197,0.30); --glow-band: 0 12px 30px rgba(143,176,240,0.35); --card-hover: #A9BDE6; }
+  .hero .btn-solid, .hero .btn-line, .btn-cta, .primary, .cta, .choice, .ex, .thumb, .seg-b, .copy, .toplink, .more {
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, background-color 0.18s ease, color 0.18s ease; }
+  .hero .btn-solid:focus-visible, .hero .btn-line:focus-visible { outline: 3px solid var(--brand-edge); outline-offset: 3px; }
+  .btn-cta:focus-visible { outline: 3px solid var(--brand); outline-offset: 3px; }
+  @media (hover: hover) {
+    .hero .btn-solid:hover { transform: translateY(-1px); box-shadow: var(--glow-band); }
+    .btn-cta:hover, .primary:not(:disabled):hover { transform: translateY(-1px); box-shadow: var(--glow); }
+    .ex.GREEN:not(:disabled):hover { box-shadow: 0 8px 20px rgba(38,125,71,0.32); }
+    .ex.YELLOW:not(:disabled):hover { box-shadow: 0 8px 20px rgba(226,174,28,0.40); }
+    .ex.RED:not(:disabled):hover { box-shadow: 0 8px 20px rgba(201,58,37,0.32); }
+    .ex.SUG:not(:disabled):hover { box-shadow: 0 8px 20px rgba(36,87,197,0.22); }
+    .hero .btn-line:hover { border-color: var(--brand-edge); }
+    .cta:not(:disabled):hover { box-shadow: 0 0 0 3px rgba(36,87,197,0.14); }
+    .choice:not(:disabled):hover { border-color: var(--brand); color: var(--brand); }
+    .thumb:not(:disabled):not([aria-pressed="true"]):hover { border-color: var(--brand); box-shadow: 0 6px 18px rgba(36,87,197,0.14); }
+    .seg-b:not([aria-pressed="true"]):hover { color: var(--brand); }
+    .copy:hover, .toplink:hover { box-shadow: inset 0 0 0 1px rgba(143,176,240,0.55); }
+    .more:hover { color: #1D4AAB; }
+  }
+  /* cards: thin border, rounded, a lighter brand-tinted border on hover; small cards also lift 3 px */
+  .card, .stage, .ev, .tech, .cp, .card3, .table-wrap, .flow li { transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease; }
+  @media (hover: hover) {
+    .stage:hover, .ev:hover, .tech:hover, .cp:hover, .card3:hover, .flow li:hover {
+      transform: translateY(-3px); border-color: var(--card-hover); box-shadow: 0 10px 24px rgba(19,41,75,0.08); }
+    .tech:hover { border-top-color: var(--brand); }
+    .card:hover, .table-wrap:hover { border-color: var(--card-hover); }
+    .ev.gap:hover, .card3.warn:hover { border-color: var(--yellow); }
+  }
+  /* logo: the wordmark turns brand blue (the light brand tone, readable on navy), the blocks glow a little */
+  .topbar .brand { transition: color 0.2s ease; }
+  .topbar .brand .logo i { transition: box-shadow 0.2s ease, border-color 0.2s ease; }
+  @media (hover: hover) {
+    .topbar .brand:hover { color: var(--brand-edge); }
+    .topbar .brand:hover .logo i { border-color: #fff; box-shadow: 0 0 8px rgba(143,176,240,0.65); }
+  }
+  /* toggle: a sliding indicator (placed by JS; without JS the pressed button keeps its own background) */
+  .seg { position: relative; }
+  .seg.slide .seg-b { position: relative; z-index: 1; transition: color 0.25s ease; }
+  .seg.slide .seg-b[aria-pressed="true"] { background: transparent; }
+  .seg-ind { position: absolute; top: 3px; bottom: 3px; left: 0; width: 0; border-radius: 999px; background: var(--brand); pointer-events: none;
+    transition: transform 0.34s var(--ease-std), width 0.34s var(--ease-std); }
+  .cam { position: relative; }
+  .cam-snap { position: absolute; inset: 0; width: 100%; height: 100%; display: block; pointer-events: none; }
+  /* reveal: classes are added by JS only, so without JS (or for crawlers) everything stays visible */
+  @keyframes rv-rise { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+  @keyframes rv-tab { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  .rv { opacity: 0; }
+  .rv.in { opacity: 1; animation: rv-rise 0.7s var(--ease-out) var(--rv-d, 0s) both; }
+  .view.tab-in { animation: rv-tab 0.4s ease-out both; }
+  @media (prefers-reduced-motion: reduce) {
+    .rv { opacity: 1; } .rv.in, .view.tab-in { animation: none; }
+    .seg-ind, .seg.slide .seg-b, .topbar .brand, .topbar .brand .logo i,
+    .hero .btn-solid, .hero .btn-line, .btn-cta, .primary, .cta, .choice, .ex, .thumb, .seg-b, .copy, .toplink, .more,
+    .card, .stage, .ev, .tech, .cp, .card3, .table-wrap, .flow li { transition: none; }
+    .hero .btn-solid:hover, .btn-cta:hover, .primary:hover, .ex:hover, .stage:hover, .ev:hover, .tech:hover, .cp:hover,
+    .card3:hover, .flow li:hover { transform: none !important; }
+  }
 </style>
 </head>
 <body>
@@ -1515,6 +1584,39 @@
     img.src = photoUrl(s);
   }
 
+  /* ---------- motion: reveal on scroll, tab fade, toggle slide (Subtext pattern; off with reduced motion) ---------- */
+  var MOTION = !(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+  // groups rise item by item (stagger); singles rise as they enter, in the order they enter together
+  var RV_GROUPS = ".hero-copy, .page-head, .stats, .ev-split, .mortar, .cards3, .agent-grid, .stages, .try-grid";
+  var RV_SINGLES = ".hero-main > .proof, .problem > *, .block > *, .roles .wrap > *, .how .wrap > *";
+  (function () {
+    if (!MOTION || !window.IntersectionObserver) return;
+    var io = new IntersectionObserver(function (es) {
+      var batch = 0;
+      es.forEach(function (e) {
+        if (!e.isIntersecting) return;
+        io.unobserve(e.target);
+        if (!e.target.style.getPropertyValue("--rv-d")) e.target.style.setProperty("--rv-d", Math.min(batch++, 5) * 0.08 + "s");
+        e.target.classList.add("in");
+      });
+    }, { threshold: 0.1, rootMargin: "0px 0px -6% 0px" });
+    function watch(n, delay) {
+      if (n.hidden || n.classList.contains("rv") || n.matches(".pipe, .sr") || n.parentNode.closest(".rv")) return;   // hidden: shown later as it is
+      if (delay != null) n.style.setProperty("--rv-d", delay + "s");
+      n.classList.add("rv");
+      io.observe(n);
+    }
+    Array.prototype.forEach.call(document.querySelectorAll(RV_GROUPS), function (g) {
+      Array.prototype.forEach.call(g.children, function (c, i) { watch(c, Math.min(0.08 + 0.12 * i, 0.56).toFixed(2)); });
+    });
+    Array.prototype.forEach.call(document.querySelectorAll(RV_SINGLES), function (n) { if (!n.matches(RV_GROUPS)) watch(n); });
+    document.addEventListener("animationend", function (e) {
+      var t = e.target;
+      if (e.animationName === "rv-rise") { t.classList.remove("rv", "in"); t.style.removeProperty("--rv-d"); }   // back to its own styles
+      if (e.animationName === "rv-tab") t.classList.remove("tab-in");
+    });
+  })();
+
   /* ---------- tabs: hash routing, one file ---------- */
   var VIEWS = ["home", "how", "demo", "evidence", "setup"];
   function showView(name, focus) {
@@ -1526,6 +1628,7 @@
     var t = el("view-" + name).dataset.title;
     document.title = name === "home" ? "Drystone \u00b7 Every stack is a drystone wall" : t + " \u00b7 Drystone";
     window.scrollTo(0, 0);
+    if (MOTION) { var vw = el("view-" + name); vw.classList.remove("tab-in"); void vw.offsetWidth; vw.classList.add("tab-in"); }
     // the five checks rise in when the tab opens (same step that shows it, so nothing flashes)
     if (name === "how") { drawCam(); document.querySelector(".pipe").classList.add("go"); }
     if (name === "demo") draw();
@@ -1683,9 +1786,47 @@
       el("cam-cap").textContent = "Sample " + REC2.sample + ": the photo from the calibrated laptop webcam (1280\u00d7720).";
     }
     Array.prototype.forEach.call(document.querySelectorAll(".seg-b"), function (b) { b.setAttribute("aria-pressed", String(b.dataset.cam === camMode)); });
+    segPlace(segSlide);
+    segSlide = false;
+  }
+  // the toggle: an indicator slides to the pressed button; the photo crossfades (old frame fades out on top)
+  var seg = document.querySelector(".seg"), segInd = null, segSlide = false;
+  function segPlace(animate) {
+    var on = seg && seg.querySelector('.seg-b[aria-pressed="true"]');
+    if (!on || !seg.offsetWidth) return;                 // tab hidden: placed when it opens
+    if (!segInd) {
+      segInd = document.createElement("span");
+      segInd.className = "seg-ind";
+      segInd.setAttribute("aria-hidden", "true");
+      seg.insertBefore(segInd, seg.firstChild);
+      seg.classList.add("slide");
+      animate = false;
+    }
+    if (!animate) segInd.style.transition = "none";
+    segInd.style.width = on.offsetWidth + "px";
+    segInd.style.transform = "translateX(" + on.offsetLeft + "px)";
+    if (!animate) { void segInd.offsetWidth; segInd.style.transition = ""; }
+  }
+  window.addEventListener("resize", function () { segPlace(false); });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { segPlace(false); });
+  function camFade(redraw) {
+    var cv = el("cam-view");
+    if (!MOTION || !cv.animate || !cv.offsetWidth) { redraw(); return; }
+    var snap = document.createElement("canvas");
+    snap.width = cv.width; snap.height = cv.height; snap.className = "cam-snap"; snap.setAttribute("aria-hidden", "true");
+    snap.getContext("2d").drawImage(cv, 0, 0);
+    cv.parentNode.appendChild(snap);
+    redraw();
+    var ease = "cubic-bezier(0.4, 0, 0.2, 1)";
+    cv.animate([{ transform: "scale(1.02)" }, { transform: "none" }], { duration: 360, easing: ease });
+    snap.animate([{ opacity: 1, transform: "none" }, { opacity: 0, transform: "scale(0.985)" }], { duration: 360, easing: ease })
+      .onfinish = function () { snap.remove(); };
   }
   Array.prototype.forEach.call(document.querySelectorAll(".seg-b"), function (b) {
-    b.addEventListener("click", function () { camMode = b.dataset.cam; drawCam(); });
+    b.addEventListener("click", function () {
+      if (b.dataset.cam === camMode) return;
+      camMode = b.dataset.cam; segSlide = true; camFade(drawCam);
+    });
   });
 
   fetch("samples/samples.json", { cache: "no-cache" }).then(function (r) { return r.json(); }).then(function (meta) {
