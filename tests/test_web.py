@@ -6,6 +6,9 @@ The zone tests run the real OpenCV reading + Monte Carlo on the sample photos (a
 import base64
 import json
 import os
+import re
+import shutil
+import subprocess
 
 import pytest
 
@@ -46,7 +49,7 @@ def test_page_200():
     assert out["headers"]["Content-Type"].startswith("text/html")
     assert "max-age" in out["headers"]["Cache-Control"]
     assert "not a certified safety device" in html
-    assert "can take ~10 s" in html
+    assert "can take up to 10 s" in html
     assert 'type="file"' not in html                       # no photo upload
 
 
@@ -223,3 +226,48 @@ def test_hero_replay_matches_service():
         assert r["box_id"] == rec["box_id"]
         assert [m["id"] for m in r["markers"]] == [m["id"] for m in rec["markers"]]
         assert [p["role"] for p in r["polygons"]] == [p["role"] for p in rec["polygons"]]
+
+
+def _page_html():
+    with open(os.path.join(ROOT, "web", "index.html"), encoding="utf-8") as f:
+        return f.read()
+
+
+def test_links_start_hidden():
+    """Links whose LINKS value is still empty are hidden in the HTML itself, before any script runs."""
+    html = _page_html()
+    tags = re.findall(r"<a [^>]*data-link=[^>]*>", html)
+    assert len(tags) == 4 and all(" hidden" in t for t in tags)
+
+
+@pytest.mark.parametrize("links, shown", [
+    ({"repo": "#", "video": "", "report": "#"}, False),
+    ({"repo": "https://github.com/example/drystone/", "video": "https://youtu.be/example",
+      "report": "https://github.com/example/drystone/blob/main/docs/REPORT.md"}, True),
+])
+def test_links_hidden_until_filled(links, shown):
+    """The page's own applyLinks block, run in Node on stand-in elements."""
+    node = shutil.which("node")
+    if not node:
+        pytest.skip("Node.js is not installed")
+    html = _page_html()
+    block = html[html.index("// links:start"):html.index("// links:end")]
+    script = block + """
+    function el(data) { return { dataset: data, hidden: true, href: "#", textContent: "<repository URL>" }; }
+    var nodes = {
+      "[data-link]": [el({ link: "video" }), el({ link: "repo" }), el({ link: "report" }), el({ link: "report" })],
+      "[data-need]": [el({ need: "repo" })], "[data-no]": [el({ no: "repo" })], "[data-clone]": [el({})]
+    };
+    nodes["[data-no]"][0].hidden = false;
+    applyLinks(%s, { querySelectorAll: function (sel) { return nodes[sel]; } });
+    console.log(JSON.stringify(nodes));
+    """ % json.dumps(links)
+    out = json.loads(subprocess.run([node, "-e", script], capture_output=True, text=True, check=True).stdout)
+    assert [a["hidden"] for a in out["[data-link]"]] == [not shown] * 4
+    assert out["[data-need]"][0]["hidden"] is (not shown)           # the git clone line
+    assert out["[data-no]"][0]["hidden"] is shown                   # "Repository link: on the submission page"
+    if shown:
+        assert [a["href"] for a in out["[data-link]"]] == [links["video"], links["repo"], links["report"], links["report"]]
+        assert out["[data-clone]"][0]["textContent"] == "https://github.com/example/drystone.git"
+    else:
+        assert all(a["href"] == "#" for a in out["[data-link]"])

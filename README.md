@@ -133,6 +133,8 @@ per-trial data: [data/eval_report/trials.csv](data/eval_report/trials.csv).
 
 ## Run it yourself
 Windows Command Prompt, Python 3.12, from the repository folder. One command per line.
+Commands are for Windows cmd (tested). On macOS/Linux: `source .venv/bin/activate` and
+`export DRYSTONE_URL=...`.
 
 Set up:
 ```

@@ -41,13 +41,15 @@
   .wrap { max-width: 1200px; margin: 0 auto; padding: 0 var(--gutter); }
   .mono { font-family: var(--mono); }
   .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  [hidden] { display: none !important; }
+  h1[tabindex="-1"]:focus { outline: none; }
 
   /* hero band */
   .hero { background-color: var(--band); --g: rgba(143,176,240,0.13); background-image: var(--grid); background-size: 28px 28px; padding-bottom: var(--overlap); color: #fff; }
   .hero a { color: #fff; }
   .topbar { background: rgba(9,20,40,0.35); border-bottom: 1px solid var(--band-border); }
   .topbar .wrap { display: flex; align-items: center; justify-content: space-between; gap: 16px; height: 56px; }
-  .brand { display: flex; align-items: center; gap: 9px; font-size: 17px; font-weight: 700; letter-spacing: -0.01em; }
+  .brand { display: flex; align-items: center; min-height: 44px; gap: 9px; font-size: 17px; font-weight: 700; letter-spacing: -0.01em; }
   .logo { display: flex; flex-direction: column; gap: 1.5px; width: 19px; }
   .logo i { display: block; width: 15px; height: 8.5px; background: var(--brand); border: 1px solid var(--brand-edge); border-radius: 1px; }
   .logo i:first-child { margin-left: 4px; }
@@ -67,6 +69,7 @@
   @media (max-width: 860px) { .hero-main { grid-template-columns: minmax(0, 1fr); } }
   h1 { margin: 0; font-size: clamp(40px, 5vw, 72px); line-height: 0.98; font-weight: 700; letter-spacing: -0.03em; text-wrap: balance; }
   .hero-sub { margin: clamp(8px, 1.2vw, 16px) 0 0; font-size: clamp(20px, 2.4vw, 32px); line-height: 1.2; color: var(--hero-sub); font-weight: 500; }
+  .hero-for { margin: clamp(10px, 1.2vw, 16px) 0 0; font-size: clamp(15px, 1.25vw, 17px); line-height: 1.45; font-weight: 600; color: var(--hero-body); }
   .hero-body { max-width: 46ch; margin: clamp(16px, 2vw, 28px) 0 0; font-size: clamp(16px, 1.4vw, 19px); line-height: 1.5; color: var(--hero-body); text-wrap: pretty; }
   /* hero proof: a replay of one real check */
   .proof { width: 100%; margin: 0; background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow); overflow: hidden; }
@@ -100,7 +103,7 @@
   .stat-num { display: block; font-size: clamp(44px, 4.8vw, 68px); line-height: 1; font-weight: 700; letter-spacing: -0.03em; color: var(--brand-edge); font-variant-numeric: tabular-nums; white-space: nowrap; }
   .stats p { margin: 12px 0 0; max-width: 38ch; font-size: 14.5px; line-height: 1.5; color: #fff; }
   .problem-note { margin: clamp(22px, 2.6vw, 32px) 0 0; font-size: 12.5px; line-height: 1.6; color: var(--hero-sub); }
-  .hero .problem-note a { color: var(--hero-sub); }
+  .hero .problem-note a { color: var(--hero-sub); padding: 14px 0; }
 
   /* try it */
   .try { position: relative; margin-top: calc(-1 * var(--overlap)); padding: clamp(8px, 1.5vw, 20px) 0 clamp(40px, 6vw, 88px); }
@@ -136,8 +139,9 @@
   .ruler-head { display: flex; justify-content: space-between; align-items: baseline; gap: 4px 12px; flex-wrap: wrap; }
   .ruler-head strong { font-size: 15px; }
   .ruler-head span { font-size: 13px; color: var(--muted); }
+  .ruler-hint { font-weight: 600; color: var(--brand); }
   .ruler-box { padding: 0 30px; margin-top: 6px; border-radius: 8px; --g: rgba(36,87,197,0.06); background-image: var(--grid); background-size: 14px 14px; }
-  .ruler { position: relative; height: 150px; cursor: crosshair; touch-action: manipulation; }
+  .ruler { position: relative; height: 150px; cursor: crosshair; touch-action: none; }
   .mk { position: absolute; bottom: 40px; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; }
   .mk button { all: unset; box-sizing: border-box; cursor: pointer; min-width: 46px; min-height: 46px; padding: 4px 7px; border-radius: 7px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; outline: 2px solid transparent; outline-offset: 2px; }
   .mk button:focus-visible { outline: 3px solid var(--brand); }
@@ -232,6 +236,7 @@
   .form textarea { min-height: 72px; resize: vertical; }
   .note { font-size: 14px; padding: 10px 12px; border-radius: 8px; background: var(--soft); }
   .note.bad { background: var(--red-tint); color: var(--red-text); }
+  .field-err { font-size: 13px; color: var(--red-text); }
   .dmeta { font: 12px/1.6 var(--mono); color: var(--muted); }
 
   /* how it decided */
@@ -333,7 +338,7 @@
   .cp b { font-size: 17px; }
   .cp p { margin: 0; font-size: 14px; line-height: 1.5; color: var(--body); }
   .seg { display: inline-flex; border: 1px solid var(--btn-border); border-radius: 999px; padding: 3px; background: var(--surface); margin-bottom: 14px; }
-  .seg-b { all: unset; box-sizing: border-box; cursor: pointer; min-height: 40px; padding: 0 16px; border-radius: 999px; font-size: 14px; font-weight: 600; color: var(--body); display: inline-flex; align-items: center; }
+  .seg-b { all: unset; box-sizing: border-box; cursor: pointer; min-height: 44px; padding: 0 16px; border-radius: 999px; font-size: 14px; font-weight: 600; color: var(--body); display: inline-flex; align-items: center; }
   .seg-b[aria-pressed="true"] { background: var(--brand); color: #fff; }
   .seg-b:focus-visible { outline: 3px solid var(--brand); outline-offset: 2px; }
   .cam { border-radius: 10px; overflow: hidden; background: var(--photo-bg); max-width: 900px; }
@@ -366,7 +371,7 @@
   @media (max-width: 560px) { .level { padding-left: 0; } .lvl { position: static; margin-bottom: 10px; } }
   .code { display: flex; align-items: stretch; margin: 8px 0; max-width: 900px; background: #0F2240; border-radius: 8px; overflow: hidden; }
   .code pre { flex: 1; min-width: 0; margin: 0; padding: 12px 14px; color: #DCE5F5; overflow-x: auto; font: 13px/1.5 var(--mono); }
-  .copy { flex: none; align-self: center; margin: 0 6px; width: 40px; height: 40px; padding: 0; display: inline-flex; align-items: center; justify-content: center; border: 0; border-radius: 8px; background: transparent; color: #9FB3D6; cursor: pointer; }
+  .copy { flex: none; align-self: center; margin: 0 4px; width: 44px; height: 44px; padding: 0; display: inline-flex; align-items: center; justify-content: center; border: 0; border-radius: 8px; background: transparent; color: #9FB3D6; cursor: pointer; }
   @media (hover: hover) { .copy:hover { color: #fff; background: rgba(255,255,255,0.08); } }
   .copy.ok { color: #7FD69A; }
   .copy:focus-visible { outline: 3px solid var(--brand-edge); outline-offset: 2px; }
@@ -386,7 +391,8 @@
   .ev-side { display: grid; gap: 12px; }
   @media (max-width: 700px) { .ev-split { grid-template-columns: minmax(0, 1fr); } }
   .honest { margin: 16px 0 0; font-size: 16px; line-height: 1.6; color: var(--body); }
-  .honest a { font-weight: 600; white-space: nowrap; }
+  .honest a { font-weight: 600; white-space: nowrap; padding: 12px 0; }
+  .verdict-line { margin: 0 0 14px; max-width: 80ch; padding: 12px 16px; border-left: 4px solid var(--red); border-radius: 0 8px 8px 0; background: var(--red-tint); font-size: 16px; line-height: 1.5; color: var(--body); }
   .mortar { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; }
   @media (max-width: 860px) { .mortar { grid-template-columns: minmax(0, 1fr); } }
   .rules-panel { background: #0F2240; color: #DCE5F5; border-radius: 12px; padding: 20px; }
@@ -439,7 +445,7 @@
   <div class="wrap">
     <a class="brand" href="#home"><span class="logo" aria-hidden="true"><i></i><i></i><i></i></span>Drystone</a>
     <nav class="tabs" aria-label="Sections"><a href="#home" data-view="home">Home</a><a href="#how" data-view="how">How it works</a><a href="#demo" data-view="demo">Demo</a><a href="#evidence" data-view="evidence">Evidence</a><a href="#setup" data-view="setup">Setup</a></nav>
-    <div class="top-icons"><a class="toplink" data-link="video" href="#" aria-label="Video" title="Video"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M10 9.2v5.6l4.6-2.8z" fill="currentColor"/></svg></a><a class="toplink" data-link="repo" href="#" aria-label="GitHub repository" title="GitHub repository"><svg viewBox="0 0 16 16" width="20" height="20" aria-hidden="true" focusable="false"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg></a></div>
+    <div class="top-icons"><a class="toplink" data-link="video" href="#" hidden aria-label="Video" title="Video"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M10 9.2v5.6l4.6-2.8z" fill="currentColor"/></svg></a><a class="toplink" data-link="repo" href="#" hidden aria-label="GitHub repository" title="GitHub repository"><svg viewBox="0 0 16 16" width="20" height="20" aria-hidden="true" focusable="false"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg></a></div>
   </div>
 </header>
 <div class="view" id="view-home" data-title="Drystone · Every stack is a drystone wall">
@@ -447,10 +453,11 @@
   <div class="wrap">
     <section class="hero-main">
       <div class="hero-copy">
-        <h1>Every stack is a drystone wall.</h1>
+        <h1 tabindex="-1">Every stack is a drystone wall.</h1>
         <p class="hero-sub">Nothing holds it but placement.</p>
+        <p class="hero-for">For anyone stacking boxes by hand. One webcam, one printed marker per box.</p>
         <p class="hero-body">Drystone checks where the next box goes, then tells you to place it, ask, or move it.</p>
-        <div class="hero-cta"><a class="btn-solid" href="#demo">Try the demo</a><a class="btn-line" data-link="report" href="#">View report</a></div>
+        <div class="hero-cta"><a class="btn-solid" href="#demo">Try the demo</a><a class="btn-line" data-link="report" href="#" hidden>View report</a></div>
       </div>
       <figure class="proof" id="proof" aria-label="Replay of a real check: sample s1, next box at +16 cm">
         <div class="proof-cmd"><span id="proof-cmd">next box &rarr; +16 cm</span><span class="proof-tag">real check</span></div>
@@ -485,7 +492,7 @@
         <div class="ev"><span class="num">25/25</span><span>placements checked correctly afterwards</span></div>
       </div>
     </div>
-    <p class="honest">One miss we report up front: <b>4 of 9 YELLOW placements fell.</b> <a href="#evidence">Where the wall cracks &rarr;</a></p>
+    <p class="honest">One miss we report up front: <b>4 of 9 YELLOW placements fell.</b> <a href="#evidence">1 of 5 locked criteria failed (C2b) &rarr;</a></p>
     <p class="fine mono">Protocol locked in git (8a953e4) before the first trial &middot; numbers from data/eval_report/</p>
   </section>
 
@@ -509,7 +516,7 @@
         <div class="tech"><span class="tech-k">AWS Lambda</span><p>Same decision code as the laptop agent. Supervisor choices logged in CloudWatch.</p></div>
       </div>
     </div>
-    <p class="facts mono">53 tests &middot; 25 locked trials &middot; every decision logged</p>
+    <p class="facts mono">56 tests &middot; 25 locked trials &middot; every decision logged</p>
   </section>
 </div>
 <section class="roles" aria-label="Who does what">
@@ -521,7 +528,7 @@
 <div class="view" id="view-how" data-title="How it works" hidden>
 <div class="band"><div class="wrap page-head">
   <span class="problem-label">HOW IT WORKS</span>
-  <h1 class="page-title">Five checks before the next stone.<span class="acc">One loop per box.</span></h1>
+  <h1 class="page-title" tabindex="-1">Five checks before the next stone.<span class="acc">One loop per box.</span></h1>
   <p class="page-lead">A laptop camera watches the stack. For every new box, Drystone runs the same loop, and what the camera sees changes what happens next: a shifted box is re-checked, a fallen box is re-planned.</p>
 </div></div>
 <div class="wrap">
@@ -568,9 +575,9 @@
 <div class="view" id="view-demo" data-title="Demo" hidden>
 <div class="hero hero-demo"><div class="wrap page-head">
   <span class="problem-label">DEMO</span>
-  <h1 class="page-title">Try a placement.<span class="acc">No camera needed.</span></h1>
+  <h1 class="page-title" tabindex="-1">Try a placement.<span class="acc">No camera needed.</span></h1>
   <p class="page-lead">Pick a real photo from our test stack, choose where the next box goes, and the same code that runs the laptop agent decides, live on AWS Lambda.</p>
-  <p class="demo-note">The first check can take ~10 s while the server wakes up. Supervisor choices are logged without your IP address.</p>
+  <p class="demo-note">The first check can take up to 10 s while the server wakes up. Supervisor choices are logged without your IP address.</p>
 </div></div>
 <main class="wrap">
   <section class="try" aria-labelledby="h-try">
@@ -596,7 +603,7 @@
         <div>
           <div class="ruler-head">
             <strong id="h-ruler">Where should the next box go?</strong>
-            <span>cm to the right of the box below</span>
+            <span>cm to the right of the box below &middot; <b class="ruler-hint">Tap or drag</b></span>
           </div>
           <div class="ruler-box">
             <div class="ruler" id="ruler" aria-labelledby="h-ruler"></div>
@@ -619,7 +626,7 @@
       <p class="sr" id="announce" role="status" aria-live="polite"></p>
       <section class="card card-right" id="decision" aria-labelledby="h-decision">
         <div class="dhead"><span id="h-decision">DECISION</span><span id="dmeta-top"></span></div>
-        <div id="result"><div class="pad"><span class="idle">Tap a marker on the ruler to run the check.</span></div></div>
+        <div id="result"><div class="pad"><span class="idle">Tap a marker on the ruler below the photo to run the check.</span></div></div>
       </section>
     </div>
   </section>
@@ -635,12 +642,13 @@
 <div class="view" id="view-evidence" data-title="Evidence" hidden>
 <div class="band"><div class="wrap page-head">
   <span class="problem-label">EVIDENCE</span>
-  <h1 class="page-title">25 real stacks.<span class="acc">Locked before the first box moved.</span></h1>
+  <h1 class="page-title" tabindex="-1">25 real stacks.<span class="acc">Locked before the first box moved.</span></h1>
   <p class="page-lead">The test plan, all 25 setups and the pass criteria went into git before any trial ran (commit 8a953e4). We ran all 25 and report every result.</p>
 </div></div>
 <div class="wrap">
   <section class="block" aria-labelledby="h-crit">
     <h2 id="h-crit" class="sr">Locked criteria</h2>
+    <p class="verdict-line"><b>Verdict: FAIL on 1 of 5 locked criteria.</b> C2b missed by one fall (12 against a band of 6&ndash;11). No box fell in the GREEN zone.</p>
     <div class="table-wrap"><table><thead><tr><th scope="col">Criterion</th><th scope="col">What it asks</th><th scope="col">Result</th></tr></thead><tbody><tr><th scope="row" class="mono">C1</th><td>No GREEN placement falls</td><td>0 of 8 fell <span class="verdict v-pass">PASS</span></td></tr><tr><th scope="row" class="mono">C2a</th><td>At least 85% right on clear cases (P &lt; 10% or &gt; 70%)</td><td>14 of 14 <span class="verdict v-pass">PASS</span></td></tr><tr><th scope="row" class="mono">C2b</th><td>Total falls inside the model&rsquo;s 90% band</td><td>12 fell; 8.5 predicted (band 5.6&ndash;11.5) <span class="verdict v-fail">FAIL</span></td></tr><tr><th scope="row" class="mono">C3</th><td>Brier score at most 0.20</td><td>0.125 <span class="verdict v-pass">PASS</span></td></tr><tr><th scope="row" class="mono">C4</th><td>At least 20 valid trials</td><td>25 trials with an outcome <span class="verdict v-pass">PASS</span></td></tr></tbody></table></div>
   </section>
 
@@ -671,15 +679,16 @@
       <li>A decision aid prototype, not a certified safety device.</li>
       <li>Photos show boxes only, no faces.</li>
     </ul>
-    <a class="more" data-link="report" href="#">Full report &amp; failure cases &rarr;</a>
+    <a class="more" data-link="report" href="#" hidden>Full report &amp; failure cases &rarr;</a>
   </section>
 </div>
 </div>
 <div class="view" id="view-setup" data-title="Setup" hidden>
 <div class="band"><div class="wrap page-head">
   <span class="problem-label">SETUP</span>
-  <h1 class="page-title">Lay the first stone.<span class="acc">Start with zero install. End with a real camera.</span></h1>
-  <p class="page-lead">Pinned versions throughout (Python 3.12, OpenCV 5.0, MuJoCo 3.15). Commands are copied from README.md and aws/README.md; Windows Command Prompt, from the repository folder, one command per line.</p>
+  <h1 class="page-title" tabindex="-1">Lay the first stone.<span class="acc">Start with zero install. End with a real camera.</span></h1>
+  <p class="page-lead">Pinned versions throughout (Python 3.12, OpenCV 5.0, MuJoCo 3.15). Commands are copied from README.md and aws/README.md, run from the repository folder, one command per line.</p>
+  <p class="demo-note">Commands are for Windows cmd (tested). On macOS/Linux: <code>source .venv/bin/activate</code> and <code>export DRYSTONE_URL=...</code>.</p>
 </div></div>
 <div class="wrap">
   <section class="block level" aria-labelledby="h-l1">
@@ -690,13 +699,13 @@
   <section class="block level" aria-labelledby="h-l2">
     <span class="lvl" role="img" aria-label="On a laptop"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="4" y="5" width="16" height="11" rx="1.5"/><path d="M2 19h20"/></svg></span><h2 id="h-l2">On your laptop, with our photos</h2>
     <p class="block-lead">Clone the repo, install, and run the same page locally (cloning is the only step not in the README).</p>
-    <div class="code"><pre><code>git clone <span data-clone>&lt;repository URL&gt;</span></code></pre><button type="button" class="copy" aria-label="Copy command" title="Copy"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="9" y="9" width="11" height="11" rx="2.5"/><path d="M15 9V6.5A2.5 2.5 0 0 0 12.5 4h-6A2.5 2.5 0 0 0 4 6.5v6A2.5 2.5 0 0 0 6.5 15H9"/></svg></button></div><div class="code"><pre><code>cd drystone</code></pre><button type="button" class="copy" aria-label="Copy command" title="Copy"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="9" y="9" width="11" height="11" rx="2.5"/><path d="M15 9V6.5A2.5 2.5 0 0 0 12.5 4h-6A2.5 2.5 0 0 0 4 6.5v6A2.5 2.5 0 0 0 6.5 15H9"/></svg></button></div><div class="code"><pre><code>python -m venv .venv</code></pre><button type="button" class="copy" aria-label="Copy command" title="Copy"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="9" y="9" width="11" height="11" rx="2.5"/><path d="M15 9V6.5A2.5 2.5 0 0 0 12.5 4h-6A2.5 2.5 0 0 0 4 6.5v6A2.5 2.5 0 0 0 6.5 15H9"/></svg></button></div><div class="code"><pre><code>.venv\Scripts\activate</code></pre><button type="button" class="copy" aria-label="Copy command" title="Copy"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="9" y="9" width="11" height="11" rx="2.5"/><path d="M15 9V6.5A2.5 2.5 0 0 0 12.5 4h-6A2.5 2.5 0 0 0 4 6.5v6A2.5 2.5 0 0 0 6.5 15H9"/></svg></button></div><div class="code"><pre><code>pip install -r requirements-dev.txt</code></pre><button type="button" class="copy" aria-label="Copy command" title="Copy"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="9" y="9" width="11" height="11" rx="2.5"/><path d="M15 9V6.5A2.5 2.5 0 0 0 12.5 4h-6A2.5 2.5 0 0 0 4 6.5v6A2.5 2.5 0 0 0 6.5 15H9"/></svg></button></div><div class="code"><pre><code>python tools/web_local.py</code></pre><button type="button" class="copy" aria-label="Copy command" title="Copy"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="9" y="9" width="11" height="11" rx="2.5"/><path d="M15 9V6.5A2.5 2.5 0 0 0 12.5 4h-6A2.5 2.5 0 0 0 4 6.5v6A2.5 2.5 0 0 0 6.5 15H9"/></svg></button></div>
+    <p class="fine" data-no="repo">Repository link: on the submission page.</p><div class="code" data-need="repo" hidden><pre><code>git clone <span data-clone>&lt;repository URL&gt;</span></code></pre><button type="button" class="copy" aria-label="Copy command" title="Copy"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="9" y="9" width="11" height="11" rx="2.5"/><path d="M15 9V6.5A2.5 2.5 0 0 0 12.5 4h-6A2.5 2.5 0 0 0 4 6.5v6A2.5 2.5 0 0 0 6.5 15H9"/></svg></button></div><div class="code"><pre><code>cd drystone</code></pre><button type="button" class="copy" aria-label="Copy command" title="Copy"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="9" y="9" width="11" height="11" rx="2.5"/><path d="M15 9V6.5A2.5 2.5 0 0 0 12.5 4h-6A2.5 2.5 0 0 0 4 6.5v6A2.5 2.5 0 0 0 6.5 15H9"/></svg></button></div><div class="code"><pre><code>python -m venv .venv</code></pre><button type="button" class="copy" aria-label="Copy command" title="Copy"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="9" y="9" width="11" height="11" rx="2.5"/><path d="M15 9V6.5A2.5 2.5 0 0 0 12.5 4h-6A2.5 2.5 0 0 0 4 6.5v6A2.5 2.5 0 0 0 6.5 15H9"/></svg></button></div><div class="code"><pre><code>.venv\Scripts\activate</code></pre><button type="button" class="copy" aria-label="Copy command" title="Copy"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="9" y="9" width="11" height="11" rx="2.5"/><path d="M15 9V6.5A2.5 2.5 0 0 0 12.5 4h-6A2.5 2.5 0 0 0 4 6.5v6A2.5 2.5 0 0 0 6.5 15H9"/></svg></button></div><div class="code"><pre><code>pip install -r requirements-dev.txt</code></pre><button type="button" class="copy" aria-label="Copy command" title="Copy"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="9" y="9" width="11" height="11" rx="2.5"/><path d="M15 9V6.5A2.5 2.5 0 0 0 12.5 4h-6A2.5 2.5 0 0 0 4 6.5v6A2.5 2.5 0 0 0 6.5 15H9"/></svg></button></div><div class="code"><pre><code>python tools/web_local.py</code></pre><button type="button" class="copy" aria-label="Copy command" title="Copy"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="9" y="9" width="11" height="11" rx="2.5"/><path d="M15 9V6.5A2.5 2.5 0 0 0 12.5 4h-6A2.5 2.5 0 0 0 4 6.5v6A2.5 2.5 0 0 0 6.5 15H9"/></svg></button></div>
     <p class="fine">Then open http://127.0.0.1:8000/.</p>
   </section>
   <section class="block level" aria-labelledby="h-l3">
     <span class="lvl" role="img" aria-label="With a camera"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.5"/></svg></span><h2 id="h-l3">The full agent: camera + markers</h2>
     <p class="block-lead">You need a webcam, printed ArUco markers (DICT_4X4_50, 80 mm, IDs 0&ndash;2), a ChArUco board on something rigid and flat, and boxes listed in <code>config/boxes.json</code>. Measure what you printed. A calibration is only used if it passes the built-in quality check.</p>
-    <p class="fine">Calibrate (print <code>assets/opencv_marker_kalibrasi.pdf</code>; repeat until the verdict is LAYAK):</p>
+    <p class="fine">Calibrate: print <code>assets/opencv_marker_kalibrasi.pdf</code>, then repeat until the verdict is LAYAK (passes).</p>
     <div class="code"><pre><code>python tools/calibrate.py --name laptop --square-mm 29.8 --auto</code></pre><button type="button" class="copy" aria-label="Copy command" title="Copy"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="9" y="9" width="11" height="11" rx="2.5"/><path d="M15 9V6.5A2.5 2.5 0 0 0 12.5 4h-6A2.5 2.5 0 0 0 4 6.5v6A2.5 2.5 0 0 0 6.5 15H9"/></svg></button></div>
     <p class="fine">Run the agent on the laptop:</p>
     <div class="code"><pre><code>python tools/agent.py --calib data/camera_laptop.yaml --marker-mm 80</code></pre><button type="button" class="copy" aria-label="Copy command" title="Copy"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="9" y="9" width="11" height="11" rx="2.5"/><path d="M15 9V6.5A2.5 2.5 0 0 0 12.5 4h-6A2.5 2.5 0 0 0 4 6.5v6A2.5 2.5 0 0 0 6.5 15H9"/></svg></button></div>
@@ -729,7 +738,7 @@
 <script>
 (function () {
   "use strict";
-  // Links: fill these in before submitting. An empty value keeps the placeholder "#".
+  // Links: fill these in before submitting. While a value is empty or "#", its links stay hidden.
   var LINKS = { repo: "", video: "", report: "" };
 
   // overlay colours come from the CSS tokens, so the page and the photo always match
@@ -748,14 +757,27 @@
   ];
   var RULER_MAX = 16, TIMEOUT_MS = 30000;
   var state = { meta: null, sample: null, img: null, shift: null, status: "idle", result: null, error: null,
-                busy: false, note: null, overrideOpen: false, req: 0 };
+                busy: false, note: null, overrideOpen: false, chosen: false, req: 0 };
   var el = function (id) { return document.getElementById(id); };
   var canvas = el("view"), ctx = canvas.getContext("2d");
 
-  Array.prototype.forEach.call(document.querySelectorAll("[data-link]"), function (a) {
-    var u = LINKS[a.dataset.link];
-    if (u) { a.href = u; a.target = "_blank"; a.rel = "noopener"; }
-  });
+  // links:start (tests/test_web.py runs this block in Node)
+  function linkOk(u) { return typeof u === "string" && u !== "" && u !== "#"; }
+  function applyLinks(links, root) {
+    Array.prototype.forEach.call(root.querySelectorAll("[data-link]"), function (a) {
+      var u = links[a.dataset.link], ok = linkOk(u);
+      a.hidden = !ok;
+      if (ok) { a.href = u; a.target = "_blank"; a.rel = "noopener"; }
+    });
+    // [data-need]: shown only with that link; [data-no]: the text shown instead
+    Array.prototype.forEach.call(root.querySelectorAll("[data-need]"), function (n) { n.hidden = !linkOk(links[n.dataset.need]); });
+    Array.prototype.forEach.call(root.querySelectorAll("[data-no]"), function (n) { n.hidden = linkOk(links[n.dataset.no]); });
+    if (linkOk(links.repo)) Array.prototype.forEach.call(root.querySelectorAll("[data-clone]"), function (n) {
+      n.textContent = links.repo.replace(/\/$/, "") + ".git";
+    });
+  }
+  // links:end
+  applyLinks(LINKS, document);
 
   function esc(s) {
     return String(s).replace(/[&<>"']/g, function (c) {
@@ -768,6 +790,7 @@
   }
   function pct(p) { return Math.round(p * 100) + "%"; }
   function signed(v) { return (v > 0 ? "+" : "") + v; }
+  function secs(ms) { return ms < 100 ? "<0.1 s" : (ms / 1000).toFixed(1) + " s"; }
   function overhang(v) { return Math.round(v / state.meta.box_length_cm * 100); }
 
   /* ---------- photo overlay ---------- */
@@ -869,7 +892,7 @@
   /* ---------- samples ---------- */
   function selectSample(s) {
     state.sample = s; state.result = null; state.note = null; state.shift = null; state.status = "idle";
-    state.overrideOpen = false; state.req++;
+    state.overrideOpen = false; state.chosen = false; state.req++;
     Array.prototype.forEach.call(el("samples").children, function (b) {
       b.setAttribute("aria-pressed", String(b.dataset.id === s.id));
     });
@@ -894,7 +917,7 @@
   function Problem(title, text) { this.title = title; this.text = text; }
   function post(path, body) {
     var ctl = window.AbortController ? new AbortController() : null;
-    var timer = setTimeout(function () { if (ctl) ctl.abort(); }, TIMEOUT_MS);
+    var timer = setTimeout(function () { if (ctl) ctl.abort(); }, TIMEOUT_MS), t0 = performance.now();
     return fetch(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
                          signal: ctl ? ctl.signal : undefined })
       .then(function (r) {
@@ -911,22 +934,24 @@
         throw new Problem("The simulator didn't answer.",
           "Nothing was decided, and your photo and spot are kept. Check your connection, then try again.");
       })
-      .then(function (j) { clearTimeout(timer); return j; }, function (e) { clearTimeout(timer); throw e; });
+      .then(function (j) { clearTimeout(timer); j.roundTripMs = Math.round(performance.now() - t0); return j; },
+            function (e) { clearTimeout(timer); throw e; });
   }
 
   function analyze(v, fromRuler) {
     if (state.busy || !state.sample) return Promise.resolve();
     var s = state.sample, id = ++state.req;
-    state.shift = v; state.status = "loading"; state.busy = true; state.error = null; state.overrideOpen = false;
+    state.shift = v; state.status = "loading"; state.busy = true; state.error = null; state.overrideOpen = false; state.chosen = false;
     renderAll();
     if (fromRuler && window.innerWidth < 900) el("decision").scrollIntoView({ behavior: "smooth", block: "start" });
     var t0 = performance.now();
     var tick = setInterval(function () {
-      var e = el("elapsed"); if (e) e.textContent = ((performance.now() - t0) / 1000).toFixed(1) + " s";
+      var e = el("elapsed"), ms = performance.now() - t0, w = el("wake");
+      if (e) e.textContent = (ms / 1000).toFixed(1) + " s";
+      if (w && w.hidden && ms > 8000) w.hidden = false;
     }, 100);
     return post("./", { sample: s.id, offset_cm: v }).then(function (r) {
       if (id !== state.req) return;
-      r.roundTripMs = Math.round(performance.now() - t0);
       state.result = r; state.status = "result";
     }, function (e) {
       if (id !== state.req) return;
@@ -945,7 +970,7 @@
     el("dmeta-top").textContent = s ? s.id + (state.shift !== null ? " · " + signed(state.shift) + " cm" : "") : "";
     if (state.status === "idle") {
       var yel = s && s.examples.YELLOW !== undefined ? s.examples.YELLOW : null;
-      h = '<div class="pad"><span class="idle">Tap a marker on the ruler to run the check.</span>' +
+      h = '<div class="pad"><span class="idle">Tap a marker on the ruler below the photo to run the check.</span>' +
         (yel !== null ? '<span class="soft-text">Not sure where to start? The ' + signed(yel) + ' cm marker is expected to be YELLOW (ask): ' +
           'a supervisor approves, takes the safer spot, or rejects.</span>' +
           '<button type="button" class="cta" data-act="try-example">Check <span class="mono">' + signed(yel) + ' cm</span></button>' : "") +
@@ -954,6 +979,7 @@
       h = '<div class="pad"><span class="load-title">Simulating the next box on AWS Lambda\u2026</span>' +
         '<div class="loader" role="progressbar" aria-label="Running the check"><i></i></div>' +
         '<span class="soft-text">Up to 600 simulated placements. Photo and ruler are locked until it answers.</span>' +
+        '<span class="soft-text" id="wake" role="status" hidden>The server is waking up. The first check can take up to 10 s.</span>' +
         '<span class="elapsed mono" id="elapsed">0.0 s</span></div>';
     } else if (state.status === "error") {
       h = '<div class="pad"><span class="err-title">' + esc(state.error.title) + '</span><span class="err-text">' +
@@ -962,7 +988,10 @@
       h = resultHtml(state.result);
     }
     el("result").innerHTML = h;
-    Array.prototype.forEach.call(el("result").querySelectorAll("button"), function (b) { b.disabled = state.busy; });
+    // a logged supervisor choice locks the choice buttons until the next check
+    Array.prototype.forEach.call(el("result").querySelectorAll("button"), function (b) {
+      b.disabled = state.busy || (state.chosen && b.classList.contains("choice"));
+    });
     // one short line for screen readers instead of re-reading the whole card
     var r = state.result, say = "";
     if (state.status === "loading") say = "Running the check at " + signed(state.shift) + " cm.";
@@ -1011,10 +1040,11 @@
       }
       h += "</div>";
     }
-    if (state.note) h += '<div class="note' + (state.note.bad ? " bad" : "") + '" role="status">' + esc(state.note.text) + "</div>";
+    if (state.note) h += '<div class="note' + (state.note.bad ? " bad" : "") + '" role="' + (state.note.bad ? "alert" : "status") + '">' +
+      esc(state.note.text) + "</div>";
     h += '<span class="dmeta">' + esc(r.sample + " · shift " + signed(r.offset_cm) + " cm (" + signed(Math.round(d.overhang_pct)) +
       "% overhang) · " + d.n + " sims · " + (r.cached ? "cached" : "not cached") + " · round trip " +
-      (r.roundTripMs / 1000).toFixed(1) + " s") + "</span>";
+      secs(r.roundTripMs)) + "</span>";
     return h + "</div>";
   }
 
@@ -1022,7 +1052,8 @@
     var d = r.decision, a = d.alternative;
     if (d.zone === "GREEN") return "Place it. Drystone guides the box to " + signed(r.offset_cm) + " cm, then checks it landed as planned.";
     if (!a) return (d.zone === "RED" ? "Move it. " : "Ask a supervisor. ") + "No safe spot found in the search range. Do not add a box to this stack.";
-    var sv = signed(Math.round(a.offset_cm)), far = a.p_further === null ? "" : " (" + pct(a.p_further) + " there)";
+    var sv = signed(Math.round(a.offset_cm)), far = a.p_further === null ? "" :
+      " (" + signed(Math.round(a.further_offset_cm)) + " cm: " + pct(a.p_further) + ")";
     if (d.zone === "YELLOW") return "Ask a supervisor. Approve, take the safer spot (" + sv + " cm, " + pct(a.p) +
       "), or reject. The choice is logged; the zone stays YELLOW.";
     return "Move it. Refused at " + signed(r.offset_cm) + " cm. Try " + sv + " cm: it stays green even if the box lands 1 cm further out" + far + ".";
@@ -1069,10 +1100,10 @@
     var r = state.result, d = r.decision;
     var nameEl = el("sup-name"), reasonEl = el("sup-reason");
     var name = nameEl ? nameEl.value.trim() : "", reason = reasonEl ? reasonEl.value.trim() : "";
-    if (choice === "override" && (name.length < 2 || reason.length < 5)) {
-      showNote("An override needs a name (at least 2 characters) and a reason (at least 5 characters).", true);
-      (name.length < 2 ? nameEl : reasonEl).focus();
-      return;
+    if (choice === "override") {
+      fieldError(nameEl, name.length < 2 ? "Add the supervisor's name (at least 2 characters)." : "");
+      fieldError(reasonEl, reason.length < 5 ? "Add a reason (at least 5 characters)." : "");
+      if (name.length < 2 || reason.length < 5) { (name.length < 2 ? nameEl : reasonEl).focus(); return; }
     }
     var body = { sample: r.sample, offset_cm: r.offset_cm, choice: choice };
     if (name) body.name = name;
@@ -1091,7 +1122,7 @@
           }
         });
       }
-      state.overrideOpen = false;
+      state.overrideOpen = false; state.chosen = true;
       state.note = { text: {
         approve: "Approved (logged). The box may be placed at " + signed(r.offset_cm) + " cm; the zone stays " + d.zone + ".",
         reject: "Rejected (logged). Nothing is placed.",
@@ -1112,19 +1143,65 @@
       var meta = el("result").querySelector(".dmeta");
       meta.parentNode.insertBefore(box, meta);
     }
-    box.className = "note" + (bad ? " bad" : ""); box.setAttribute("role", "status"); box.textContent = text;
+    box.className = "note" + (bad ? " bad" : ""); box.setAttribute("role", bad ? "alert" : "status"); box.textContent = text;
+  }
+  // one message under the field it is about; an empty text clears it
+  function fieldError(input, text) {
+    if (!input) return;
+    var id = input.id + "-err", msg = el(id);
+    if (!text) {
+      if (msg) msg.parentNode.removeChild(msg);
+      input.removeAttribute("aria-invalid"); input.removeAttribute("aria-describedby");
+      return;
+    }
+    if (!msg) {
+      msg = document.createElement("span"); msg.id = id; msg.className = "field-err"; msg.setAttribute("role", "alert");
+      input.parentNode.appendChild(msg);
+    }
+    msg.textContent = text;
+    input.setAttribute("aria-invalid", "true"); input.setAttribute("aria-describedby", id);
   }
 
   /* ---------- events ---------- */
+  function rulerValue(x) {
+    var rect = el("ruler").getBoundingClientRect();
+    return Math.max(0, Math.min(RULER_MAX, Math.round((x - rect.left) / rect.width * RULER_MAX)));
+  }
   el("ruler").addEventListener("click", function (e) {
+    if (dragClick) { dragClick = false; return; }       // the release of a drag already ran the check
     if (state.busy || !state.sample) return;
     state.note = null;
     var b = e.target.closest("button[data-v]");
     if (b) { analyze(Number(b.dataset.v), true); return; }
-    var rect = el("ruler").getBoundingClientRect();
-    var v = Math.round((e.clientX - rect.left) / rect.width * RULER_MAX);
-    analyze(Math.max(0, Math.min(RULER_MAX, v)), true);
+    analyze(rulerValue(e.clientX), true);
   });
+  // drag: the pin follows the pointer; one check runs when the finger or mouse is lifted
+  var drag = null, dragClick = false;
+  el("ruler").addEventListener("pointerdown", function (e) {
+    dragClick = false;
+    if (state.busy || !state.sample || e.button > 0) return;
+    drag = { id: e.pointerId, x: e.clientX, moved: false };
+  });
+  el("ruler").addEventListener("pointermove", function (e) {
+    if (!drag || e.pointerId !== drag.id) return;
+    if (!drag.moved) {
+      if (Math.abs(e.clientX - drag.x) < 6) return;
+      drag.moved = true; el("ruler").setPointerCapture(e.pointerId);
+    }
+    var v = rulerValue(e.clientX);
+    if (v !== state.shift || state.status !== "idle") {
+      state.shift = v; state.status = "idle"; state.result = null; state.note = null; renderAll();
+    }
+  });
+  function endDrag(e, run) {
+    if (!drag || e.pointerId !== drag.id) return;
+    var moved = drag.moved; drag = null;
+    if (!moved) return;
+    dragClick = true;
+    if (run) { state.note = null; analyze(rulerValue(e.clientX), true); }
+  }
+  el("ruler").addEventListener("pointerup", function (e) { endDrag(e, true); });
+  el("ruler").addEventListener("pointercancel", function (e) { endDrag(e, false); });
   function step(d) {
     var range = state.meta.offset_range_cm, v = (state.shift === null ? 0 : state.shift) + d;
     state.shift = Math.max(range[0], Math.min(range[1], v));
@@ -1138,7 +1215,7 @@
   });
   el("result").addEventListener("click", function (e) {
     var b = e.target.closest("button[data-act]");
-    if (!b || state.busy) return;
+    if (!b || state.busy || (state.chosen && b.classList.contains("choice"))) return;
     var act = b.dataset.act;
     if (act === "retry") { analyze(state.shift === null ? 0 : state.shift); return; }
     if (act === "try-example") { analyze(state.sample.examples.YELLOW, true); return; }
@@ -1234,7 +1311,7 @@
 
   /* ---------- tabs: hash routing, one file ---------- */
   var VIEWS = ["home", "how", "demo", "evidence", "setup"];
-  function showView(name) {
+  function showView(name, focus) {
     if (VIEWS.indexOf(name) < 0) name = "home";
     VIEWS.forEach(function (v) { el("view-" + v).hidden = v !== name; });
     Array.prototype.forEach.call(document.querySelectorAll(".tabs a"), function (a) {
@@ -1245,11 +1322,13 @@
     window.scrollTo(0, 0);
     if (name === "how") drawCam();
     if (name === "demo") draw();
+    if (focus) { var h1 = el("view-" + name).querySelector("h1"); if (h1) h1.focus({ preventScroll: true }); }
   }
-  window.addEventListener("hashchange", function () { showView(location.hash.slice(1)); });
+  window.addEventListener("hashchange", function () { showView(location.hash.slice(1), true); });
 
   /* ---------- copy buttons ---------- */
   Array.prototype.forEach.call(document.querySelectorAll(".copy"), function (b) {
+    b.setAttribute("aria-label", "Copy: " + b.parentNode.querySelector("code").textContent);
     b.addEventListener("click", function () {
       var text = b.parentNode.querySelector("code").textContent;
       var icon = b.innerHTML;
@@ -1263,7 +1342,6 @@
       else done(false);
     });
   });
-  if (LINKS.repo) Array.prototype.forEach.call(document.querySelectorAll("[data-clone]"), function (n) { n.textContent = LINKS.repo.replace(/\/$/, "") + ".git"; });
 
   /* ---------- what the camera reads (sample s2, a recorded check) ---------- */
   // Recorded from tools/service.py for sample s2 at +13 cm; tests/test_web.py checks it against the service.
