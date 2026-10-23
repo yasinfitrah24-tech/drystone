@@ -20,13 +20,14 @@ where the page follows REPORT or the code instead of the draft.
 - For line: For anyone stacking boxes by hand. One webcam, one printed marker per box.
 - Body: Drystone checks where the next box goes, then tells you to place it, ask, or move it.
 - Buttons: Try the demo · View report
-- Hero card (recorded answer for s1 +16 cm, `tools/service.py`, seed 0; same answer live on Lambda):
-  - next box → +16 cm [badge: real check]
-  - RED · move it — P(fall) 73%
-  - overhang: 55% of the box below
-  - 150 simulated placements on AWS Lambda
-  - [box] Safer spot: +10 cm · still green 1 cm further out (5%)
-  - Replay of a real check · OpenCV 5 · MuJoCo
+- Hero card (23 Oct: the Drystone camera screen; recorded answer for s1 +16 cm, `tools/service.py`, seed 0; same answer live on Lambda). Every number comes from the record:
+  - Top bar: [blinking dot] REPLAY · s1 · next box → +16 cm [badge: real check]
+  - Camera screen with viewfinder corners and a thin grid. Stage label (top left) and counter (top right): SCAN · OpenCV 5 → LOCK · ArUco ID 0 → TWIN · digital twin → SIMULATE · MuJoCo (n/150 sims · fell k) → DECIDE · fixed rules → SUGGEST · +10 cm; counter "camera 1280×720" until the simulation.
+  - On the photo: scan line, marker brackets + "ID 0", twin outline, flashing runs (red = fell, green = stood) around +16 cm, the edge of the box below, the centre of mass, "overhang 55%" and "margin −1.5 cm", then the next box in red and the safer spot dashed blue.
+  - Decision bar: RED · move it [REJECT] — P(fall) 73% (counts up, then the bar turns red)
+  - [dashed box] Safer spot: +10 cm · still green 1 cm further out (5%)
+  - Status bar: RED · P(fall) 73% ±7 · suggest +10 cm · 150 sims
+  - Motion: the whole replay plays once on load and each time Home is opened (about 8 s), then holds the result; only a faint scan line and the REPLAY dot keep moving. Fell 110 = 73% of 150 from the record; only the order of the flashing runs is illustrative. Reduced motion: the result, no motion.
 
 ### Problem
 - Eyebrow: THE PROBLEM

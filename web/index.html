@@ -71,26 +71,46 @@
   .hero-sub { margin: clamp(8px, 1.2vw, 16px) 0 0; font-size: clamp(20px, 2.4vw, 32px); line-height: 1.2; color: var(--hero-sub); font-weight: 500; }
   .hero-for { margin: clamp(10px, 1.2vw, 16px) 0 0; font-size: clamp(15px, 1.25vw, 17px); line-height: 1.45; font-weight: 600; color: var(--hero-body); }
   .hero-body { max-width: 46ch; margin: clamp(16px, 2vw, 28px) 0 0; font-size: clamp(16px, 1.4vw, 19px); line-height: 1.5; color: var(--hero-body); text-wrap: pretty; }
-  /* hero proof: a replay of one real check */
-  .proof { width: 100%; margin: 0; background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow); overflow: hidden; }
-  .proof-cmd { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 10px 14px; font: 12px var(--mono); color: var(--muted); border-bottom: 1px solid var(--soft); }
-  .proof-tag { flex: none; font: 600 11px var(--mono); color: var(--brand); background: rgba(36,87,197,0.08); border: 1px solid rgba(36,87,197,0.25); padding: 2px 8px; border-radius: 999px; }
-  .proof canvas { display: block; width: 100%; height: auto; aspect-ratio: 880 / 320; background: var(--photo-bg); }
-  .proof-head { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; padding: 10px 16px; min-height: 54px; background: var(--soft); transition: background-color 0.35s ease-out; }
-  .proof-head.RED { background: var(--red-tint); }
-  .proof-safe small { display: block; font-weight: 500; font-size: 11.5px; }
-  .proof-zone { font-size: 30px; font-weight: 700; line-height: 1; letter-spacing: -0.02em; color: var(--red-text); }
-  .proof-p { margin-left: auto; font: 500 14px var(--mono); }
+  /* hero proof: a looping replay of one real check (REC), drawn like the Drystone camera screen */
+  .proof { width: 100%; margin: 0; background: #0E1E38; color: var(--hero-body); border: 1px solid rgba(143,176,240,0.35); border-radius: 12px; box-shadow: 0 24px 60px rgba(4,12,28,0.45); overflow: hidden; }
+  .proof-top { display: flex; align-items: center; gap: 10px; padding: 9px 14px; font: 11.5px var(--mono); color: var(--hero-sub); border-bottom: 1px solid rgba(143,176,240,0.18); }
+  .proof-rec { flex: none; display: inline-flex; align-items: center; gap: 6px; font-weight: 600; letter-spacing: 0.1em; color: var(--brand-edge); }
+  .proof-rec i { width: 8px; height: 8px; border-radius: 50%; background: var(--brand-edge); animation: proof-blink 1.6s steps(1) infinite; }
+  .proof-cmd { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .proof-tag { margin-left: auto; flex: none; font: 600 11px var(--mono); color: var(--brand-edge); border: 1px solid rgba(143,176,240,0.4); padding: 2px 8px; border-radius: 999px; }
+  .proof-screen { position: relative; }
+  .proof canvas { display: block; width: 100%; height: auto; aspect-ratio: 880 / 360; background: #0B1830; }
+  .proof-vf { position: absolute; width: 14px; height: 14px; border: 0 solid rgba(220,229,245,0.85); pointer-events: none; }
+  .proof-vf.tl { top: 8px; left: 8px; border-top-width: 2px; border-left-width: 2px; }
+  .proof-vf.tr { top: 8px; right: 8px; border-top-width: 2px; border-right-width: 2px; }
+  .proof-vf.bl { bottom: 8px; left: 8px; border-bottom-width: 2px; border-left-width: 2px; }
+  .proof-vf.br { bottom: 8px; right: 8px; border-bottom-width: 2px; border-right-width: 2px; }
+  .proof-ov { position: absolute; top: 9px; padding: 2px 6px; border-radius: 4px; background: rgba(11,24,48,0.75); font: 600 10.5px var(--mono); letter-spacing: 0.06em; color: #fff; pointer-events: none; white-space: nowrap; }
+  .proof-ov.ov-stage { left: 28px; } .proof-ov.ov-count { right: 28px; font-variant-numeric: tabular-nums; }
+  .proof-head { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; padding: 10px 16px; min-height: 54px; background: rgba(143,176,240,0.07); transition: background-color 0.3s ease-out; }
+  .proof-head.RED { background: var(--red); }
+  .proof-head.flash { animation: proof-flash 0.7s ease-out; }
+  .proof-zone { font-size: 30px; font-weight: 700; line-height: 1; letter-spacing: -0.02em; color: #fff; transition: opacity 0.3s ease-out; }
+  .proof-head .pill, .proof-head.RED .pill { background: transparent; color: #fff; border: 1px solid rgba(255,255,255,0.65); transition: opacity 0.3s ease-out; }
+  .proof-head.wait .proof-zone, .proof-head.wait .pill { opacity: 0.22; }
+  .proof-p { margin-left: auto; font: 500 14px var(--mono); color: #fff; }
   .proof-p b { font-size: 26px; font-weight: 600; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
-  .proof-lines { list-style: none; margin: 0; padding: 10px 16px 0; display: grid; gap: 3px; font: 12.5px/1.45 var(--mono); }
-  .proof-lines li { display: grid; grid-template-columns: 58px 1fr; gap: 10px; }
-  .proof-lines .k { color: var(--brand); font-weight: 600; }
-  .proof-safe { margin: 10px 16px 0; padding: 7px 12px; border: 1.5px solid var(--green); background: var(--green-tint); color: var(--green-text); border-radius: 8px; font: 600 13px/1.4 var(--mono); }
-  .proof-foot { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0 12px; min-height: 40px; padding: 0 16px; margin-top: 10px; border-top: 1px solid var(--soft); font-size: 12px; color: var(--muted); }
-  .hero .proof-foot a { display: inline-flex; align-items: center; min-height: 44px; font-size: 14px; font-weight: 600; color: var(--brand); }
-  /* the replay only hides steps once the script runs, so the card is complete without it */
-  .proof.anim [data-step] { opacity: 0; transform: translateY(4px); transition: opacity 0.35s ease-out, transform 0.35s ease-out; }
-  .proof.anim [data-step].on { opacity: 1; transform: none; }
+  .proof-safe { margin: 10px 16px 0; padding: 7px 12px; border: 1.5px dashed var(--brand-edge); background: rgba(36,87,197,0.22); color: #fff; border-radius: 8px; font: 600 12.5px/1.4 var(--mono); transition: opacity 0.35s ease-out; }
+  .proof-safe.wait { opacity: 0.15; }
+  .proof-status { display: flex; flex-wrap: wrap; gap: 2px 0; padding: 9px 16px; margin-top: 10px; border-top: 1px solid rgba(143,176,240,0.18); font: 11.5px var(--mono); color: var(--hero-sub); }
+  .proof-status span + span::before { content: "\00b7"; margin: 0 8px; color: rgba(143,176,240,0.6); }
+  .proof-status b { color: #fff; font-weight: 600; }
+  @media (max-width: 520px) {
+    .proof-zone { font-size: 22px; } .proof-p { font-size: 12px; white-space: nowrap; } .proof-p b { font-size: 20px; }
+    .proof-head { gap: 8px; padding: 10px 14px; min-height: 48px; }
+    .proof-ov { top: 7px; padding: 1px 5px; font-size: 9px; letter-spacing: 0.03em; } .proof-ov.ov-stage { left: 24px; } .proof-ov.ov-count { right: 24px; }
+  }
+  @keyframes proof-blink { 0%, 59% { opacity: 1; } 60%, 100% { opacity: 0.15; } }
+  @keyframes proof-flash { 0% { filter: brightness(1.45); } 100% { filter: none; } }
+  @media (prefers-reduced-motion: reduce) {
+    .proof-rec i, .proof-head.flash { animation: none; }
+    .proof-head, .proof-zone, .proof-head .pill, .proof-safe { transition: none; }
+  }
   /* the problem, in the band between the hero and the try-it cards */
   .problem { padding: clamp(16px, 2.5vw, 32px) 0 clamp(36px, 4.5vw, 64px); }
   .problem-label { font: 600 12px var(--mono); letter-spacing: 0.12em; color: var(--brand-edge); }
@@ -384,7 +404,6 @@
   .acc { display: block; color: var(--brand); }
   .hero .acc, .band .acc { color: var(--brand-edge); }
   .eyebrow { display: block; margin-bottom: 8px; font: 600 12px var(--mono); letter-spacing: 0.12em; color: var(--brand); }
-  .proof-lines li { display: block; }
   .pill-sm { padding: 3px 8px; font-size: 11px; }
   .zone-say { font-size: clamp(20px, 2vw, 26px); font-weight: 600; }
   .GREEN .zone-say { color: var(--green-text); } .YELLOW .zone-say { color: var(--yellow-text); } .RED .zone-say { color: var(--red-text); }
@@ -486,13 +505,17 @@
         <p class="hero-body">Drystone checks where the next box goes, then tells you to place it, ask, or move it.</p>
         <div class="hero-cta"><a class="btn-solid" href="#demo">Try the demo</a><a class="btn-line" data-link="report" href="#" hidden>View report</a></div>
       </div>
-      <figure class="proof" id="proof" aria-label="Replay of a real check: sample s1, next box at +16 cm">
-        <div class="proof-cmd"><span id="proof-cmd">next box &rarr; +16 cm</span><span class="proof-tag">real check</span></div>
-        <canvas id="proof-view" width="880" height="320" aria-hidden="true"></canvas>
-        <div class="proof-head RED" id="proof-head"><span class="proof-zone" id="proof-zone" data-step>RED &middot; move it</span><span class="pill pill-sm" id="proof-action" data-step>REJECT</span><span class="proof-p">P(fall) <b id="proof-p">73%</b></span></div>
-        <ol class="proof-lines" id="proof-lines"></ol>
-        <div class="proof-safe" id="proof-safe" data-step></div>
-        <figcaption class="proof-foot"><span>Replay of a real check &middot; OpenCV 5 &middot; MuJoCo</span></figcaption>
+      <figure class="proof" id="proof" aria-label="Replay of a real check: sample s1, next box at +16 cm. RED, move it: P(fall) 73%. Safer spot +10 cm.">
+        <div class="proof-top"><span class="proof-rec"><i aria-hidden="true"></i>REPLAY</span><span class="proof-cmd" id="proof-cmd">s1 &middot; next box &rarr; +16 cm</span><span class="proof-tag">real check</span></div>
+        <div class="proof-screen">
+          <canvas id="proof-view" width="880" height="360" aria-hidden="true"></canvas>
+          <span class="proof-vf tl" aria-hidden="true"></span><span class="proof-vf tr" aria-hidden="true"></span><span class="proof-vf bl" aria-hidden="true"></span><span class="proof-vf br" aria-hidden="true"></span>
+          <span class="proof-ov ov-stage" id="proof-stage" aria-hidden="true">DECIDE &middot; fixed rules</span>
+          <span class="proof-ov ov-count" id="proof-count" aria-hidden="true">150/150 sims</span>
+        </div>
+        <div class="proof-head RED" id="proof-head"><span class="proof-zone" id="proof-zone">RED &middot; move it</span><span class="pill pill-sm" id="proof-action">REJECT</span><span class="proof-p">P(fall) <b id="proof-p">73%</b></span></div>
+        <div class="proof-safe" id="proof-safe"></div>
+        <figcaption class="proof-status" id="proof-status"></figcaption>
       </figure>
     </section>
     <section class="problem" aria-labelledby="h-problem">
@@ -1244,80 +1267,189 @@
   // Recorded from tools/service.py for sample s1 at +16 cm (fixed seed 0, the same code and answer as on AWS Lambda).
   // tests/test_web.py checks that this record still matches the service.
   var REC = {"sample":"s1","offset_cm":16,"box_id":1,"markers":[{"id":0,"corners":[[571.8,523.7],[643.4,525.9],[641.6,593.4],[571.1,591.2]]}],"polygons":[{"role":"stack","id":0,"corners":[[503.2,578.6],[479.6,635.5],[502.9,435.6],[478.3,470.7],[720.8,585.3],[732.2,643.7],[726.7,441.6],[739.7,478.1]]},{"role":"candidate","id":1,"corners":[[626.1,439.0],[622.0,475.0],[629.3,288.1],[625.8,298.9],[850.2,444.6],[883.8,481.4],[858.8,293.9],[895.0,305.8]]},{"role":"suggestion","id":1,"corners":[[579.7,437.8],[567.9,473.5],[581.9,287.0],[570.1,297.6],[804.0,443.5],[829.9,480.2],[811.6,292.6],[839.7,304.3]]}],"decision":{"zone":"RED","action":"REJECT","p":0.733,"ci":0.071,"n":150,"overhang_pct":55.17,"static_margin_cm":-1.5,"alternative":{"offset_cm":10.0,"overhang_pct":34.48,"p":0.027,"n":150,"further_offset_cm":11.0,"p_further":0.05}}};
+  // The hero card replays one recorded check (REC) as the camera screen: scan -> marker lock -> twin -> Monte Carlo
+  // -> decision -> safer spot, once on load and again each time Home is opened; then it holds the result while a faint
+  // scan line keeps moving. Every number comes from REC; only the order in which the simulated runs flash is made up.
+  var replayProof = function () {};
   function startProof() {
     var s = state.meta.samples.filter(function (x) { return x.id === REC.sample; })[0];
     if (!s) { el("proof").hidden = true; return; }
     var d = REC.decision, a = d.alternative, pv = el("proof-view"), g = pv.getContext("2d"), img = new Image();
-    el("proof-cmd").textContent = "next box \u2192 " + signed(REC.offset_cm) + " cm";
-    el("proof-zone").textContent = d.zone + " \u00b7 " + SAY[d.zone]; el("proof-action").textContent = ACTION[d.action];
-    el("proof-p").textContent = pct(d.p);
-    var lines = [
-      "overhang: " + Math.round(d.overhang_pct) + "% of the box below",
-      d.n + " simulated placements on AWS Lambda"
-    ];
-    el("proof-lines").innerHTML = lines.map(function (l) { return "<li data-step>" + esc(l) + "</li>"; }).join("");
-    el("proof-safe").innerHTML = a ? esc("Safer spot: " + signed(Math.round(a.offset_cm)) + " cm \u00b7 still green 1 cm further out (" +
-      pct(a.p_further) + ")") : "No safe spot in the search range";
-    var crop = null;
+    var W = pv.width, H = pv.height, END = 7.9;          // the replay is over after END seconds; the result then holds
+    var T = { scan: 1.6, twin: 2.4, sim: 5.6, decide: 6.6, red: 6.3, suggest: 7.4 };     // end of each step, seconds
+    var target = Math.round(d.p * 100), fellTotal = Math.round(d.p * d.n), sug = a ? Math.round(a.offset_cm) : null;
+    var stack = REC.polygons.filter(function (p) { return p.role === "stack"; }).map(function (p) { return p.corners; });
+    var cand = REC.polygons.filter(function (p) { return p.role === "candidate"; })[0].corners;
+    var sugBox = (REC.polygons.filter(function (p) { return p.role === "suggestion"; })[0] || {}).corners;
+    var marker = REC.markers[0];
+
+    el("proof-cmd").textContent = REC.sample + " · next box → " + signed(REC.offset_cm) + " cm";
+    el("proof-zone").textContent = d.zone + " · " + SAY[d.zone];
+    el("proof-action").textContent = ACTION[d.action];
+    el("proof-safe").textContent = a ? "Safer spot: " + signed(sug) + " cm · still green 1 cm further out (" + pct(a.p_further) + ")"
+                                     : "No safe spot in the search range";
+    el("proof-status").innerHTML = "<span><b>" + d.zone + "</b></span><span>P(fall) " + pct(d.p) + " ±" + Math.round(d.ci * 100) +
+      "</span>" + (a ? "<span>suggest " + signed(sug) + " cm</span>" : "") + "<span>" + d.n + " sims</span>";
+
+    // the simulated runs: exactly fellTotal of d.n fall (as in REC); each placed with 1 cm position uncertainty
+    var seed = 20261023, rnd = function () {
+      seed = (seed + 0x6D2B79F5) | 0; var t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+    var gauss = function () { return Math.sqrt(-2 * Math.log(1 - rnd())) * Math.cos(2 * Math.PI * rnd()); };
+    var pxPerCm = Math.hypot(cand[4][0] - cand[0][0], cand[4][1] - cand[0][1]) / state.meta.box_length_cm;
+    var runs = [], k;
+    for (k = 0; k < d.n; k++) runs.push({ fell: k < fellTotal, dx: gauss() * pxPerCm, dy: gauss() * pxPerCm * 0.25 });
+    for (k = runs.length - 1; k > 0; k--) { var m = Math.floor(rnd() * (k + 1)), tmp = runs[k]; runs[k] = runs[m]; runs[m] = tmp; }
+    var fellUpTo = [], f = 0;
+    runs.forEach(function (r, i) { f += r.fell ? 1 : 0; fellUpTo[i] = f; });
+
+    var EDGES = [];
+    for (var p = 0; p < 8; p++) for (var q = p + 1; q < 8; q++) { var x = p ^ q; if (x === 1 || x === 2 || x === 4) EDGES.push([p, q]); }
+    var crop = null, kx = 1;
     function cropBox() {
       // the part of the photo around the markers and boxes, at the canvas aspect ratio
-      var pts = [], W = img.naturalWidth, H = img.naturalHeight, A = pv.width / pv.height;
-      REC.polygons.concat(REC.markers).forEach(function (p) { pts = pts.concat(p.corners); });
-      var xs = pts.map(function (p) { return p[0]; }), ys = pts.map(function (p) { return p[1]; });
+      var pts = [], IW = img.naturalWidth, IH = img.naturalHeight, A = W / H;
+      REC.polygons.concat(REC.markers).forEach(function (pp) { pts = pts.concat(pp.corners); });
+      var xs = pts.map(function (pt) { return pt[0]; }), ys = pts.map(function (pt) { return pt[1]; });
       var x0 = Math.min.apply(null, xs), x1 = Math.max.apply(null, xs), y0 = Math.min.apply(null, ys), y1 = Math.max.apply(null, ys);
-      var cw = Math.min(W, Math.max((x1 - x0) * 1.6, (y1 - y0) * 1.35 * A)), ch = cw / A;
-      if (ch > H) { ch = H; cw = ch * A; }
-      var cx = Math.max(0, Math.min(W - cw, (x0 + x1) / 2 - cw / 2)), cy = Math.max(0, Math.min(H - ch, (y0 + y1) / 2 - ch / 2));
-      return { x: cx, y: cy, w: cw };
+      var cw = Math.min(IW, Math.max((x1 - x0) * 1.6, (y1 - y0) * 1.6 * A)), ch = cw / A;
+      if (ch > IH) { ch = IH; cw = ch * A; }
+      var cy = (y0 + y1) / 2 - ch / 2 - (y1 - y0) * 0.12;          // a little room above the next box for the labels
+      return { x: Math.max(0, Math.min(IW - cw, (x0 + x1) / 2 - cw / 2)), y: Math.max(0, Math.min(IH - ch, cy)), w: cw };
     }
-    function paint(stage) {
-      pv.width = 880; pv.height = 320;
-      crop = crop || cropBox();
-      var k = pv.width / crop.w;
-      g.setTransform(k, 0, 0, k, -crop.x * k, -crop.y * k);
+    function toScreen(pt) { return [(pt[0] - crop.x) * kx, (pt[1] - crop.y) * kx]; }
+    function clamp01(v) { return v < 0 ? 0 : v > 1 ? 1 : v; }
+    function ease(v) { return 1 - Math.pow(1 - clamp01(v), 3); }
+    function shifted(c, dx, dy) { return c.map(function (pt) { return [pt[0] + dx, pt[1] + dy]; }); }
+    function edges(c, color, w, frac, dash, alpha) {
+      var n = Math.round(EDGES.length * clamp01(frac));
+      if (!n) return;
+      g.save(); g.globalAlpha = alpha === undefined ? 1 : alpha; g.lineJoin = "round"; g.setLineDash(dash || []);
+      for (var pass = 0; pass < 2; pass++) {
+        g.strokeStyle = pass ? color : "rgba(0,0,0,.5)"; g.lineWidth = pass ? w : w + 2.5; g.beginPath();
+        for (var i = 0; i < n; i++) { var e = EDGES[i]; g.moveTo(c[e[0]][0], c[e[0]][1]); g.lineTo(c[e[1]][0], c[e[1]][1]); }
+        g.stroke();
+      }
+      g.restore();
+    }
+    function text(t, x, y, color, px, align) {
+      g.save(); g.font = "600 " + px + "px 'IBM Plex Mono', ui-monospace, monospace"; g.textAlign = align || "left";
+      g.lineWidth = 4; g.strokeStyle = "rgba(6,14,30,.75)"; g.strokeText(t, x, y); g.fillStyle = color; g.fillText(t, x, y); g.restore();
+    }
+
+    var shown = {};
+    function setText(id, v) { if (shown[id] !== v) { shown[id] = v; el(id).textContent = v; } }
+    function setClass(id, cls, on) { var key = id + "." + cls; if (shown[key] !== on) { shown[key] = on; el(id).classList.toggle(cls, on); } }
+
+    function frame(t, still, tScan) {                       // tScan: clock of the faint scan line, which never stops
+      if (!crop) crop = cropBox();
+      kx = W / crop.w;
+      var lw = 2.4, c, i;
+      g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, W, H);
+      g.setTransform(kx, 0, 0, kx, -crop.x * kx, -crop.y * kx);
       g.drawImage(img, 0, 0);
-      G = g;
-      var lw = Math.max(2, img.naturalWidth / 400) * 1.4;
-      if (stage >= 1) REC.markers.forEach(function (m) { poly(m.corners, MARKER, lw); label("ID " + m.id, m.corners[0][0], m.corners[0][1] - 8, MARKER, 22); });
-      REC.polygons.forEach(function (p) {
-        if (p.role === "stack" && stage >= 2) box(p.corners, "#ffffff", lw, []);
-        if (p.role === "suggestion" && stage >= 4) box(p.corners, BRAND, lw * 1.4, [14, 10]);
-      });
-      REC.polygons.forEach(function (p) { if (p.role === "candidate" && stage >= 3) box(p.corners, ZONE[d.zone], lw * 1.8, []); });
-      G = ctx;
+      g.setTransform(1, 0, 0, 1, 0, 0);
+      g.fillStyle = "rgba(9,20,42,0.28)"; g.fillRect(0, 0, W, H);                       // screen tint
+      g.strokeStyle = "rgba(143,176,240,0.10)"; g.lineWidth = 1; g.beginPath();           // measuring grid
+      for (i = 40; i < W; i += 40) { g.moveTo(i + 0.5, 0); g.lineTo(i + 0.5, H); }
+      for (i = 40; i < H; i += 40) { g.moveTo(0, i + 0.5); g.lineTo(W, i + 0.5); }
+      g.stroke();
+
+      // a + b. scan, and the marker locks as the line passes it
+      var scanY = t < T.scan ? H * (t / T.scan) : null;
+      var mk = marker.corners.map(toScreen);
+      var mx0 = Math.min.apply(null, mk.map(function (pt) { return pt[0]; })), mx1 = Math.max.apply(null, mk.map(function (pt) { return pt[0]; }));
+      var my0 = Math.min.apply(null, mk.map(function (pt) { return pt[1]; })), my1 = Math.max.apply(null, mk.map(function (pt) { return pt[1]; }));
+      var tLock = T.scan * (my0 / H), lock = ease((t - tLock) / 0.35);
+      if (t >= tLock) {
+        var off = (1 - lock) * 16, L = 9;
+        g.save(); g.strokeStyle = MARKER; g.lineWidth = 2.5; g.globalAlpha = 0.4 + 0.6 * lock; g.beginPath();
+        [[mx0 - 6 - off, my0 - 6 - off, 1, 1], [mx1 + 6 + off, my0 - 6 - off, -1, 1], [mx0 - 6 - off, my1 + 6 + off, 1, -1], [mx1 + 6 + off, my1 + 6 + off, -1, -1]]
+          .forEach(function (b) { g.moveTo(b[0], b[1] + b[3] * L); g.lineTo(b[0], b[1]); g.lineTo(b[0] + b[2] * L, b[1]); });
+        g.stroke(); g.restore();
+        if (lock >= 1) text("ID " + marker.id, mx0 - 6, my0 - 14, MARKER, 15);
+      }
+
+      // c. digital twin of the stack
+      g.setTransform(kx, 0, 0, kx, -crop.x * kx, -crop.y * kx);
+      var twin = ease((t - T.scan) / (T.twin - T.scan));
+      stack.forEach(function (sc) { edges(sc, "#ffffff", lw, twin); });
+
+      // d. Monte Carlo: runs flash around the planned spot, centre of mass against the edge below
+      var simK = clamp01((t - T.twin) / (T.sim - T.twin)), runIdx = Math.min(d.n - 1, Math.floor(simK * d.n));
+      if (t >= T.twin) {
+        if (t < T.sim) {
+          for (i = 4; i >= 0; i--) {
+            var r = runs[runIdx - i]; if (!r) continue;
+            edges(shifted(cand, r.dx, r.dy), r.fell ? ZONE.RED : ZONE.GREEN, 2.6, 1, [], 0.95 - i * 0.18);
+          }
+        }
+        if (t < T.red) edges(cand, "rgba(230,233,239,0.85)", lw, 1, [10, 8]);
+        var top = stack[stack.length - 1], ex = (top[6][0] + top[7][0]) / 2, ey = Math.min(top[6][1], top[7][1]);
+        var cx = cand.reduce(function (v, pt) { return v + pt[0]; }, 0) / 8, cy = cand.reduce(function (v, pt) { return v + pt[1]; }, 0) / 8;
+        var cy0 = Math.min.apply(null, cand.map(function (pt) { return pt[1]; }));
+        g.save(); g.globalAlpha = ease((t - T.twin) / 0.4);
+        g.setLineDash([6, 6]); g.lineWidth = 2;
+        g.strokeStyle = ZONE.RED; g.beginPath(); g.moveTo(ex, ey); g.lineTo(ex, cy0 - 10); g.stroke();        // edge of the box below
+        g.strokeStyle = "#ffffff"; g.beginPath(); g.moveTo(cx, cy); g.lineTo(cx, ey); g.stroke();             // centre of mass, straight down
+        g.setLineDash([]); g.fillStyle = "#ffffff"; g.beginPath(); g.arc(cx, cy, 5, 0, 2 * Math.PI); g.fill();
+        g.restore();
+        if (t >= T.twin + 0.3) {                      // in the empty corner right of the box below
+          G = g;
+          label("overhang " + Math.round(d.overhang_pct) + "%", ex + 14, ey + 32, "#E6E9EF", 22);
+          label("margin " + d.static_margin_cm.toFixed(1) + " cm", ex + 14, ey + 60, "#E6E9EF", 22);
+          G = ctx;
+        }
+      }
+
+      // e. decision, then the safer spot
+      if (t >= T.red) edges(cand, ZONE[d.zone], lw * 1.6, 1);
+      if (sugBox && t >= T.decide) edges(sugBox, BRAND, lw * 1.4, 1, [12, 9], ease((t - T.decide) / 0.5));
+
+      // scan line on top: bright while scanning, then a faint idle sweep
+      g.setTransform(1, 0, 0, 1, 0, 0);
+      var ly = scanY !== null ? scanY : (still ? null : (((tScan === undefined ? t : tScan) - T.scan) % 3.2) / 3.2 * H), bright = scanY !== null;
+      if (ly !== null) {
+        var grad = g.createLinearGradient(0, ly - (bright ? 46 : 18), 0, ly);
+        grad.addColorStop(0, "rgba(143,176,240,0)"); grad.addColorStop(1, bright ? "rgba(143,176,240,0.35)" : "rgba(143,176,240,0.10)");
+        g.fillStyle = grad; g.fillRect(0, ly - (bright ? 46 : 18), W, bright ? 46 : 18);
+        g.fillStyle = bright ? "rgba(220,229,245,0.95)" : "rgba(143,176,240,0.35)"; g.fillRect(0, ly - 1, W, 2);
+      }
+
+      // the text around the screen
+      var stage = t < tLock ? "SCAN · OpenCV 5" : t < T.scan ? "LOCK · ArUco ID " + marker.id : t < T.twin ? "TWIN · digital twin"
+                : t < T.sim ? "SIMULATE · MuJoCo" : t < T.decide ? "DECIDE · fixed rules" : "SUGGEST · " + (a ? signed(sug) + " cm" : "none");
+      setText("proof-stage", stage);
+      setText("proof-count", t < T.twin ? "camera 1280×720" : (t < T.sim ? (runIdx + 1) : d.n) + "/" + d.n + " sims · fell " +
+              (t < T.sim ? fellUpTo[runIdx] : fellTotal));
+      var pc = t < T.sim ? null : Math.round(target * ease((t - T.sim) / (T.red - T.sim)));
+      setText("proof-p", pc === null ? "—" : pc + "%");
+      setClass("proof-head", d.zone, t >= T.red);
+      setClass("proof-head", "wait", t < T.red);
+      setClass("proof-head", "flash", !still && t >= T.red && t < T.red + 0.7);
+      setClass("proof-safe", "wait", t < T.decide + 0.3);
     }
-    function on(sel) { Array.prototype.forEach.call(document.querySelectorAll(sel), function (n) { n.classList.add("on"); }); }
-    function play() {
-      var card = el("proof"), steps = card.querySelectorAll("#proof-lines [data-step]"), target = Math.round(d.p * 100);
-      card.classList.add("anim"); paint(0);
-      el("proof-head").classList.remove(d.zone); el("proof-p").textContent = "\u2014";
-      var t = [
-        [450, function () { paint(1); }],
-        [1050, function () { paint(2); steps[0].classList.add("on"); }],
-        [1650, function () {
-          paint(3); steps[1].classList.add("on");
-          var t0 = performance.now();
-          (function count() {
-            var k = Math.min(1, (performance.now() - t0) / 800);
-            el("proof-p").textContent = Math.round(target * (1 - Math.pow(1 - k, 3))) + "%";
-            if (k < 1) requestAnimationFrame(count);
-          })();
-        }],
-        [2550, function () { el("proof-head").classList.add(d.zone); on("#proof-head [data-step]"); }],
-        [3250, function () { paint(4); on("#proof-safe"); }]
-      ];
-      t.forEach(function (x) { setTimeout(x[1], x[0]); });
+
+    // run only while the card is on screen and the tab is visible; reduced motion shows the end state
+    var still = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    var running = false, onScreen = false, t0 = 0, at = 0, raf = 0;
+    function tick(now) {
+      if (!running) return;
+      at = (now - t0) / 1000; frame(Math.min(at, END), false, at); raf = requestAnimationFrame(tick);
+    }
+    function update() {
+      var go = !still && onScreen && !document.hidden && img.complete && img.naturalWidth > 0;
+      if (go && !running) { running = true; t0 = performance.now() - at * 1000; raf = requestAnimationFrame(tick); }
+      else if (!go && running) { running = false; cancelAnimationFrame(raf); }
     }
     img.onload = function () {
-      var still = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-      if (still || !window.IntersectionObserver) { paint(4); return; }
-      paint(0);
-      el("proof").classList.add("anim");
-      el("proof-head").classList.remove(d.zone); el("proof-p").textContent = "—";
-      var io = new IntersectionObserver(function (es) {
-        if (es[0].isIntersecting) { io.disconnect(); play(); }
-      }, { threshold: 0.4 });
-      io.observe(el("proof"));
+      frame(END, true);                            // the finished check first: correct even if the replay never runs
+      if (still || !window.IntersectionObserver) return;
+      at = 0;
+      replayProof = function () { at = 0; t0 = performance.now(); };
+      new IntersectionObserver(function (es) { onScreen = es[0].isIntersecting; update(); }, { threshold: 0.2 }).observe(el("proof"));
+      document.addEventListener("visibilitychange", update);
     };
     img.src = photoUrl(s);
   }
@@ -1336,6 +1468,7 @@
     // the five checks rise in when the tab opens (same step that shows it, so nothing flashes)
     if (name === "how") { drawCam(); document.querySelector(".pipe").classList.add("go"); }
     if (name === "demo") draw();
+    if (name === "home" && focus) replayProof();         // the full replay again each time Home is opened
     if (focus) { var h1 = el("view-" + name).querySelector("h1"); if (h1) h1.focus({ preventScroll: true }); }
   }
   window.addEventListener("hashchange", function () { showView(location.hash.slice(1), true); });
