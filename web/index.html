@@ -474,9 +474,9 @@
       <p class="problem-lead">Boxes have no mortar either. Whether a stack stays up depends on where each box lands, and that call is
         usually made by eye, with the next box already in hand.</p>
       <ul class="stats">
-        <li><span class="stat-num">99,800</span><p>nonfatal cases with days away from work in US transportation and warehousing (2020)</p></li>
-        <li><span class="stat-num">12,100</span><p>of them &ldquo;struck by object or equipment&rdquo;, a category broader than falling stacks</p></li>
-        <li><span class="stat-num">65</span><p>fatal injuries from &ldquo;contact with objects and equipment&rdquo; in 2020 (62&ndash;75 a year, 2016&ndash;2020)</p></li>
+        <li><span class="stat-num" data-count>99,800</span><p>nonfatal cases with days away from work in US transportation and warehousing (2020)</p></li>
+        <li><span class="stat-num" data-count>12,100</span><p>of them &ldquo;struck by object or equipment&rdquo;, a category broader than falling stacks</p></li>
+        <li><span class="stat-num" data-count>65</span><p>fatal injuries from &ldquo;contact with objects and equipment&rdquo; in 2020 (62&ndash;75 a year, 2016&ndash;2020)</p></li>
       </ul>
       <p class="problem-note">Source: <a href="https://www.bls.gov/iif/snapshots/isn-transportation-and-warehousing-2016-20.htm" target="_blank" rel="noopener">U.S. Bureau of Labor Statistics, Injuries, illnesses, and fatalities in transportation and warehousing, 2016&ndash;20</a>.</p>
     </section>
@@ -486,10 +486,10 @@
   <section class="block" aria-labelledby="h-ev-short">
     <h2 id="h-ev-short">Tested on 25 real stacks.<span class="acc">Real boxes. Real falls.</span></h2>
     <div class="ev-split">
-      <div class="ev ev-big"><span class="num g">0/8</span><span><b>GREEN</b> placements that fell</span></div>
+      <div class="ev ev-big"><span class="num g" data-count>0/8</span><span><b>GREEN</b> placements that fell</span></div>
       <div class="ev-side">
-        <div class="ev"><span class="num r">8/8</span><span><b>RED</b> placements that fell</span></div>
-        <div class="ev"><span class="num">25/25</span><span>placements checked correctly afterwards</span></div>
+        <div class="ev"><span class="num r" data-count>8/8</span><span><b>RED</b> placements that fell</span></div>
+        <div class="ev"><span class="num" data-count>25/25</span><span>placements checked correctly afterwards</span></div>
       </div>
     </div>
     <p class="honest">One miss we report up front: <b>4 of 9 YELLOW placements fell.</b> <a href="#evidence">1 of 5 locked criteria failed (C2b) &rarr;</a></p>
@@ -664,10 +664,10 @@
   <section class="block" aria-labelledby="h-agent">
     <h2 id="h-agent">The agent, under test.</h2>
     <div class="agent-grid">
-      <div class="ev"><span class="num">25/25</span><span>placements checked correctly afterwards</span></div>
-      <div class="ev"><span class="num">12/12</span><span>falls detected (7/7 in rehearsal)</span></div>
-      <div class="ev"><span class="num">4</span><span>setups refused until fixed</span></div>
-      <div class="ev"><span class="num">0</span><span>retakes, 0 fallbacks</span></div>
+      <div class="ev"><span class="num" data-count>25/25</span><span>placements checked correctly afterwards</span></div>
+      <div class="ev"><span class="num" data-count>12/12</span><span>falls detected (7/7 in rehearsal)</span></div>
+      <div class="ev"><span class="num" data-count>4</span><span>setups refused until fixed</span></div>
+      <div class="ev"><span class="num" data-count>0</span><span>retakes, 0 fallbacks</span></div>
     </div>
   </section>
 
@@ -1342,6 +1342,39 @@
       else done(false);
     });
   });
+
+  /* ---------- big numbers count up from 0 the first time they come into view ---------- */
+  (function () {
+    var still = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (still || !window.IntersectionObserver || !window.requestAnimationFrame) return;   // the written numbers stay
+    var MS = 1200;
+    function parse(t) { var m = t.match(/^([\d,]+)(.*)$/); return m && { end: Number(m[1].replace(/,/g, "")), rest: m[2], comma: m[1].indexOf(",") >= 0 }; }
+    function show(n, p, v) { n.textContent = (p.comma ? v.toLocaleString("en-US") : String(v)) + p.rest; }
+    function run(n) {
+      var p = n._count;
+      n.textContent = n.dataset.final;                        // width of the final number, so nothing moves while counting
+      n.style.minWidth = Math.ceil(n.getBoundingClientRect().width) + "px";
+      show(n, p, 0);
+      var t0 = performance.now();
+      (function frame(now) {
+        var k = Math.min(1, (now - t0) / MS);
+        show(n, p, Math.round(p.end * (1 - Math.pow(1 - k, 3))));
+        if (k < 1) requestAnimationFrame(frame);
+      })(t0);
+    }
+    var io = new IntersectionObserver(function (es) {
+      es.forEach(function (e) { if (e.isIntersecting) { io.unobserve(e.target); run(e.target); } });
+    }, { rootMargin: "0px 0px 80px 0px" });              // starts just before the number scrolls in
+    Array.prototype.forEach.call(document.querySelectorAll("[data-count]"), function (n) {
+      var p = parse(n.textContent.trim());
+      if (!p) return;
+      n._count = p; n.dataset.final = n.textContent.trim();
+      // screen readers read the final number, not the counting one
+      var sr = document.createElement("span"); sr.className = "sr"; sr.textContent = n.dataset.final;
+      n.setAttribute("aria-hidden", "true"); n.parentNode.insertBefore(sr, n.nextSibling);
+      io.observe(n);                                          // until then the written number stays, never a stuck 0
+    });
+  })();
 
   /* ---------- what the camera reads (sample s2, a recorded check) ---------- */
   // Recorded from tools/service.py for sample s2 at +13 cm; tests/test_web.py checks it against the service.

@@ -10,6 +10,7 @@ where the page follows REPORT or the code instead of the draft.
 - Menu: Home · How it works · Demo · Evidence · Setup, then two icons: Video, GitHub
 - Links (View report, Full report & failure cases, Video, GitHub) are hidden while their `LINKS` value is empty or "#", and appear by themselves once it is filled.
 - After a tab change, focus moves to that tab's H1.
+- Big numbers (Problem, Home evidence, Evidence "The agent, under test") count up from 0 the first time they scroll into view, about 1.2 s; the text after a slash stays ("/8"). Reduced motion or no script: the final number shows at once. Screen readers get the final number.
 
 ## HOME
 ### Hero
