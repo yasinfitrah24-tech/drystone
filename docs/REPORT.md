@@ -1,6 +1,6 @@
 # Drystone: technical report
 
-*Predict before you stack.* OpenCV AI Competition 2026. Report of 18 Oct 2026, with the evaluation on new trials
+*Predict before you stack.* OpenCV AI Competition 2026. Report of 23 Oct 2026, with the evaluation on new trials
 (section 7.4).
 
 **Where the numbers come from.** Project log `docs/STATUS.md`; evaluation output `data/eval_report/summary.md` and
@@ -11,6 +11,18 @@ them are summarised in `docs/STATUS.md`; the post-hoc table in section 7.4 is re
 
 > Drystone is a **decision-support prototype, not a certified safety device**. It estimates a risk; a person makes
 > every decision and places every box.
+
+## Summary
+- **What it is.** One calibrated webcam and OpenCV 5 read an ArUco marker on each box and build a digital twin of
+  the stack; a MuJoCo Monte Carlo simulation estimates P(fall) for the next box; fixed rules turn it into GREEN
+  (guide), YELLOW (ask a supervisor) or RED (reject and suggest a safer spot), and the camera checks the result.
+- **Evaluation verdict: FAIL** under the criteria locked before the data, on C2b by one fall: 12 falls against an
+  interval of 6–11.
+- **The other four criteria passed:** C1 0 of 8 GREEN trials fell, C2a 14/14 correct on clear trials, C3 Brier
+  0.125, C4 25 of 25 trials with an outcome. Overall accuracy (not a criterion): 84% (21/25).
+- **The agent:** falls detected as FELL in 12/12 evaluation trials; decisions on AWS Lambda took a median of
+  7.6 s.
+- **Where it fails, and the full numbers:** [section 7.4](#74-evaluation-on-new-trials-18-oct-fail-on-c2b-by-one-fall).
 
 ## 1. Problem and real-world use
 Stacking boxes by hand is a judgement call: how far can the next box hang over the one below before the stack
@@ -481,3 +493,16 @@ suggested spot.*
    storage*. https://www.osha.gov/laws-regs/regulations/standardnumber/1910/1910.176
 3. Oregon OSHA, *Resource* newsletter, 20 Nov 2025, on unstable loads.
    https://osha.oregon.gov/pubs/newsletters/resource/2025/Pages/2511-unstable-loads.aspx
+
+## 12. Reproduce
+- **On a laptop:** [README, "Run it yourself"](../README.md#run-it-yourself): set up Python 3.12 and the pinned
+  packages, calibrate a camera, run the agent (on the laptop or with decisions on AWS Lambda), run the judges' page
+  locally, run the tests, and rebuild the evaluation summary from an evaluation log.
+- **On AWS:** [aws/README.md](../aws/README.md): the container image, the function settings, how to update the
+  function with a commit-hash tag, the routes and limits, and how to test it.
+- The agent logs are not published (their photos show people), so the evaluation summary can only be rebuilt with
+  the log; `data/eval_report/trials.csv` holds every per-trial number.
+
+## 13. Team
+- **Yasin:** perception, simulation, agent, AWS.
+- **Vincent:** video, script, diagrams.
