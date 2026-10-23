@@ -16,6 +16,7 @@ Judges' web page on the same Function URL (web/index.html, no photo upload):
     GET /                    the page
     GET /samples/<id>.jpg    sample photo listed in web/samples/samples.json
     GET /img/<name>.png      architecture and agent-loop diagrams (fixed list, web/img/)
+    GET /print/<name>.pdf    printable markers and calibration board (fixed list, web/print/)
     POST {"sample": "s2", "offset_cm": 14}                         decision for a sample photo (cached)
     POST /log {"sample", "offset_cm", "choice", "name", "reason"}  approve / override etc., one JSON line
                                                                    in CloudWatch Logs; it never changes the decision
@@ -210,6 +211,7 @@ PHOTO_MAX_BODY = 2 * 1024 * 1024  # bytes: photo POST from the agent (3 JPEG ~ 4
 RATE_WINDOW_S = 60.0
 RATE_LIMITS = {"GET": 60, "POST": 20}
 WEB_IMAGES = ("architecture", "agent_loop")   # diagrams on the page's How it works tab
+WEB_PRINTS = ("markers_A4", "charuco_A4")     # Setup tab downloads, copies of docs/print/
 NAME_LEN = (2, 60)
 REASON_LEN = (5, 300)
 # Buttons per zone, as in the laptop agent. GREEN needs no approval (the agent guides the placement).
@@ -415,6 +417,10 @@ def _http(event, http):
         m = re.fullmatch(r"/img/([a-z_]{1,20})\.png", path)
         if m and m.group(1) in WEB_IMAGES:
             return _response(200, _web_file(f"img/{m.group(1)}.png"), "image/png", "public, max-age=86400",
+                             binary=True)
+        m = re.fullmatch(r"/print/([A-Za-z0-9_]{1,20})\.pdf", path)
+        if m and m.group(1) in WEB_PRINTS:
+            return _response(200, _web_file(f"print/{m.group(1)}.pdf"), "application/pdf", "public, max-age=86400",
                              binary=True)
         m = re.fullmatch(r"/samples/([a-z0-9_-]{1,20})\.jpg", path)
         if m and m.group(1) in _web_setup()["samples"]:

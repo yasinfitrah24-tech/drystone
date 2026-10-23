@@ -76,6 +76,23 @@ def test_diagram_images_200_and_unknown_404():
     assert call("GET", "/img/../index.html")[0] == 404
 
 
+def test_print_pdfs_200_and_unknown_404():
+    """The Setup tab's two downloads, served by the service: the same files as docs/print/."""
+    import hashlib
+    for name in ("markers_A4", "charuco_A4"):
+        status, body, out = call("GET", "/print/%s.pdf" % name)
+        assert status == 200 and out["isBase64Encoded"] and out["headers"]["Content-Type"] == "application/pdf"
+        assert out["headers"]["Cache-Control"] == "public, max-age=86400"
+        with open(os.path.join(ROOT, "docs", "print", name + ".pdf"), "rb") as f:
+            assert hashlib.sha256(base64.b64decode(body)).hexdigest() == hashlib.sha256(f.read()).hexdigest()
+    html = _page_html()
+    for name in ("markers_A4", "charuco_A4"):                       # always shown, relative: works live and in web_local
+        tag = re.search(r'<a [^>]*href="print/%s\.pdf"[^>]*>' % name, html).group(0)
+        assert "hidden" not in tag and "data-link" not in tag
+    for path in ("/print/other.pdf", "/print/markers_A4.png", "/print/../index.html", "/print/MARKERS_A4.pdf"):
+        assert call("GET", path)[0] == 404
+
+
 @pytest.mark.parametrize("sample,zone,offset,sug_key", EXAMPLES)
 def test_example_zones(sample, zone, offset, sug_key):
     status, r, _ = call("POST", "/", {"sample": sample, "offset_cm": offset})
@@ -246,7 +263,7 @@ def test_links_start_hidden():
     html = _page_html()
     links = _page_links(html)
     tags = re.findall(r"<a [^>]*data-link=[^>]*>", html)
-    assert len(tags) == 6                                          # video, repo, report x2, markers, board
+    assert len(tags) == 4                                          # video, repo, report x2
     for t in tags:
         u = links[re.search(r'data-link="(\w+)"', t).group(1)]
         filled = u not in ("", "#")
