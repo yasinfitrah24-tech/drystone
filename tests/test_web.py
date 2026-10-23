@@ -274,6 +274,7 @@ def test_links_hidden_until_filled(links, shown):
         assert out["[data-clone]"][0]["textContent"] == "https://github.com/example/drystone.git"
     else:
         assert all(a["href"] == "#" for a in out["[data-link]"])
+        assert out["[data-clone]"][0]["textContent"] == "<repository URL>"   # the clone command keeps its placeholder
 
 
 def test_ghost_boxes_match_the_service():
@@ -302,3 +303,16 @@ def test_live_diagrams_link_to_their_images():
         assert '<a href="%s"' % img in fig and "Open as image" in fig
         status, _, out = call("GET", "/" + img)
         assert status == 200 and out["headers"]["Content-Type"] == "image/png"
+
+
+def test_setup_git_clone_is_always_the_first_command():
+    """With LINKS.repo empty or filled, the Setup tab shows git clone first; only links are hidden, never a command."""
+    html = _page_html()
+    i = html.index('aria-labelledby="h-l2"')
+    section = html[i:html.index("</section>", i)]
+    clone = section.index("<code>git clone ")
+    assert clone < section.index("<code>cd drystone</code>")
+    block = section[section.rindex('<div class="code"', 0, clone):clone]
+    assert "hidden" not in block and "data-need" not in block
+    assert "data-need=" not in html                                   # no command depends on a link any more
+    assert section.index("<code>git clone ") < section.index('data-no="repo">Repository link: on the submission page.')

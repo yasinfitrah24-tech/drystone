@@ -135,6 +135,11 @@ per-trial data: [data/eval_report/trials.csv](data/eval_report/trials.csv).
 Python 3.12, one command per line. Where Windows (cmd) and macOS/Linux differ, both are shown. Each command was run
 in a fresh clone on Windows cmd.
 
+Before you start: Git, and Python 3.12 (on Windows, `py -3.12` needs Python 3.12 installed from
+[python.org](https://www.python.org/downloads/)). For your own AWS Lambda also Docker Desktop (running) and AWS CLI v2;
+the first-time AWS steps, including `aws configure` and the function name `drystone`, are in
+[aws/README.md](aws/README.md#first-time-setup-already-done-for-this-project).
+
 Get the code and install (`requirements-dev.txt` includes `requirements.txt` and adds pytest):
 ```
 git clone <repository URL>

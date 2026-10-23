@@ -320,7 +320,7 @@ boxes; measure box-on-box and box-on-floor friction with a tilt test; model the 
 tilt when the box is let go); then lock new settings and test them on new trials again.
 
 ### 7.5 Software tests and live checks
-- **68 automated tests** (pytest). Synthetic camera photos are rendered through the real calibration, so the same
+- **69 automated tests** (pytest). Synthetic camera photos are rendered through the real calibration, so the same
   OpenCV code runs as on real photos:
   - the web endpoint: page, sample photos, the two diagrams, the zone and suggestion of every example (with the 1 cm
     margin), the recorded checks replayed on the page, cache,

@@ -64,13 +64,17 @@ not change. From China, PyPI can be very slow; build with
 `--build-arg PIP_INDEX_URL=https://pypi.tuna.tsinghua.edu.cn/simple` if that file changes.
 
 ## First-time setup (already done for this project)
+Before you start: Docker Desktop (running) and AWS CLI v2.
+
 1. Console: Billing and Cost Management → Budgets → create a zero-spend budget with an email alert, before anything
    else.
-2. `aws ecr create-repository --repository-name drystone-service --region ap-southeast-1`
-3. Build, tag and push as above (the commands up to `docker push`).
-4. Console: Lambda → Create function → Container image → the image → x86_64. Configuration → General: 2048 MB,
-   60 s.
-5. Configuration → Function URL: auth type NONE (public demo), CORS allow POST. Keep the URL in `DRYSTONE_URL`, not
+2. `aws configure`: an access key of your own IAM user with ECR and Lambda permissions, region `ap-southeast-1`.
+3. `aws ecr create-repository --repository-name drystone-service --region ap-southeast-1`
+4. Build, tag and push the image: the build → tag → push commands above (up to `docker push`).
+5. Console: Lambda → Create function → Container image. Function name: `drystone` (the update commands use
+   `--function-name drystone`). Image: `drystone-service` with your tag; architecture x86_64. Configuration →
+   General: 2048 MB, 60 s.
+6. Configuration → Function URL: auth type NONE (public demo), CORS allow POST. Keep the URL in `DRYSTONE_URL`, not
    in the repository.
 
 The image uses the calibration in `data/camera_laptop.yaml` (our webcam). For your own camera, put your calibration
