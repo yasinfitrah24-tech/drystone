@@ -40,7 +40,7 @@ placed.
 - After the box is placed, the camera checks the result: OK, OFF_PLAN or FELL. A box that fell is planned again. If
   a box is not visible, the agent asks the supervisor.
 - The same decision code runs on the laptop and on AWS Lambda. Judges can try it on a public web page with three
-  real sample photos, a placement ruler, the decision, a numbered trace with timings, "use suggestion" and
+  real sample photos, a placement slider with a preview of the next box, the decision, a numbered trace with timings, "use suggestion" and
   "override".
 
 Drystone is a decision-support prototype, **not a certified safety device**. We tested it only on three uniform
@@ -60,7 +60,7 @@ Drystone is a decision-support prototype, **not a certified safety device**. We 
   photo API and the judges' page with its API, and supervisor choices go to CloudWatch Logs. Deploys are tagged with
   the git commit, and a lifecycle policy keeps the previous version for rollback. The service also has request
   limits, a cache and a zero-spend budget alarm.
-- Testing: 57 automated tests. Many use synthetic camera photos rendered through the real calibration, including
+- Testing: 66 automated tests. Many use synthetic camera photos rendered through the real calibration, including
   the whole agent loop with a fake camera, both on the laptop and through the Lambda handler.
 
 ## Challenges we ran into

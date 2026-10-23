@@ -102,7 +102,7 @@ flowchart LR
 | Decision core | `tools/drystone_core.py` | static check, Monte Carlo P(fall), zones, suggestion search, check after placement |
 | Live agent | `tools/agent.py` | camera loop, wireframes, human control, JSONL log with photos |
 | Service | `tools/service.py` | AWS Lambda handler: photo API for the agent, judges' web page and its API |
-| Web page | `web/index.html` | sample photos, placement ruler, decision, numbered trace, use suggestion, override |
+| Web page | `web/index.html` | sample photos, placement slider with a preview of the next box, decision, numbered trace, use suggestion, override |
 
 All decision rules live in one file, `drystone_core.py`. The laptop agent and the Lambda service call the same
 code; no rule is written twice, and no language model decides anything.
@@ -320,7 +320,7 @@ boxes; measure box-on-box and box-on-floor friction with a tilt test; model the 
 tilt when the box is let go); then lock new settings and test them on new trials again.
 
 ### 7.5 Software tests and live checks
-- **57 automated tests** (pytest). Synthetic camera photos are rendered through the real calibration, so the same
+- **66 automated tests** (pytest). Synthetic camera photos are rendered through the real calibration, so the same
   OpenCV code runs as on real photos:
   - the web endpoint: page, sample photos, the two diagrams, the zone and suggestion of every example (with the 1 cm
     margin), the recorded checks replayed on the page, cache,
@@ -457,12 +457,12 @@ From the evaluation (25 trials, `agent.py --aws`) unless noted:
 drawn dashed on the photo](img/web_desktop.png)
 
 *The judges' page on a desktop (1440 px wide). Sample s1, next box at +16 cm: RED, P(fall) 73%, suggestion +10 cm
-(drawn dashed on the photo). Markers on the ruler are the sample's GREEN, YELLOW and RED examples and the
-suggested spot.*
+(drawn dashed on the photo). This screenshot shows the earlier placement ruler; since 23 Oct the page has a slider
+from −16 to +16 cm with example chips on both sides, and nothing is computed until Check is pressed.*
 
-<img src="img/web_mobile.png" alt="The judges' page on a phone (390 px): the same RED decision below the ruler" width="320">
+<img src="img/web_mobile.png" alt="The judges' page on a phone (390 px): the same RED decision below the placement control" width="320">
 
-*The same request on a phone (390 px wide): after a tap on the ruler the page scrolls to the decision.*
+*The same request on a phone (390 px wide, earlier ruler version): after a check the page scrolls to the decision.*
 
 ## 9. Limitations
 - Markers are required on every box; faded markers in dim light can be missed.
