@@ -572,7 +572,7 @@
     .stage:hover, .ev:hover, .tech:hover, .cp:hover, .card3:hover, .flow li:hover {
       transform: translateY(-3px); border-color: var(--card-hover); box-shadow: 0 10px 24px rgba(19,41,75,0.08); }
     .tech:hover { border-top-color: var(--brand); }
-    .card:hover, .table-wrap:hover { border-color: var(--card-hover); }
+    .card:hover { border-color: var(--card-hover); }
     .ev.gap:hover, .card3.warn:hover { border-color: var(--yellow); }
   }
   /* logo: the wordmark turns brand blue (the light brand tone, readable on navy), the blocks glow a little */
@@ -604,6 +604,33 @@
     .hero .btn-solid:hover, .btn-cta:hover, .primary:hover, .ex:hover, .stage:hover, .ev:hover, .tech:hover, .cp:hover,
     .card3:hover, .flow li:hover { transform: none !important; }
   }
+  /* tables: only the row under the cursor lights up (as in Subtext), with a thin brand line on its left; the
+     header stays as it is. Touch screens get no hover, so a tapped row never stays lit. */
+  tbody tr { transition: background-color 0.15s ease; }
+  tbody tr > :first-child { transition: box-shadow 0.15s ease; }
+  @media (hover: hover) {
+    tbody tr:hover { background-color: var(--how-band); }
+    tbody tr:hover > :first-child { box-shadow: inset 3px 0 0 var(--brand); }
+  }
+  @media (prefers-reduced-motion: reduce) { tbody tr, tbody tr > :first-child { transition: none; } }
+  /* scrollbars in the theme: thin, rounded, no arrows. Light page: #BDBAB3 on #ECEAE5, brand blue on hover.
+     Navy code and trace blocks: a light-blue thumb on a slightly darker track. */
+  /* Firefox only: in Chromium 121+ scrollbar-width / scrollbar-color switch the ::-webkit-scrollbar styles off */
+  @supports (-moz-appearance: none) {
+    html { scrollbar-width: thin; scrollbar-color: var(--btn-border) var(--soft); }
+    .table-wrap { scrollbar-width: thin; scrollbar-color: var(--btn-border) transparent; }
+    .code pre, .trace-box { scrollbar-width: thin; scrollbar-color: rgba(124,155,219,0.6) #0B1A33; }
+  }
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  html::-webkit-scrollbar-track { background: var(--soft); }
+  ::-webkit-scrollbar-thumb { background: var(--btn-border); border-radius: 999px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--brand); }
+  ::-webkit-scrollbar-button { display: none; width: 0; height: 0; }
+  ::-webkit-scrollbar-corner { background: transparent; }
+  .code pre::-webkit-scrollbar-track, .trace-box::-webkit-scrollbar-track { background: #0B1A33; border-radius: 999px; }
+  .code pre::-webkit-scrollbar-thumb, .trace-box::-webkit-scrollbar-thumb { background: rgba(124,155,219,0.6); }
+  .code pre::-webkit-scrollbar-thumb:hover, .trace-box::-webkit-scrollbar-thumb:hover { background: var(--brand-edge); }
 </style>
 </head>
 <body>
@@ -1586,11 +1613,15 @@
 
   /* ---------- motion: reveal on scroll, tab fade, toggle slide (Subtext pattern; off with reduced motion) ---------- */
   var MOTION = !(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
-  // groups rise item by item (stagger); singles rise as they enter, in the order they enter together
+  // groups rise item by item (stagger); singles rise as they enter, in the order they enter together.
+  // Each time a tab opens, its elements are armed again (rvArm), so the entrance plays again; inside a tab an
+  // element rises when it first scrolls into view.
   var RV_GROUPS = ".hero-copy, .page-head, .stats, .ev-split, .mortar, .cards3, .agent-grid, .stages, .try-grid";
   var RV_SINGLES = ".hero-main > .proof, .problem > *, .block > *, .roles .wrap > *, .how .wrap > *";
+  var rvArm = null, countArm = null;                  // set below when motion is on; showView calls them
   (function () {
     if (!MOTION || !window.IntersectionObserver) return;
+    var items = [];                                     // { n: element, d: its group delay or null }
     var io = new IntersectionObserver(function (es) {
       var batch = 0;
       es.forEach(function (e) {
@@ -1604,12 +1635,23 @@
       if (n.hidden || n.classList.contains("rv") || n.matches(".pipe, .sr") || n.parentNode.closest(".rv")) return;   // hidden: shown later as it is
       if (delay != null) n.style.setProperty("--rv-d", delay + "s");
       n.classList.add("rv");
-      io.observe(n);
+      items.push({ n: n, d: delay });
     }
     Array.prototype.forEach.call(document.querySelectorAll(RV_GROUPS), function (g) {
       Array.prototype.forEach.call(g.children, function (c, i) { watch(c, Math.min(0.08 + 0.12 * i, 0.56).toFixed(2)); });
     });
     Array.prototype.forEach.call(document.querySelectorAll(RV_SINGLES), function (n) { if (!n.matches(RV_GROUPS)) watch(n); });
+    rvArm = function (view) {
+      items.forEach(function (it) {
+        var n = it.n;
+        if (!view.contains(n) || n.hidden) return;
+        io.unobserve(n);
+        n.classList.remove("in");
+        n.classList.add("rv");
+        if (it.d != null) n.style.setProperty("--rv-d", it.d + "s"); else n.style.removeProperty("--rv-d");
+        io.observe(n);
+      });
+    };
     document.addEventListener("animationend", function (e) {
       var t = e.target;
       if (e.animationName === "rv-rise") { t.classList.remove("rv", "in"); t.style.removeProperty("--rv-d"); }   // back to its own styles
@@ -1628,9 +1670,17 @@
     var t = el("view-" + name).dataset.title;
     document.title = name === "home" ? "Drystone \u00b7 Every stack is a drystone wall" : t + " \u00b7 Drystone";
     window.scrollTo(0, 0);
-    if (MOTION) { var vw = el("view-" + name); vw.classList.remove("tab-in"); void vw.offsetWidth; vw.classList.add("tab-in"); }
+    var vw = el("view-" + name);
+    if (MOTION) { vw.classList.remove("tab-in"); void vw.offsetWidth; vw.classList.add("tab-in"); }
+    if (rvArm) rvArm(vw);                                // entrance animations play again on every visit
+    if (countArm) countArm(vw);                          // ... and the big numbers count up again
     // the five checks rise in when the tab opens (same step that shows it, so nothing flashes)
-    if (name === "how") { drawCam(); document.querySelector(".pipe").classList.add("go"); }
+    if (name === "how") {
+      drawCam();
+      var pipe = document.querySelector(".pipe");
+      if (MOTION) { pipe.classList.remove("go"); void pipe.offsetWidth; }
+      pipe.classList.add("go");
+    }
     if (name === "demo") draw();
     if (name === "home" && focus) replayProof();         // the full replay again each time Home is opened
     if (focus) { var h1 = el("view-" + name).querySelector("h1"); if (h1) h1.focus({ preventScroll: true }); }
@@ -1718,25 +1768,35 @@
     liveDiagram(el("dg-loop"), loopSteps, 1000, DG_INFO.loop);
   })();
 
-  /* ---------- big numbers count up from 0 the first time they come into view ---------- */
+  /* ---------- big numbers count up from 0 when they come into view, again on every visit to their tab ---------- */
   (function () {
     var still = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (still || !window.IntersectionObserver || !window.requestAnimationFrame) return;   // the written numbers stay
-    var MS = 1200;
+    var MS = 1200, nums = [];
     function parse(t) { var m = t.match(/^([\d,]+)(.*)$/); return m && { end: Number(m[1].replace(/,/g, "")), rest: m[2], comma: m[1].indexOf(",") >= 0 }; }
     function show(n, p, v) { n.textContent = (p.comma ? v.toLocaleString("en-US") : String(v)) + p.rest; }
     function run(n) {
-      var p = n._count;
+      var p = n._count, token = n._run = (n._run || 0) + 1;   // a newer run stops an older one
       n.textContent = n.dataset.final;                        // width of the final number, so nothing moves while counting
       n.style.minWidth = Math.ceil(n.getBoundingClientRect().width) + "px";
       show(n, p, 0);
       var t0 = performance.now();
       (function frame(now) {
+        if (token !== n._run) return;
         var k = Math.min(1, (now - t0) / MS);
         show(n, p, Math.round(p.end * (1 - Math.pow(1 - k, 3))));
         if (k < 1) requestAnimationFrame(frame);
       })(t0);
     }
+    countArm = function (view) {
+      nums.forEach(function (n) {
+        if (!view.contains(n)) return;
+        io.unobserve(n);
+        n._run = (n._run || 0) + 1;                           // stop a count still running from the last visit
+        n.textContent = n.dataset.final;                      // the written number until it comes into view again
+        io.observe(n);
+      });
+    };
     var io = new IntersectionObserver(function (es) {
       es.forEach(function (e) { if (e.isIntersecting) { io.unobserve(e.target); run(e.target); } });
     }, { rootMargin: "0px 0px 80px 0px" });              // starts just before the number scrolls in
@@ -1747,6 +1807,7 @@
       // screen readers read the final number, not the counting one
       var sr = document.createElement("span"); sr.className = "sr"; sr.textContent = n.dataset.final;
       n.setAttribute("aria-hidden", "true"); n.parentNode.insertBefore(sr, n.nextSibling);
+      nums.push(n);
       io.observe(n);                                          // until then the written number stays, never a stuck 0
     });
   })();
