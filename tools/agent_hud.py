@@ -83,7 +83,7 @@ def status_tag(status):
 def banner(camera, calib, decisions):
     """Opening block: name, then camera, calibration and where decisions are computed (never the URL)."""
     print()
-    print(paint("DRYSTONE", fg="EDGE", bold=True) + paint(" · Every stack is a drystone wall", bold=True))
+    print(paint("Drystone", fg="EDGE", bold=True) + paint(" · Every stack is a drystone wall", bold=True))
     print(rule())
     for k, v in (("Camera", camera), ("Calibration", calib), ("Decisions", decisions)):
         print(f"  {paint(f'{k:<13}', fg='MUTED')}{v}")
@@ -180,7 +180,7 @@ def top_bar(img, right=""):
     w = img.shape[1]
     panel(img, 0, 0, w, TOP_H, BGR["NAVY"], 0.82)
     _logo(img, 14, 9)
-    text(img, "DRYSTONE", (44, 30), 20, BGR["WHITE"], 700)
+    text(img, "Drystone", (44, 30), 21, BGR["WHITE"], 700)       # as the logo on the page
     if right:
         text(img, right, (w - 16 - text_w(right, 17), 29), 17, BGR["WHITE"], 500)
 
