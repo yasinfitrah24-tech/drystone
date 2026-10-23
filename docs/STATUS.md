@@ -231,6 +231,9 @@ Latihan final 18 Okt 13.36–13.41, `agent.py --aws`, Lambda `drystone-service:3
 - **Deploy 23 Okt 08.34:** image `drystone-service:b0f4b7f` (+ `:latest`, digest `sha256:52ecb387…baa4`), Lambda `Successful`/`Active`. **Rollback target: `drystone-service:3ca4c46`.**
 - **Tes live (08.35–08.37):** `GET /` 200, copy baru ada (judul, kata zona place it/ask/move it, teks "can take ~10 s", ikon copy, logo OpenCV dan MuJoCo, ikon GitHub, tombol "View report") · lima tab, kedua diagram 200, `/img/web_desktop.png` → 404 · s1 +16 cm → RED 73% dan s2 +13 cm → YELLOW 27%, sama persis dengan rekaman · s2 +16 cm → RED 69%, usulan +9 cm · `aws/test_endpoint.py` → GREEN GUIDE · `/log` → 200 + CloudWatch · override tanpa alasan → 400 · 0 baris ERROR.
 
+### Tombol hero "Check a placement" (23 Okt malam)
+- Tombol utama hero "Try the demo" → **"Check a placement"** (keputusan Yasin; padanan "Scan a repo" di Subtext, tanpa menjanjikan foto sendiri). Tujuan tetap `#demo`. `docs/SITE_COPY.md` ikut. 67 tes lulus. Deploy: lihat di bawah.
+
 ### PNG diagram baru (23 Okt malam)
 - Yasin menaruh `architecture.png` dan `agent_loop.png` baru di Downloads (22.12). Dicek: 1920×1080, tanpa metadata, isi sesuai REPORT §4/§6/§8.1 (architecture kini juga menampilkan Function URL (public) dan zero-spend budget alarm, keduanya dari §6), tanpa URL, nomor akun, atau data pribadi.
 - Diganti di **`web/img/`** (link "Open as image" dan rute `/img/*.png`) dan **`docs/img/`** (README, REPORT §4/§8.1, galeri Devpost); kedua folder tetap identik (sha256 `582e8bff…` / `7e2efcbb…`). 67 tes lulus.

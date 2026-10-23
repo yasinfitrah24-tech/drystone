@@ -19,7 +19,7 @@ where the page follows REPORT or the code instead of the draft.
 - Accent: Nothing holds it but placement.
 - For line: For anyone stacking boxes by hand. One webcam, one printed marker per box.
 - Body: Drystone checks where the next box goes, then tells you to place it, ask, or move it.
-- Buttons: Try the demo · View report
+- Buttons: Check a placement · View report
 - Hero card (23 Oct: the Drystone camera screen; recorded answer for s1 +16 cm, `tools/service.py`, seed 0; same answer live on Lambda). Every number comes from the record:
   - Top bar: [blinking dot] REPLAY · s1 · next box → +16 cm [badge: real check]
   - Camera screen with viewfinder corners and a thin grid. Stage label (top left) and counter (top right): SCAN · OpenCV 5 → LOCK · ArUco ID 0 → TWIN · digital twin → SIMULATE · MuJoCo (n/150 sims · fell k) → DECIDE · fixed rules → SUGGEST · +10 cm; counter "camera 1280×720" until the simulation.
