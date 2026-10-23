@@ -457,12 +457,12 @@ From the evaluation (25 trials, `agent.py --aws`) unless noted:
 drawn dashed on the photo](img/web_desktop.png)
 
 *The judges' page on a desktop (1440 px wide). Sample s1, next box at +16 cm: RED, P(fall) 73%, suggestion +10 cm
-(drawn dashed on the photo). This screenshot shows the earlier placement ruler; since 23 Oct the page has a slider
-from −16 to +16 cm with example chips on both sides, and nothing is computed until Check is pressed.*
+(drawn dashed on the photo). The chips are the sample's GREEN, YELLOW and RED examples and suggested spots on both
+sides; the slider picks any shift from −16 to +16 cm, and nothing is computed until Check is pressed.*
 
 <img src="img/web_mobile.png" alt="The judges' page on a phone (390 px): the same RED decision below the placement control" width="320">
 
-*The same request on a phone (390 px wide, earlier ruler version): after a check the page scrolls to the decision.*
+*The same request on a phone (390 px wide): after a check the page scrolls to the decision.*
 
 ## 9. Limitations
 - Markers are required on every box; faded markers in dim light can be missed.
