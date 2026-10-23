@@ -600,7 +600,7 @@ def main():
                "AWS Lambda (fallback: laptop)" if args.aws else "laptop")
     detector = common.make_marker_detector()
     cap = common.open_camera(args.source, calib_size[0], calib_size[1])
-    cv2.namedWindow(WIN, cv2.WINDOW_NORMAL)
+    cv2.namedWindow(WIN, cv2.WINDOW_NORMAL | cv2.WINDOW_KEEPRATIO)   # scale the whole frame, never crop it
     cv2.resizeWindow(WIN, 960, 540)
     ev = Evaluation(args.eval_plan, args.eval_start, log) if args.eval_plan else None
     if ev:
@@ -687,9 +687,7 @@ def main():
                 hud.check_banner(view, check_hud["status"], check_hud["message"], check_hud["zone_now"],
                                  check_hud["p_now"])
             hud.top_bar(view, (right + " \u00b7 " if right else "") + where)
-            y = view.shape[0] - hud.BOTTOM_H - 10 - len(notes) * 41
-            for note, kind in notes:
-                y = hud.pill(view, note, y, kind)
+            hud.pills(view, notes)
             hud.bottom_bar(view, keys)
             cv2.imshow(WIN, view)
             key = cv2.waitKey(1) & 0xFF

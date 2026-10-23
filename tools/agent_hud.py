@@ -4,6 +4,7 @@
 Nothing here changes what the agent decides, logs or asks; agent.py calls these functions only to print and to draw
 on the image it shows. Colours are off when the output is not a terminal (tests, files), so the text stays plain.
 """
+import functools
 import os
 import sys
 import time
@@ -124,7 +125,9 @@ BGR = {"NAVY": (75, 41, 19), "BRAND": (197, 87, 36), "EDGE": (240, 176, 143), "W
        "INK": (43, 40, 38), "GREEN": (71, 125, 38), "YELLOW": (28, 174, 226), "RED": (37, 58, 201),
        "MUTED": (190, 180, 168), "ORANGE": (26, 120, 230)}
 ZONE_INK = {"GREEN": BGR["WHITE"], "YELLOW": BGR["INK"], "RED": BGR["WHITE"]}
-TOP_H, BOTTOM_H = 44, 40
+TOP_H, BOTTOM_H = 44, 44
+M, PAD, GAP = 16, 16, 12        # outer margin, inner side padding, space between elements (px)
+MIN_SIZE = 13
 
 try:
     _FACE = cv2.FontFace("sans")
@@ -157,6 +160,34 @@ def text(img, s, org, size=20, color=BGR["WHITE"], weight=500):
     return org[0] + text_w(s, size, weight)
 
 
+@functools.lru_cache(maxsize=None)
+def metrics(size, weight=500):
+    """(cap, desc) in px: ink height of capitals above the baseline, and of descenders below it."""
+    def ink(s):
+        c = np.zeros((size * 3, text_w(s, size, weight) + 8, 3), np.uint8)
+        text(c, s, (2, size * 2), size, (255, 255, 255), weight)
+        rows = np.nonzero(c.max(axis=(1, 2)))[0]
+        return size * 2 - rows[0], max(0, rows[-1] - size * 2 + 1)
+    return int(ink("H")[0]), int(ink("gjpqy(")[1])
+
+
+def fit(s, size, weight, maxw):
+    """Lines and size so that every line is at most maxw wide: shrink a little, then wrap (nothing is cut)."""
+    smallest = max(MIN_SIZE, round(size * 0.85))
+    for sz in range(size, smallest - 1, -1):
+        if text_w(s, sz, weight) <= maxw:
+            return [s], sz
+    lines, cur = [], ""
+    for word in s.split(" "):
+        t = word if not cur else cur + " " + word
+        if cur and text_w(t, smallest, weight) > maxw:
+            lines.append(cur)
+            cur = word
+        else:
+            cur = t
+    return lines + [cur], smallest
+
+
 def panel(img, x0, y0, x1, y1, color, alpha=0.85):
     """A filled rectangle blended with cv2.addWeighted."""
     h, w = img.shape[:2]
@@ -169,6 +200,21 @@ def panel(img, x0, y0, x1, y1, color, alpha=0.85):
     cv2.addWeighted(fill, alpha, roi, 1 - alpha, 0, dst=roi)
 
 
+def rounded(img, x0, y0, x1, y1, r, color, alpha=0.9):
+    """A filled rounded rectangle blended with cv2.addWeighted."""
+    over = img.copy()
+    cv2.rectangle(over, (x0 + r, y0), (x1 - r, y1), color, -1)
+    cv2.rectangle(over, (x0, y0 + r), (x1, y1 - r), color, -1)
+    for cx, cy in ((x0 + r, y0 + r), (x1 - r, y0 + r), (x0 + r, y1 - r), (x1 - r, y1 - r)):
+        cv2.circle(over, (cx, cy), r, color, -1, cv2.LINE_AA)
+    cv2.addWeighted(over, alpha, img, 1 - alpha, 0, dst=img)
+
+
+def _baseline(y0, y1, size, weight=500):
+    """The baseline that centres capitals between y0 and y1."""
+    return round((y0 + y1) / 2 + metrics(size, weight)[0] / 2)
+
+
 def _logo(img, x, y):
     for i, dx in enumerate((5, 0, 0)):                 # three blocks, the top one shifted right (as on the page)
         y0 = y + i * 9
@@ -179,10 +225,13 @@ def _logo(img, x, y):
 def top_bar(img, right=""):
     w = img.shape[1]
     panel(img, 0, 0, w, TOP_H, BGR["NAVY"], 0.82)
-    _logo(img, 14, 9)
-    text(img, "Drystone", (44, 30), 21, BGR["WHITE"], 700)       # as the logo on the page
+    _logo(img, M, (TOP_H - 25) // 2)
+    xe = text(img, "Drystone", (M + 32, _baseline(0, TOP_H, 21, 700)), 21, BGR["WHITE"], 700)   # as the logo on the page
     if right:
-        text(img, right, (w - 16 - text_w(right, 17), 29), 17, BGR["WHITE"], 500)
+        size = 17
+        while size > 11 and text_w(right, size) > w - M - xe - 2 * GAP:
+            size -= 1
+        text(img, right, (w - M - text_w(right, size), _baseline(0, TOP_H, size)), size, BGR["WHITE"], 500)
 
 
 def _dashed(img, p, q, color, thick=2, dash=10):
@@ -196,94 +245,131 @@ def _dashed(img, p, q, color, thick=2, dash=10):
 LEGEND = (("marker", "EDGE", False), ("stack", "WHITE", False), ("suggested spot", "BRAND", True), ("next box", "MUTED", False))
 
 
+def _legend_w(size):
+    return sum(text_w(name, size, 400) + 46 for name, _, _ in LEGEND) - 18
+
+
 def bottom_bar(img, keys):
     h, w = img.shape[:2]
-    panel(img, 0, h - BOTTOM_H, w, h, BGR["NAVY"], 0.82)
-    text(img, keys, (16, h - 14), 16, BGR["WHITE"], 500)
-    x = w - 16
+    y0 = h - BOTTOM_H
+    panel(img, 0, y0, w, h, BGR["NAVY"], 0.82)
+    ks, ls = 16, 14
+    while ks > 11 and text_w(keys, ks) + 2 * GAP + _legend_w(ls) > w - 2 * M:
+        ks, ls = ks - 1, max(11, ls - 1)
+    text(img, keys, (M, _baseline(y0, h, ks)), ks, BGR["WHITE"], 500)
+    if text_w(keys, ks) + 2 * GAP + _legend_w(ls) > w - 2 * M:
+        return                                         # a very narrow frame: the keys only
+    by = _baseline(y0, h, ls, 400)
+    mid = by - metrics(ls, 400)[0] // 2
+    x = w - M
     for name, col, dashed in reversed(LEGEND):
-        tw = text_w(name, 14)
-        x -= tw
-        text(img, name, (x, h - 15), 14, BGR["MUTED"], 400)
+        x -= text_w(name, ls, 400)
+        text(img, name, (x, by), ls, BGR["MUTED"], 400)
         x -= 28
         if dashed:
-            _dashed(img, (x, h - 20), (x + 22, h - 20), BGR[col], 3, 6)
+            _dashed(img, (x, mid), (x + 22, mid), BGR[col], 3, 6)
         else:
-            cv2.line(img, (x, h - 20), (x + 22, h - 20), BGR[col], 3, cv2.LINE_AA)
+            cv2.line(img, (x, mid), (x + 22, mid), BGR[col], 3, cv2.LINE_AA)
         x -= 18
 
 
-def pill(img, s, y, kind="warn", x=16, size=17):
-    """A rounded label: warn (yellow), alert (orange), info (navy)."""
-    fill, ink = {"warn": (BGR["YELLOW"], BGR["INK"]), "alert": (BGR["ORANGE"], BGR["WHITE"]),
-                 "info": (BGR["NAVY"], BGR["WHITE"])}[kind]
-    w = text_w(s, size) + 26
-    h = size + 16
-    r = h // 2
-    over = img.copy()
-    cv2.rectangle(over, (x + r, y), (x + w - r, y + h), fill, -1)
-    cv2.circle(over, (x + r, y + r), r, fill, -1, cv2.LINE_AA)
-    cv2.circle(over, (x + w - r, y + r), r, fill, -1, cv2.LINE_AA)
-    cv2.addWeighted(over, 0.9, img, 0.1, 0, dst=img)
-    if kind == "warn":
-        cv2.circle(img, (x + 14, y + r), 4, BGR["INK"], -1, cv2.LINE_AA)
-        text(img, s, (x + 24, y + h - 9), size, ink, 600)
-    else:
-        text(img, s, (x + 13, y + h - 9), size, ink, 600)
-    return y + h + 8
+PILL_SIZE, PILL_VPAD, PILL_GAP = 17, 11, 8
+PILL_COLORS = {"warn": (BGR["YELLOW"], BGR["INK"]), "alert": (BGR["ORANGE"], BGR["WHITE"]),
+               "info": (BGR["NAVY"], BGR["WHITE"])}
+
+
+def pills(img, notes):
+    """Rounded labels stacked upward from the bottom bar: warn (yellow, with a dot), alert (orange), info (navy)."""
+    h, w = img.shape[:2]
+    y = h - BOTTOM_H - GAP
+    for s, kind in reversed(notes):
+        fill, ink = PILL_COLORS[kind]
+        lead = PAD + 16 if kind == "warn" else PAD       # the warn dot sits in front of the text
+        lines, size = fit(s, PILL_SIZE, 600, w - 2 * M - lead - PAD)
+        cap = metrics(size, 600)[0]
+        step = round(size * 1.4)
+        ph = cap + 2 * PILL_VPAD + step * (len(lines) - 1)
+        pw = lead + max(text_w(t, size, 600) for t in lines) + PAD
+        y -= ph
+        rounded(img, M, y, M + pw, y + ph, (cap + 2 * PILL_VPAD) // 2, fill, 0.9)
+        by = y + PILL_VPAD + cap
+        if kind == "warn":
+            cv2.circle(img, (M + PAD + 4, by - cap // 2), 4, BGR["INK"], -1, cv2.LINE_AA)
+        for t in lines:
+            text(img, t, (M + lead, by), size, ink, 600)
+            by += step
+        y -= PILL_GAP
+
+
+def _card(img, rows, fill, ink, alpha=0.9):
+    """A card under the top bar. Each row: {"segs": [(text, size, weight), ...] on one baseline,
+    "badge": (text, size) after them, "gap": px above the row}. Long one-part rows shrink a little, then wrap."""
+    x0, y0 = M, TOP_H + GAP
+    maxw = img.shape[1] - 2 * M - 2 * PAD
+    out = []                                           # (segs, badge, gap) after fitting
+    for row in rows:
+        segs, badge, gap = row["segs"], row.get("badge"), row.get("gap", 0)
+        if len(segs) == 1 and not badge:
+            s, size, weight = segs[0]
+            lines, size = fit(s, size, weight, maxw)
+            out += [([(t, size, weight)], None, gap if i == 0 else round(size * 0.4)) for i, t in enumerate(lines)]
+        else:
+            out.append((segs, badge, gap))
+
+    def row_w(segs, badge):
+        x = sum(text_w(t, s, wt) for t, s, wt in segs) + 12 * (len(segs) - 1)
+        return x + (14 + text_w(badge[0], badge[1], 700) + 16 if badge else 0)
+
+    cw = max(row_w(s, b) for s, b, _ in out) + 2 * PAD
+    y, bys = y0 + PAD, []
+    for segs, _, gap in out:
+        y += gap + max(metrics(s, wt)[0] for _, s, wt in segs)
+        bys.append(y)
+        y += max(metrics(s, wt)[1] for _, s, wt in segs)
+    ch = y + PAD - y0
+    panel(img, x0, y0, x0 + cw, y0 + ch, fill, alpha)
+    for (segs, badge, _), by in zip(out, bys):
+        x = x0 + PAD
+        for t, s, wt in segs:
+            x = text(img, t, (x, by), s, ink, wt) + 12
+        if badge:                                      # the action code in a box, centred on the capitals
+            bt, bs = badge
+            cb = metrics(bs, 700)[0]
+            mid = by - metrics(segs[-1][1], segs[-1][2])[0] // 2
+            bx, bb = x + 2, mid + cb - cb // 2
+            cv2.rectangle(img, (bx, bb - cb - 8), (bx + text_w(bt, bs, 700) + 16, bb + 8), ink, 1, cv2.LINE_AA)
+            text(img, bt, (bx + 8, bb), bs, ink, 700)
+    return y0 + ch
 
 
 def decision_banner(img, d, hint=""):
     """The decision as a card in the zone colour: zone word, action code, P(fall), safer spot."""
     z = d["zone"]
-    fill, ink = BGR[z], ZONE_INK[z]
-    x0, y0 = 16, TOP_H + 14
-    lines = [f"P(fall) {d['p']:.0%}", f"at {d['offset_m'] * 100:+.0f} cm · overhang {d['overhang_pct']:+.0f}%"]
+    rows = [{"segs": [(f"{z} · {SAY[z]}", 40, 700)], "badge": (d["action"], 15)},
+            {"segs": [(f"P(fall) {d['p']:.0%}", 46, 700)], "gap": 18},
+            {"segs": [(f"at {d['offset_m'] * 100:+.0f} cm · overhang {d['overhang_pct']:+.0f}%", 19, 500)], "gap": 12}]
     if d.get("alternative"):
         a = d["alternative"]
-        lines.append(f"Safer spot {a['offset_m'] * 100:+.0f} cm · P(fall) {a['p']:.0%}")
-    head = f"{z} · {SAY[z]}"
-    w = max(text_w(head, 40, 700) + text_w(d["action"], 15, 700) + 46, text_w(lines[0], 46, 700),
-            *(text_w(s, 19, 500) for s in lines[1:]), text_w(hint, 16) if hint else 0) + 36
-    h = 70 + 56 + 28 * (len(lines) - 1) + (30 if hint else 0)
-    panel(img, x0, y0, x0 + w, y0 + h, fill, 0.9)
-    xe = text(img, head, (x0 + 18, y0 + 50), 40, ink, 700)
-    bw = text_w(d["action"], 15, 700) + 16
-    cv2.rectangle(img, (xe + 14, y0 + 24), (xe + 14 + bw, y0 + 50), ink, 1, cv2.LINE_AA)
-    text(img, d["action"], (xe + 22, y0 + 43), 15, ink, 700)
-    text(img, lines[0], (x0 + 18, y0 + 108), 46, ink, 700)
-    y = y0 + 108
-    for s in lines[1:]:
-        y += 28
-        text(img, s, (x0 + 18, y), 19, ink, 500)
+        rows.append({"segs": [(f"Safer spot {a['offset_m'] * 100:+.0f} cm · P(fall) {a['p']:.0%}", 19, 500)], "gap": 9})
     if hint:
-        text(img, hint, (x0 + 18, y + 30), 16, ink, 500)
+        rows.append({"segs": [(hint, 16, 500)], "gap": 14})
+    _card(img, rows, BGR[z], ZONE_INK[z])
 
 
 def check_banner(img, status, message, zone_now=None, p_now=None):
-    """After placement: OK / OFF_PLAN / FELL in colour, with the agent's message (shortened)."""
+    """After placement: OK / OFF_PLAN / FELL in colour, with the agent's message (wrapped, never cut)."""
     fill = {"OK": BGR["GREEN"], "OFF_PLAN": BGR["YELLOW"], "FELL": BGR["RED"], "FELL?": BGR["RED"]}.get(status, BGR["NAVY"])
     ink = BGR["INK"] if status == "OFF_PLAN" else BGR["WHITE"]
-    x0, y0 = 16, TOP_H + 14
-    msg = message if len(message) <= 78 else message[:77] + "…"
-    sub = f"stack now: {zone_now} · {SAY.get(zone_now, '')}, P(fall) {p_now:.0%}" if zone_now else ""
-    w = max(text_w("CHECK  " + status, 34, 700), text_w(msg, 17), text_w(sub, 17) if sub else 0) + 36
-    h = 98 + (26 if sub else 0)
-    panel(img, x0, y0, x0 + w, y0 + h, fill, 0.9)
-    xe = text(img, "CHECK", (x0 + 18, y0 + 46), 20, ink, 600)
-    text(img, status, (xe + 12, y0 + 48), 34, ink, 700)
-    text(img, msg, (x0 + 18, y0 + 80), 17, ink, 500)
-    if sub:
-        text(img, sub, (x0 + 18, y0 + 106), 17, ink, 500)
+    rows = [{"segs": [("CHECK", 20, 600), (status, 34, 700)]}, {"segs": [(message, 17, 500)], "gap": 14}]
+    if zone_now:
+        rows.append({"segs": [(f"stack now: {zone_now} · {SAY.get(zone_now, '')}, P(fall) {p_now:.0%}", 17, 500)],
+                     "gap": 9})
+    _card(img, rows, fill, ink)
 
 
 def waiting(img, dots=3):
     """While a decision is computed on AWS Lambda (a static card: the request blocks the window)."""
-    s = "Simulating on AWS Lambda…"
-    w = text_w(s, 26, 600) + 40
-    x0, y0 = 16, TOP_H + 14
-    panel(img, x0, y0, x0 + w, y0 + 58, BGR["NAVY"], 0.88)
-    text(img, s, (x0 + 20, y0 + 38), 26, BGR["WHITE"], 600)
+    _card(img, [{"segs": [("Simulating on AWS Lambda…", 26, 600)]}], BGR["NAVY"], BGR["WHITE"], 0.88)
 
 
 def suggested(img, pts, thick=2):
