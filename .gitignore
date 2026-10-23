@@ -23,3 +23,6 @@ hasil_endpoint.jpg
 
 # Local Claude Code skills, agents and hooks (Impeccable): never commit
 .claude/
+
+# rebuilt by: python tools/eval_report.py --trials data/eval_report/trials.csv
+data/eval_report/from_trials/

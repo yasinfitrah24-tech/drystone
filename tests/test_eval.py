@@ -106,3 +106,18 @@ def test_summary_metrics_and_criteria():
     assert s["failure_cases"]["outcome corrected by the worker"] == ["T05"]
     assert s["placement"]["max"] == pytest.approx(1.2) and s["placement"]["within_1cm"] == 2
     assert [b["n"] for b in s["bins"]] == [2, 0, 1, 0, 1, 1]      # 0.70 belongs to 70-90%
+
+
+def test_summary_rebuilds_from_published_trials(tmp_path, monkeypatch, capsys):
+    """--trials rebuilds the published summary.md from the published trials.csv (the logs are not in the repo)."""
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    report = os.path.join(root, "data", "eval_report")
+    monkeypatch.setattr(sys, "argv", ["eval_report.py", "--trials", os.path.join(report, "trials.csv"),
+                                      "--out", str(tmp_path)])
+    eval_report.main()
+    capsys.readouterr()
+    with open(os.path.join(report, "summary.md"), encoding="utf-8") as f:
+        published = f.read().splitlines()
+    rebuilt = (tmp_path / "summary.md").read_text(encoding="utf-8").splitlines()
+    assert published[2].startswith("Logs: ") and rebuilt[2].startswith("Trials: ")    # only the source line differs
+    assert rebuilt[:2] + rebuilt[3:] == published[:2] + published[3:]

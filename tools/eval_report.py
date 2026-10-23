@@ -5,6 +5,10 @@ pass criteria, failure-case candidates). See docs/EVAL_PROTOCOL.md.
     python tools/eval_report.py --logs data/agent_20261021_190000/log.jsonl data/agent_20261022_100000/log.jsonl
 Writes data/eval_report/trials.csv and data/eval_report/summary.md (no photos, no names).
 If a trial was run more than once (e.g. after a restart), its last result counts; earlier ones are listed.
+
+Without the logs (they stay on our laptop), rebuild the summary from the published per-trial table:
+    python tools/eval_report.py --trials data/eval_report/trials.csv
+Writes data/eval_report/from_trials/summary.md and leaves the published files as they are.
 """
 import argparse
 import csv
@@ -63,6 +67,29 @@ def trial_rows(events):
             r["setup_shift_cm"] = " ".join(f"{v:+.1f}" for v in r["setup_shift_cm"])
         out.append(r)
     return out
+
+
+INTS = ("n_boxes", "box_id", "n", "retakes", "fp_question", "wrong_stack", "runs")
+FLOATS = ("shift_cm", "expected_p", "p", "ci", "deviation_cm", "aws_seconds")
+BOOLS = ("predicted_fall", "fell_auto", "fell", "corrected")
+
+
+def read_trials(path):
+    """trials.csv (as written below) -> the same rows trial_rows() gives, with numbers and True/False back."""
+    rows = []
+    with open(path, newline="", encoding="utf-8") as f:
+        for r in csv.DictReader(f):
+            for k, v in r.items():
+                if v == "":
+                    r[k] = None
+                elif k in INTS:
+                    r[k] = int(v)
+                elif k in FLOATS:
+                    r[k] = float(v)
+                elif k in BOOLS:
+                    r[k] = v == "True"
+            rows.append(r)
+    return rows
 
 
 def summarise(rows, plan_trials):
@@ -140,8 +167,8 @@ def _rel(path):
         return path
 
 
-def write_summary(path, s, logs):
-    L = ["# Evaluation report", "", f"Logs: {', '.join(_rel(p) for p in logs)}", "",
+def write_summary(path, s, logs, label="Logs"):
+    L = ["# Evaluation report", "", f"{label}: {', '.join(_rel(p) for p in logs)}", "",
          f"Trials with an outcome: **{s['n']} of {s['planned']} planned**"
          + (f" (missing: {', '.join(s['missing'])})" if s["missing"] else ""), ""]
     if not s["n"]:
@@ -179,16 +206,28 @@ def write_summary(path, s, logs):
 
 def main():
     ap = argparse.ArgumentParser(description="Evaluation report from --eval-plan agent logs")
-    ap.add_argument("--logs", nargs="+", required=True, help="log.jsonl files or patterns")
+    src = ap.add_mutually_exclusive_group(required=True)
+    src.add_argument("--logs", nargs="+", help="log.jsonl files or patterns")
+    src.add_argument("--trials", help="a trials.csv written by this tool (rebuilds summary.md only)")
     ap.add_argument("--plan", default=os.path.join(ROOT, "config", "eval_plan.json"))
-    ap.add_argument("--out", default=os.path.join(ROOT, "data", "eval_report"))
+    ap.add_argument("--out", default=None,
+                    help="default data/eval_report (with --logs) or data/eval_report/from_trials (with --trials)")
     args = ap.parse_args()
+    with open(args.plan, encoding="utf-8") as f:
+        plan_trials = json.load(f)["trials"]
+    if args.trials:
+        out = args.out or os.path.join(ROOT, "data", "eval_report", "from_trials")
+        s = summarise(read_trials(args.trials), plan_trials)
+        os.makedirs(out, exist_ok=True)
+        write_summary(os.path.join(out, "summary.md"), s, [args.trials], label="Trials")
+        print(open(os.path.join(out, "summary.md"), encoding="utf-8").read())
+        print(f"Saved in {out} (summary.md)")
+        return s
+    args.out = args.out or os.path.join(ROOT, "data", "eval_report")
     logs = sorted({p for pattern in args.logs for p in glob.glob(pattern)})
     events = read_logs(logs)
     logs = sorted({e["_log"] for e in events if e.get("event") == "eval_start"}) or logs
     events = [e for e in events if e["_log"] in logs]
-    with open(args.plan, encoding="utf-8") as f:
-        plan_trials = json.load(f)["trials"]
     rows = trial_rows(events)
     s = summarise(rows, plan_trials)
     os.makedirs(args.out, exist_ok=True)
