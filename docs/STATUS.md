@@ -2,7 +2,7 @@
 
 Salinan status untuk repo (dibaca Yasin, Vincent, dan Claude masing-masing). Update di commit yang sama setiap ada keputusan atau hasil tes baru. Semua jam = waktu China.
 
-Terakhir diperbarui: 23 Okt 2026. Live: `drystone-service:37b1380` (halaman juri, tombol hero "Check a placement", sejak 23 Okt 23.06; rollback `aac07c7`). **Evaluasi 25 percobaan baru selesai: FAIL (C2b, kelebihan 1 roboh); C1, C2a, C3, C4 lulus.**
+Terakhir diperbarui: 23 Okt 2026. Live: `drystone-service:f465e07` (halaman juri + link lembar cetak, sejak 23 Okt 23.40; rollback `37b1380`). **Evaluasi 25 percobaan baru selesai: FAIL (C2b, kelebihan 1 roboh); C1, C2a, C3, C4 lulus.**
 
 ## Ringkasan
 - **Lomba:** OpenCV AI Competition 2026 (https://opencv26.devpost.com/). Deadline **27 Okt, 14.45** (target submit 26 Okt malam). Penjurian 27 Okt–10 Nov, endpoint harus tetap hidup.
@@ -237,7 +237,10 @@ Latihan final 18 Okt 13.36–13.41, `agent.py --aws`, Lambda `drystone-service:3
 - **`docs/print/charuco_A4.pdf`** (A4 **landscape**: papan 210 × 150 mm akan menyentuh kedua tepi A4 tegak): ChArUco 7×5, kotak 30 mm, marker 22 mm, DICT_5X5_100, "Mount on a rigid, flat board. Measure a square and pass it as --square-mm.", penggaris 100 mm.
 - **Cek skala dari angka di file:** halaman 210 × 297 / 297 × 210 mm; kotak marker 80,000 mm, sel 13,333 mm (80/6); kotak papan 30,000 mm, marker papan 22,000 mm, sel 3,143 mm (22/7).
 - **Cek render** (Windows.Data.Pdf, 300 dpi): `cv2.aruco` menemukan ID 0, 1, 2, sisi 79,93 mm (< 1 piksel dari 80); `CharucoDetector` dengan `common.make_board` menemukan 24/24 sudut dan 17/17 marker, kotak 30,006 mm.
-- Tab Setup (opsi kamera): link "Download printable markers (PDF)" dan "Download calibration board (PDF)" lewat `LINKS.markers` dan `LINKS.board` (link file GitHub, **diisi Senin**; tersembunyi selama kosong). README bagian setup menunjuk ke kedua PDF. `tests/test_web.py`: jumlah link tersembunyi 4 → 6. 67 tes lulus. Deploy: lihat di bawah.
+- Tab Setup (opsi kamera): link "Download printable markers (PDF)" dan "Download calibration board (PDF)" lewat `LINKS.markers` dan `LINKS.board` (link file GitHub, **diisi Senin**; tersembunyi selama kosong). README bagian setup menunjuk ke kedua PDF. `tests/test_web.py`: jumlah link tersembunyi 4 → 6. 67 tes lulus.
+- `.gitattributes`: `*.pdf binary`, supaya Git tidak mengubah akhir baris PDF (offset xref tetap benar di checkout Windows).
+- **Deploy 23 Okt 23.40:** image `drystone-service:f465e07` (+ `:latest`, digest `sha256:209d7aca…a0bd`), Lambda `Successful`/`Active`. **Rollback target: `drystone-service:37b1380`.** (PDF tidak masuk image; link-nya ke GitHub.)
+- **Tes live (23.41):** `GET /` 200, link unduhan markers/board ada di HTML (tersembunyi sampai `LINKS` diisi) · lima tab, kedua diagram 200 · s1 +16 cm → RED 73% dan s2 +13 cm → YELLOW 27%, sama persis dengan rekaman · s2 +16 cm → RED 69%, usulan +9 cm · `aws/test_endpoint.py` → GREEN GUIDE · `/log` → 200 + CloudWatch · override tanpa alasan → 400 · 0 baris ERROR.
 
 ### Tombol hero "Check a placement" (23 Okt malam)
 - Tombol utama hero "Try the demo" → **"Check a placement"** (keputusan Yasin; padanan "Scan a repo" di Subtext, tanpa menjanjikan foto sendiri). Tujuan tetap `#demo`. `docs/SITE_COPY.md` ikut. 67 tes lulus.
@@ -435,7 +438,7 @@ Latihan final 18 Okt 13.36–13.41, `agent.py --aws`, Lambda `drystone-service:3
 - **Diagram final (18 Okt):** `docs/img/architecture.png` dan `docs/img/agent_loop.png` (dari Claude Design, 1920×1080, ±0,23 MB tiap file, dicek: tanpa Function URL atau nomor akun, metadata PNG kosong). Dipasang di REPORT §4 dan §8.1 (Mermaid tetap ada di bawahnya sebagai versi teks) dan di README. **Saat submit:** unggah ke galeri gambar Devpost, architecture dulu, lalu agent_loop.
 - **Sabtu 24 Okt:** rekam video (Yasin + Vincent), adegan sesuai "Alur video final".
 - **Minggu 25 Okt:** edit video, finalisasi laporan, isi Devpost.
-- **Senin 26 Okt:** isi `LINKS` di awal skrip `web/index.html` (repo, video, REPORT, markers, board; sekarang sengaja masih kosong) → deploy ulang dengan tag hash baru (rollback = `37b1380`) → tes live (`GET /`, link terbuka, s2 +16 → RED, `aws/test_endpoint.py`, `/log` di CloudWatch). **Sebelum repo dibuat publik: scan ulang seluruh riwayat git** (bukan hanya commit terakhir) untuk secret, access key, nomor akun AWS, dan Function URL; REPORT §6 menyebut scan 18 Okt bersih, commit sesudahnya belum di-scan. Lalu jadikan repo publik, cek akhir halaman juri dari HP, submit (deadline 27 Okt 14.45).
+- **Senin 26 Okt:** isi `LINKS` di awal skrip `web/index.html` (repo, video, REPORT, markers, board; sekarang sengaja masih kosong) → deploy ulang dengan tag hash baru (rollback = `f465e07`) → tes live (`GET /`, link terbuka, s2 +16 → RED, `aws/test_endpoint.py`, `/log` di CloudWatch). **Sebelum repo dibuat publik: scan ulang seluruh riwayat git** (bukan hanya commit terakhir) untuk secret, access key, nomor akun AWS, dan Function URL; REPORT §6 menyebut scan 18 Okt bersih, commit sesudahnya belum di-scan. Lalu jadikan repo publik, cek akhir halaman juri dari HP, submit (deadline 27 Okt 14.45).
 
 ## Bonus (hanya kalau inti selesai)
 - S3 (foto bukti per keputusan) + DynamoDB (log keputusan, approval, override). Log approve/override dari halaman juri **sudah** tercatat di CloudWatch Logs (satu baris JSON `web_supervisor_choice`).
