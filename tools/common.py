@@ -40,7 +40,7 @@ def open_camera(source, width, height):
     ok, frame = cap.read()
     if not ok:
         sys.exit("Kamera terbuka tapi tidak mengirim gambar.")
-    print(f"Kamera aktif: {frame.shape[1]}x{frame.shape[0]}")
+    print(f"Camera on: {frame.shape[1]}x{frame.shape[0]}")
     return cap
 
 

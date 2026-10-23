@@ -6,6 +6,7 @@ on the image it shows. Colours are off when the output is not a terminal (tests,
 """
 import functools
 import os
+import re
 import sys
 import time
 
@@ -155,7 +156,19 @@ def text(img, s, org, size=20, color=BGR["WHITE"], weight=500):
     """Text with its baseline at org; returns the x after it."""
     org = (int(org[0]), int(org[1]))
     if _FACE is not None:
-        return cv2.putText(img, s, org, color, _FACE, size, weight)[0][0]
+        parts = re.split(r"(?<!\w)(Q)(?!\w)", s)        # the Q key: its tail is too short in this font
+        x = org[0]
+        for i, part in enumerate(parts):
+            if not part:
+                continue
+            x0 = x
+            x = cv2.putText(img, part, (x, org[1]), color, _FACE, size, weight)[0][0]
+            if i % 2:                                   # draw a longer tail so it does not read as O
+                cap, q = metrics(size, weight)[0], x - x0
+                cv2.line(img, (round(x0 + 0.52 * q), round(org[1] - 0.3 * cap)),
+                         (round(x0 + 1.02 * q), round(org[1] + 0.16 * cap)), color, max(2, round(size / 8)),
+                         cv2.LINE_AA)
+        return x
     cv2.putText(img, _ascii(s), org, cv2.FONT_HERSHEY_SIMPLEX, size / 30.0, color, max(1, weight // 300), cv2.LINE_AA)
     return org[0] + text_w(s, size, weight)
 

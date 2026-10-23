@@ -231,6 +231,10 @@ Latihan final 18 Okt 13.36–13.41, `agent.py --aws`, Lambda `drystone-service:3
 - **Deploy 23 Okt 08.34:** image `drystone-service:b0f4b7f` (+ `:latest`, digest `sha256:52ecb387…baa4`), Lambda `Successful`/`Active`. **Rollback target: `drystone-service:3ca4c46`.**
 - **Tes live (08.35–08.37):** `GET /` 200, copy baru ada (judul, kata zona place it/ask/move it, teks "can take ~10 s", ikon copy, logo OpenCV dan MuJoCo, ikon GitHub, tombol "View report") · lima tab, kedua diagram 200, `/img/web_desktop.png` → 404 · s1 +16 cm → RED 73% dan s2 +13 cm → YELLOW 27%, sama persis dengan rekaman · s2 +16 cm → RED 69%, usulan +9 cm · `aws/test_endpoint.py` → GREEN GUIDE · `/log` → 200 + CloudWatch · override tanpa alasan → 400 · 0 baris ERROR.
 
+### Huruf Q dan baris kamera (24 Okt) — hanya tampilan
+- HUD: di font `sans` OpenCV, ekor Q terlalu pendek sehingga "Q quit" terbaca seperti "O quit". `agent_hud.text` sekarang menggambar ekor yang lebih panjang (satu garis) pada Q yang berdiri sendiri; huruf Q di dalam kata tidak berubah. Cek tata letak: 0 teks keluar dari kotak.
+- Terminal: `common.open_camera` mencetak "Camera on: 1280x720" (sebelumnya "Kamera aktif"). Baris ini juga tercetak di tool lain. 67 tes lulus. Lambda tidak perlu deploy.
+
 ### Tata letak HUD diperbaiki (24 Okt) — hanya tampilan
 - Dari screenshot webcam asli: teks pil peringatan keluar dari kanan (lebar diukur dengan ketebalan 500, digambar 600), bar bawah terlalu rendah, legenda terlalu dekat tepi kanan.
 - `tools/agent_hud.py`: satu aturan untuk semua elemen. Margin luar 16 px, padding dalam 16 px, jarak 12 px antara pil dan bar bawah. Lebar pil dan kartu diukur dengan ketebalan yang sama dengan saat digambar. Teks dipusatkan secara vertikal dari tinggi huruf kapital yang diukur (`metrics`). Bar bawah sekarang 44 px, sama dengan bar atas. Teks yang terlalu panjang diperkecil sedikit lalu dipecah jadi beberapa baris, tidak dipotong. Pemotongan "…" pada pesan cek dihapus.
