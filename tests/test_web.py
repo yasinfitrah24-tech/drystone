@@ -46,7 +46,7 @@ def test_page_200():
     assert out["headers"]["Content-Type"].startswith("text/html")
     assert "max-age" in out["headers"]["Cache-Control"]
     assert "not a certified safety device" in html
-    assert "first run can take ~10 s" in html
+    assert "can take ~10 s" in html
     assert 'type="file"' not in html                       # no photo upload
 
 

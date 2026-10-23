@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Drystone demo</title>
+<title>Drystone · Every stack is a drystone wall</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 rx=%227%22 fill=%22%2313294B%22/%3E%3Cg fill=%22%232457C5%22 stroke=%22%238FB0F0%22 stroke-width=%221.4%22%3E%3Crect x=%229.2%22 y=%225.2%22 width=%2217%22 height=%226.4%22 rx=%221%22/%3E%3Crect x=%225.2%22 y=%2212.8%22 width=%2217%22 height=%226.4%22 rx=%221%22/%3E%3Crect x=%225.2%22 y=%2220.4%22 width=%2217%22 height=%226.4%22 rx=%221%22/%3E%3C/g%3E%3C/svg%3E">
 <meta name="theme-color" content="#13294B">
-<meta name="description" content="Drystone: know before you stack. Pick a sample photo and a spot for the next box; OpenCV reads the markers, a MuJoCo simulation estimates the chance of a fall, and fixed rules decide.">
+<meta name="description" content="Drystone reads a box stack with OpenCV 5, simulates the next box on AWS Lambda, and tells you to place it, ask, or move it.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -83,7 +83,7 @@
   .proof-lines li { display: grid; grid-template-columns: 58px 1fr; gap: 10px; }
   .proof-lines .k { color: var(--brand); font-weight: 600; }
   .proof-safe { margin: 10px 16px 0; padding: 7px 12px; border: 1.5px solid var(--green); background: var(--green-tint); color: var(--green-text); border-radius: 8px; font: 600 13px/1.4 var(--mono); }
-  .proof-foot { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0 12px; padding: 0 16px; margin-top: 10px; border-top: 1px solid var(--soft); font-size: 12px; color: var(--muted); }
+  .proof-foot { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0 12px; min-height: 40px; padding: 0 16px; margin-top: 10px; border-top: 1px solid var(--soft); font-size: 12px; color: var(--muted); }
   .hero .proof-foot a { display: inline-flex; align-items: center; min-height: 44px; font-size: 14px; font-weight: 600; color: var(--brand); }
   /* the replay only hides steps once the script runs, so the card is complete without it */
   .proof.anim [data-step] { opacity: 0; transform: translateY(4px); transition: opacity 0.35s ease-out, transform 0.35s ease-out; }
@@ -362,12 +362,76 @@
   .fig img { display: block; width: 100%; height: auto; border: 1px solid var(--border); border-radius: 10px; background: #fff; }
   .fig figcaption { margin-top: 8px; font-size: 14px; color: var(--muted); }
   .level { position: relative; padding-left: 52px; }
-  .lvl { position: absolute; left: 0; top: clamp(36px, 4.5vw, 64px); width: 36px; height: 36px; border-radius: 50%; background: var(--brand); color: #fff; display: flex; align-items: center; justify-content: center; font: 600 16px var(--mono); }
+  .lvl { position: absolute; left: 0; top: clamp(34px, 4.4vw, 62px); width: 38px; height: 38px; border-radius: 10px; background: var(--brand); color: #fff; display: flex; align-items: center; justify-content: center; font: 600 16px var(--mono); }
   @media (max-width: 560px) { .level { padding-left: 0; } .lvl { position: static; margin-bottom: 10px; } }
   .code { display: flex; align-items: stretch; margin: 8px 0; max-width: 900px; background: #0F2240; border-radius: 8px; overflow: hidden; }
   .code pre { flex: 1; min-width: 0; margin: 0; padding: 12px 14px; color: #DCE5F5; overflow-x: auto; font: 13px/1.5 var(--mono); }
-  .copy { flex: none; align-self: center; margin: 0 6px; min-height: 32px; padding: 0 12px; border-radius: 6px; border: 1px solid rgba(185,203,238,0.45); background: transparent; color: #fff; font: 600 12px var(--sans); cursor: pointer; }
+  .copy { flex: none; align-self: center; margin: 0 6px; width: 40px; height: 40px; padding: 0; display: inline-flex; align-items: center; justify-content: center; border: 0; border-radius: 8px; background: transparent; color: #9FB3D6; cursor: pointer; }
+  @media (hover: hover) { .copy:hover { color: #fff; background: rgba(255,255,255,0.08); } }
+  .copy.ok { color: #7FD69A; }
   .copy:focus-visible { outline: 3px solid var(--brand-edge); outline-offset: 2px; }
+
+  /* ---------- copy v2 ---------- */
+  .acc { display: block; color: var(--brand); }
+  .hero .acc, .band .acc { color: var(--brand-edge); }
+  .eyebrow { display: block; margin-bottom: 8px; font: 600 12px var(--mono); letter-spacing: 0.12em; color: var(--brand); }
+  .proof-lines li { display: block; }
+  .pill-sm { padding: 3px 8px; font-size: 11px; }
+  .zone-say { font-size: clamp(20px, 2vw, 26px); font-weight: 600; }
+  .GREEN .zone-say { color: var(--green-text); } .YELLOW .zone-say { color: var(--yellow-text); } .RED .zone-say { color: var(--red-text); }
+  .demo-note { margin: 10px 0 0; font-size: 14px; color: var(--hero-sub); }
+  .ev-split { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 12px; }
+  .ev-split .ev-big { justify-content: center; padding: 28px; }
+  .ev-split .ev-big .num { font-size: clamp(72px, 9vw, 128px); }
+  .ev-side { display: grid; gap: 12px; }
+  @media (max-width: 700px) { .ev-split { grid-template-columns: minmax(0, 1fr); } }
+  .honest { margin: 16px 0 0; font-size: 16px; line-height: 1.6; color: var(--body); }
+  .honest a { font-weight: 600; white-space: nowrap; }
+  .mortar { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; }
+  @media (max-width: 860px) { .mortar { grid-template-columns: minmax(0, 1fr); } }
+  .rules-panel { background: #0F2240; color: #DCE5F5; border-radius: 12px; padding: 20px; }
+  .rules-panel h3 { margin: 0 0 12px; font-size: 18px; color: #fff; }
+  .rules-panel ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 10px; font-size: 15px; line-height: 1.5; }
+  .rules-panel li { display: flex; gap: 8px; align-items: baseline; }
+  .rules-panel li:not(:has(.z))::before { content: "\2014"; color: var(--brand-edge); }
+  .tech-col { display: grid; gap: 12px; }
+  .cp-n { font-size: 13px; font-weight: 600; color: var(--brand); }
+  .cards3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+  @media (max-width: 900px) { .cards3 { grid-template-columns: minmax(0, 1fr); } }
+  .card3 { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 18px; }
+  .card3 b { font-size: 17px; }
+  .card3 p { margin: 8px 0 0; font-size: 15px; line-height: 1.55; color: var(--body); }
+  .card3.warn { border: 1.5px dashed var(--yellow-edge); }
+  .agent-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+  @media (max-width: 900px) { .agent-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .rules-table th.mono { font-size: 12px; letter-spacing: 0.04em; white-space: nowrap; }
+  .closing { text-align: center; }
+  .closing-line { margin: 0 0 18px; font-size: clamp(28px, 3.4vw, 44px); font-weight: 700; letter-spacing: -0.02em; }
+  .btn-cta { display: inline-flex; align-items: center; min-height: 48px; padding: 0 24px; border-radius: 999px; background: var(--brand); color: #fff; font-weight: 600; text-decoration: none; }
+  .lvl svg { display: block; }
+  .top-icons { display: flex; align-items: center; gap: 2px; margin-right: -10px; flex: none; }
+  .topbar .toplink { width: 44px; height: 44px; margin: 0; padding: 0; border-radius: 8px; color: var(--hero-body); }
+  @media (hover: hover) { .topbar .toplink:hover { color: #fff; background: rgba(255,255,255,0.08); } }
+  @media (max-width: 760px) { .top-icons { margin-left: auto; } }
+  .foot-lic { font-size: 14px; color: var(--muted); }
+
+  /* ---------- how it works: five checks as a pipeline ---------- */
+  .pipe { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
+  .pipe li { position: relative; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 6px; }
+  .pipe li:not(:last-child)::after { content: ""; position: absolute; top: 36px; left: calc(50% + 48px); right: calc(-50% + 48px); border-top: 2px dashed var(--tick); opacity: 0.7; }
+  .pp-dot { width: 72px; height: 72px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 8px;
+    background: var(--surface); border: 1px solid var(--border); color: var(--brand); box-shadow: 0 6px 18px rgba(19,41,75,0.08); }
+  .pp-n { font-size: 12px; font-weight: 600; color: var(--brand); }
+  .pipe b { font-size: 17px; }
+  .pp-sub { font-size: 14px; line-height: 1.4; color: var(--muted); }
+  .pipe .key .pp-dot { border: 2px solid var(--brand); box-shadow: 0 0 0 6px rgba(36,87,197,0.10), 0 6px 18px rgba(19,41,75,0.10); }
+  .pipe .key b { color: var(--brand); }
+  @media (max-width: 760px) {
+    .pipe { grid-template-columns: minmax(0, 1fr); gap: 18px; }
+    .pipe li { display: grid; grid-template-columns: 60px 1fr; grid-template-rows: auto auto auto; column-gap: 14px; row-gap: 2px; text-align: left; align-items: start; }
+    .pp-dot { grid-row: 1 / span 3; width: 56px; height: 56px; margin: 0; }
+    .pipe li:not(:last-child)::after { top: 62px; left: 28px; right: auto; bottom: -16px; border-top: 0; border-left: 2px dashed var(--tick); }
+  }
 </style>
 </head>
 <body>
@@ -375,70 +439,75 @@
   <div class="wrap">
     <a class="brand" href="#home"><span class="logo" aria-hidden="true"><i></i><i></i><i></i></span>Drystone</a>
     <nav class="tabs" aria-label="Sections"><a href="#home" data-view="home">Home</a><a href="#how" data-view="how">How it works</a><a href="#demo" data-view="demo">Demo</a><a href="#evidence" data-view="evidence">Evidence</a><a href="#setup" data-view="setup">Setup</a></nav>
-    <a class="toplink" data-link="repo" href="#" aria-label="GitHub repository" title="GitHub repository"><svg viewBox="0 0 16 16" width="20" height="20" aria-hidden="true" focusable="false"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg></a>
+    <div class="top-icons"><a class="toplink" data-link="video" href="#" aria-label="Video" title="Video"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M10 9.2v5.6l4.6-2.8z" fill="currentColor"/></svg></a><a class="toplink" data-link="repo" href="#" aria-label="GitHub repository" title="GitHub repository"><svg viewBox="0 0 16 16" width="20" height="20" aria-hidden="true" focusable="false"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg></a></div>
   </div>
 </header>
-<div class="view" id="view-home" data-title="Drystone">
+<div class="view" id="view-home" data-title="Drystone · Every stack is a drystone wall">
 <div class="hero">
   <div class="wrap">
     <section class="hero-main">
       <div class="hero-copy">
-        <h1>Know before you stack.</h1>
-        <p class="hero-sub">No mortar. Just placement.</p>
-        <p class="hero-body">A camera reads the box stack, a physics simulation estimates the chance of a fall, and fixed rules decide.</p>
-        <div class="hero-cta"><a class="btn-solid" href="#demo">Try the demo</a><a class="btn-line" data-link="repo" href="#">View on GitHub</a></div>
+        <h1>Every stack is a drystone wall.</h1>
+        <p class="hero-sub">Nothing holds it but placement.</p>
+        <p class="hero-body">Drystone checks where the next box goes, then tells you to place it, ask, or move it.</p>
+        <div class="hero-cta"><a class="btn-solid" href="#demo">Try the demo</a><a class="btn-line" data-link="report" href="#">View report</a></div>
       </div>
       <figure class="proof" id="proof" aria-label="Replay of a real check: sample s1, next box at +16 cm">
-        <div class="proof-cmd"><span id="proof-cmd">check &middot; sample s1 &middot; next box +16 cm</span><span class="proof-tag">real check</span></div>
+        <div class="proof-cmd"><span id="proof-cmd">next box &rarr; +16 cm</span><span class="proof-tag">real check</span></div>
         <canvas id="proof-view" width="880" height="320" aria-hidden="true"></canvas>
-        <div class="proof-head RED" id="proof-head"><span class="proof-zone" id="proof-zone" data-step>RED</span><span class="pill" id="proof-action" data-step>REJECT</span><span class="proof-p">P(fall) <b id="proof-p">73%</b></span></div>
+        <div class="proof-head RED" id="proof-head"><span class="proof-zone" id="proof-zone" data-step>RED &middot; move it</span><span class="pill pill-sm" id="proof-action" data-step>REJECT</span><span class="proof-p">P(fall) <b id="proof-p">73%</b></span></div>
         <ol class="proof-lines" id="proof-lines"></ol>
         <div class="proof-safe" id="proof-safe" data-step></div>
-        <figcaption class="proof-foot"><span>Replay of a real check &middot; OpenCV 5 &middot; MuJoCo</span><a href="#demo" id="proof-run">Run it yourself &rarr;</a></figcaption>
+        <figcaption class="proof-foot"><span>Replay of a real check &middot; OpenCV 5 &middot; MuJoCo</span></figcaption>
       </figure>
     </section>
     <section class="problem" aria-labelledby="h-problem">
       <span class="problem-label">THE PROBLEM</span>
-      <h2 id="h-problem">Every stack is a judgement call,<span>made by eye.</span></h2>
-      <p class="problem-lead">How far can the next box hang over the one below? When boxes are stacked by hand, a person
-        answers that by eye, and a wrong guess only shows when the stack comes down.</p>
+      <h2 id="h-problem">Stacks are still built by eye.<span>One guess per box.</span></h2>
+      <p class="problem-lead">Boxes have no mortar either. Whether a stack stays up depends on where each box lands, and that call is
+        usually made in a second, by eye, with the next box already in hand.</p>
       <ul class="stats">
-        <li><span class="stat-num">12,100</span><p>injuries &ldquo;struck by object or equipment&rdquo;, of 99,800 with days
-          away from work in US transportation and warehousing (2020)</p></li>
-        <li><span class="stat-num">65</span><p>deaths from &ldquo;contact with objects and equipment&rdquo; in the same
-          industries in 2020 (62&ndash;75 a year since 2016)</p></li>
-        <li><span class="stat-num">&gt;7 ft</span><p>of stacked boxes collapsed in a store and trapped a worker at the waist
-          (Oregon OSHA, Nov 2025)</p></li>
+        <li><span class="stat-num">99,800</span><p>nonfatal cases with days away from work in US transportation and warehousing (2020)</p></li>
+        <li><span class="stat-num">12,100</span><p>of them &ldquo;struck by object or equipment&rdquo;, a category broader than falling stacks</p></li>
+        <li><span class="stat-num">65</span><p>fatal injuries from &ldquo;contact with objects and equipment&rdquo; in 2020 (62&ndash;75 a year, 2016&ndash;2020)</p></li>
       </ul>
-      <p class="problem-note">Sources:
-        <a href="https://www.bls.gov/iif/snapshots/isn-transportation-and-warehousing-2016-20.htm" target="_blank" rel="noopener">US BLS, transportation and warehousing 2016&ndash;20</a> &middot;
-        <a href="https://osha.oregon.gov/pubs/newsletters/resource/2025/Pages/2511-unstable-loads.aspx" target="_blank" rel="noopener">Oregon OSHA, unstable loads (Nov 2025)</a>.
-        BLS counts all objects and equipment, not only falling stacks.</p>
+      <p class="problem-note">Source: <a href="https://www.bls.gov/iif/snapshots/isn-transportation-and-warehousing-2016-20.htm" target="_blank" rel="noopener">U.S. Bureau of Labor Statistics, Injuries, illnesses, and fatalities in transportation and warehousing, 2016&ndash;20</a>.</p>
     </section>
   </div>
 </div>
 <div class="wrap">
   <section class="block" aria-labelledby="h-ev-short">
-    <h2 id="h-ev-short">Locked evaluation, 25 real trials</h2>
-    <p class="block-lead">Settings and pass criteria were locked in git before any data. Every outcome was confirmed by the person at the stack.</p>
-    <div class="ev-grid">
-      <div class="ev ev-big"><span class="num g">0/8</span><span><b>GREEN</b> trials fell</span></div>
-      <div class="ev"><span class="num r">8/8</span><span><b>RED</b> trials fell</span></div>
-      <div class="ev"><span class="num">25/25</span><span><b>Check after placement</b> agreed with the outcome</span></div>
-      <div class="ev gap"><span class="num y">4/9</span><span><b>Known gap:</b> YELLOW trials fell more often than predicted</span></div>
+    <h2 id="h-ev-short">Tested on 25 real stacks.<span class="acc">Real boxes. Real falls.</span></h2>
+    <div class="ev-split">
+      <div class="ev ev-big"><span class="num g">0/8</span><span><b>GREEN</b> placements that fell</span></div>
+      <div class="ev-side">
+        <div class="ev"><span class="num r">8/8</span><span><b>RED</b> placements that fell</span></div>
+        <div class="ev"><span class="num">25/25</span><span>placements checked correctly afterwards</span></div>
+      </div>
     </div>
-    <p class="ev-note">One locked criterion failed: 12 boxes fell where the model predicted 8.5 (90% interval 6&ndash;11). We report it and did not tune on the evaluation data.</p>
-    <a class="more" href="#evidence">Full evidence &rarr;</a>
+    <p class="honest">One miss we report up front: <b>4 of 9 YELLOW placements fell.</b> <a href="#evidence">Where the wall cracks &rarr;</a></p>
+    <p class="fine mono">Protocol locked in git (8a953e4) before the first trial &middot; numbers from data/eval_report/</p>
   </section>
 
   <section class="block" aria-labelledby="h-gate">
-    <h2 id="h-gate">The rules are the gate, not the model.</h2>
-    <p class="block-lead">Fixed rules in one file (<code>drystone_core.py</code>) turn P(fall) into an action. No language model makes a decision. The same code runs on the laptop and on AWS Lambda.</p>
-    <div class="tech-grid">
-      <div class="tech"><span class="tech-k">OpenCV 5</span><p>80 mm ArUco markers (DICT_4X4_50), sub-pixel corners, <code>solvePnPGeneric</code>. ChArUco calibration: 61 views, RMS 0.37 px.</p></div>
-      <div class="tech"><span class="tech-k">MuJoCo</span><p>Monte Carlo, 150&ndash;600 simulated drops with 1 cm position and 2 cm load uncertainty; more runs near a zone line.</p></div>
-      <div class="tech"><span class="tech-k">AWS Lambda + ECR + CloudWatch</span><p>Container image (2048 MB, 60 s) tagged with the git commit; supervisor choices are one JSON line in CloudWatch Logs.</p></div>
-      <div class="tech"><span class="tech-k">Budget alarm</span><p>A zero-spend budget alarm sends an email at the first cent. 60 GET and 20 POST a minute per IP.</p></div>
+    <span class="eyebrow">BUILT WITH OPENCV 5 + AWS</span>
+    <h2 id="h-gate">No mortar. No black box.<span class="acc">Every joint is visible.</span></h2>
+    <div class="mortar">
+      <div class="rules-panel">
+        <h3>Fixed rules decide</h3>
+        <ul>
+          <li><span class="z z-g">GREEN</span> Under 10%: place it</li>
+          <li><span class="z z-y">YELLOW</span> 10&ndash;50%: a supervisor approves, takes the safer spot, or rejects</li>
+          <li><span class="z z-r">RED</span> Over 50%: refuse and suggest a safer spot</li>
+          <li>Overrides need a name and a reason, and never change the decision</li>
+          <li>No language model makes the safety call</li>
+        </ul>
+      </div>
+      <div class="tech-col">
+        <div class="tech"><span class="tech-k">OpenCV 5</span><p>Calibrated camera, ArUco markers, pose averaged over 10 frames.</p></div>
+        <div class="tech"><span class="tech-k">MuJoCo</span><p>150 to 600 simulated placements per check, with 1 cm position and 2 cm load uncertainty.</p></div>
+        <div class="tech"><span class="tech-k">AWS Lambda</span><p>Same decision code as the laptop agent. Supervisor choices logged in CloudWatch.</p></div>
+      </div>
     </div>
     <p class="facts mono">53 tests &middot; 25 locked trials &middot; every decision logged</p>
   </section>
@@ -452,73 +521,61 @@
 <div class="view" id="view-how" data-title="How it works" hidden>
 <div class="band"><div class="wrap page-head">
   <span class="problem-label">HOW IT WORKS</span>
-  <h1 class="page-title">Five checkpoints between the camera and the next box.</h1>
-  <p class="page-lead">The camera measures. The simulation estimates. The rules decide. A person places every box.</p>
+  <h1 class="page-title">Five checks before the next stone.<span class="acc">One loop per box.</span></h1>
+  <p class="page-lead">A laptop camera watches the stack. For every new box, Drystone runs the same loop, and what the camera sees changes what happens next: a shifted box is re-checked, a fallen box is re-planned.</p>
 </div></div>
 <div class="wrap">
-  <section class="block" aria-label="Checkpoints">
-    <ol class="cps"><li class="cp"><span class="stage-n">1</span><b>Perceive</b><p>10 frames; 80 mm ArUco markers with sub-pixel corners; pose with <code>solvePnPGeneric</code>. A shaky reading is taken again (up to 3 times).</p></li><li class="cp"><span class="stage-n">2</span><b>Digital twin</b><p>The stack is built by contact, from the bottom box up, with the measured box sizes and weights from <code>config/boxes.json</code>.</p></li><li class="cp"><span class="stage-n">3</span><b>Simulate</b><p>MuJoCo Monte Carlo: 150&ndash;600 drops of the next box with 1 cm position and 2 cm load uncertainty.</p></li><li class="cp"><span class="stage-n">4</span><b>Decide</b><p>GREEN under 10% guides, YELLOW 10&ndash;50% asks a supervisor, RED over 50% rejects and suggests a safer spot.</p></li><li class="cp"><span class="stage-n">5</span><b>Check</b><p>After placement the camera reads the stack again: OK, OFF_PLAN (more than 1.5 cm off) or FELL.</p></li></ol>
-  </section>
-
-  <section class="block" aria-labelledby="h-camera">
-    <h2 id="h-camera">What the camera reads</h2>
-    <div class="seg" role="group" aria-label="Photo view">
-      <button type="button" class="seg-b" data-cam="photo" aria-pressed="false">What you see</button>
-      <button type="button" class="seg-b" data-cam="read" aria-pressed="true">What the camera reads</button>
-    </div>
-    <div class="cam"><canvas id="cam-view" width="1280" height="720" aria-label="Sample s2 with and without the camera reading"></canvas></div>
-    <p class="cam-cap" id="cam-cap"></p>
+  <section class="block" aria-label="Five checks">
+    <ol class="pipe"><li class="pp"><span class="pp-dot"><svg viewBox="0 0 100 100" width="48" height="48" role="img" aria-label="OpenCV" focusable="false"><circle cx="50" cy="25" r="17" fill="none" stroke="#FF1A1A" stroke-width="14" stroke-dasharray="84.86 21.96" transform="rotate(127.0 50 25)"/><circle cx="25" cy="71" r="17" fill="none" stroke="#6CCB35" stroke-width="14" stroke-dasharray="84.86 21.96" transform="rotate(6.0 25 71)"/><circle cx="75" cy="71" r="17" fill="none" stroke="#0A55D6" stroke-width="14" stroke-dasharray="84.86 21.96" transform="rotate(-112.0 75 71)"/></svg></span><span class="pp-n mono">01</span><b>Perceive</b><span class="pp-sub">OpenCV 5, 10 frames</span></li><li class="pp"><span class="pp-dot"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5"/></svg></span><span class="pp-n mono">02</span><b>Twin</b><span class="pp-sub">Marker poses + box sizes</span></li><li class="pp"><span class="pp-dot"><svg viewBox="0 0 100 100" width="40" height="40" role="img" aria-label="MuJoCo" focusable="false"><defs><linearGradient id="mjg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1E46A8"/><stop offset="1" stop-color="#0B1E52"/></linearGradient></defs><rect x="2" y="2" width="96" height="96" rx="20" fill="url(#mjg)"/><path d="M20 79 L31 21 H43 L50 49 L57 21 H69 L80 79 H69 L62 41 L50 82 L38 41 L31 79 Z" fill="#fff"/></svg></span><span class="pp-n mono">03</span><b>Simulate</b><span class="pp-sub">150&ndash;600 MuJoCo placements</span></li><li class="pp key"><span class="pp-dot"><svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true" focusable="false"><rect x="7.5" y="2.5" width="9" height="19" rx="4.5" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="7" r="1.9" fill="#C93A25"/><circle cx="12" cy="12" r="1.9" fill="#E2AE1C"/><circle cx="12" cy="17" r="1.9" fill="#267D47"/></svg></span><span class="pp-n mono">04</span><b>Decide</b><span class="pp-sub">place it &middot; ask &middot; move it</span></li><li class="pp"><span class="pp-dot"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.7 2.7L16 9.8"/></svg></span><span class="pp-n mono">05</span><b>Check</b><span class="pp-sub">OK &middot; OFF_PLAN &middot; FELL</span></li></ol>
   </section>
 
   <section class="block" aria-labelledby="h-red">
-    <h2 id="h-red">RED is not the end. Get a safer spot.</h2>
-    <div class="two">
-      <div>
-        <p class="block-lead">A suggested spot must be green where it is <em>and</em> 1 cm further out, because real placements landed 0.0&ndash;1.3 cm from the plan. A real trace from the final practice (18 Oct, decision on Lambda):</p>
-        <pre class="trace-box"><code>150 simulations: P(fall) = 93% +- 4%
-not green -&gt; searching the nearest safe position
-try +12 cm (+41%): P = 15%
-try +11 cm (+38%): P = 12%
-try +10 cm (+34%): P = 4%, but 1 cm further out (+11 cm P = 12%) is not green -&gt; no margin, keep looking
-try +9 cm (+31%): P = 1%; 1 cm further out (+10 cm P = 4%) also green -&gt; suggestion</code></pre>
-      </div>
-      <div>
-        <p class="block-lead">If a box falls anyway, the check sees it on the floor and the agent plans it again. The final scene of the practice:</p>
-        <ol class="flow">
-          <li><span class="z z-r">RED</span> 93% &rarr; override (name and reason logged)</li>
-          <li>The box fell &rarr; check: <b>FELL</b></li>
-          <li>&ldquo;Pick it up&rdquo; &rarr; the same box is planned again</li>
-          <li><span class="z z-r">RED</span> again &rarr; suggestion +9 cm</li>
-          <li>Check <b>OK</b> (&minus;0.3 cm), stack <span class="z z-g">GREEN</span> 1%</li>
-        </ol>
-      </div>
+    <span class="eyebrow">AFTER A RED</span>
+    <h2 id="h-red">RED is a detour, not a dead end.<span class="acc">Not +16 cm. Try +10.</span></h2>
+    <p class="block-lead">Every RED comes with the nearest safer spot. Margin, overrides and what happens after a fall are rules MARGIN, OVERRIDE, NOT VISIBLE and FELL in the table below.</p>
+  </section>
+
+  <section class="block" aria-labelledby="h-camera">
+    <h2 id="h-camera">You see boxes.<span class="acc">Drystone sees a wall.</span></h2>
+    <div class="seg" role="group" aria-label="Photo view">
+      <button type="button" class="seg-b" data-cam="photo" aria-pressed="false">Photo &middot; what you see</button>
+      <button type="button" class="seg-b" data-cam="read" aria-pressed="true">Twin &middot; what Drystone reads</button>
     </div>
+    <div class="cam"><canvas id="cam-view" width="1280" height="720" aria-label="Sample s2: the photo, or the photo with the markers and the digital twin"></canvas></div>
+    <p class="cam-cap">Each 80 mm marker gives a box&rsquo;s position and rotation. With the measured box sizes, that is enough to rebuild the stack and test the next box before anyone lifts it.</p>
+    <p class="fine" id="cam-cap"></p>
   </section>
 
   <section class="block" aria-labelledby="h-rules">
-    <h2 id="h-rules">Decision rules</h2>
-    <div class="table-wrap"><table class="rules-table"><thead><tr><th scope="col">Situation</th><th scope="col">When</th><th scope="col">What the agent does</th></tr></thead>
-    <tbody><tr><th scope="row"><span class="z z-g">GREEN</span></th><td>P(fall) under 10%</td><td>GUIDE: the box goes in the outline, no approval needed</td></tr><tr><th scope="row"><span class="z z-y">YELLOW</span></th><td>P(fall) 10&ndash;50%</td><td>ASK SUPERVISOR: approve, use the suggestion, or reject</td></tr><tr><th scope="row"><span class="z z-r">RED</span></th><td>P(fall) over 50%</td><td>REJECT: suggest the nearest safe spot</td></tr><tr><th scope="row">Near a zone line</th><td>still unsure after more simulations</td><td>takes the safer zone</td></tr><tr><th scope="row">Suggestion margin</th><td>every suggested spot</td><td>green there and 1 cm further out</td></tr><tr><th scope="row">Going on after RED</th><td>override</td><td>needs a name (2&ndash;60 characters) and a reason (5&ndash;300); logged, never changes the risk</td></tr><tr><th scope="row">Setup gate (evaluation mode)</th><td>a setup box missing, or more than 1.5 cm from its planned shift</td><td>refuses to decide and says what to fix</td></tr><tr><th scope="row">Placed box off the plan</th><td>more than 1.5 cm</td><td>OFF_PLAN: risk computed again, warning if not green</td></tr><tr><th scope="row">Box on the floor next to the stack</th><td>after placement</td><td>FELL: pick it up, the same box is planned again</td></tr><tr><th scope="row">Box not visible, stack intact</th><td>after placement</td><td>asks the person: f = fell out of view, p = not placed yet</td></tr></tbody></table></div>
+    <h2 id="h-rules">Ten rules, written as code.</h2>
+    <p class="block-lead">Physics gives a probability. These rules turn it into an action, the same way every time.</p>
+    <div class="table-wrap"><table class="rules-table"><thead><tr><th scope="col">Rule</th><th scope="col">When</th><th scope="col">What happens</th></tr></thead>
+    <tbody><tr><th scope="row" class="mono"><span class="z z-g">GREEN</span></th><td>P(fall) under 10%</td><td>Place it: guide the box in</td></tr><tr><th scope="row" class="mono"><span class="z z-y">YELLOW</span></th><td>P(fall) 10&ndash;50%</td><td>Ask: a supervisor approves, takes the safer spot, or rejects</td></tr><tr><th scope="row" class="mono"><span class="z z-r">RED</span></th><td>P(fall) over 50%</td><td>Move it: refuse and suggest a safer spot</td></tr><tr><th scope="row" class="mono">MARGIN</th><td>Every suggested spot</td><td>Must stay GREEN 1 cm further out</td></tr><tr><th scope="row" class="mono">MORE SIMS</th><td>Near 10% or 50%</td><td>Simulate more (150 &rarr; 300 &rarr; 600); if still unclear, take the safer zone</td></tr><tr><th scope="row" class="mono">OVERRIDE</th><td>Going ahead on RED</td><td>Name (2&ndash;60 characters) and reason (5&ndash;300 characters), logged; the zone never changes</td></tr><tr><th scope="row" class="mono">RETAKE</th><td>Base marker not visible, markers change between frames, a box jitters more than 1 cm or is turned more than 12&deg;</td><td>Up to 3 fresh readings, then ask the person</td></tr><tr><th scope="row" class="mono">NOT VISIBLE</th><td>Placed box not seen, stack below intact</td><td>Ask: fell, or not placed yet?</td></tr><tr><th scope="row" class="mono">FELL</th><td>Box gone after placement</td><td>Pick it up, plan the same box again</td></tr><tr><th scope="row" class="mono">SETUP GATE</th><td>Evaluation mode, setup off by more than 1.5 cm</td><td>Refuse until fixed</td></tr></tbody></table></div>
   </section>
 
   <section class="block" aria-labelledby="h-diagrams">
-    <h2 id="h-diagrams">Architecture and agent loop</h2>
-    <figure class="fig"><img src="img/architecture.png" alt="Drystone system architecture: laptop agent and judges' page call one AWS Lambda function behind a Function URL; image in Amazon ECR; logs in CloudWatch" loading="lazy" width="1920" height="1080"><figcaption>Architecture: the laptop agent and this page call the same Lambda function.</figcaption></figure>
-    <figure class="fig"><img src="img/agent_loop.png" alt="Drystone agent loop: read the stack, decide, guide or ask or reject, place, check, and the failure branches" loading="lazy" width="1920" height="1080"><figcaption>The agent loop with its failure branches.</figcaption></figure>
+    <h2 id="h-diagrams">The whole system, on one page.</h2>
+    <figure class="fig"><img src="img/architecture.png" alt="Drystone system architecture: the laptop agent with OpenCV 5, AWS Lambda with the same decision code, CloudWatch logs and a zero-spend budget alarm" loading="lazy" width="1920" height="1080"><figcaption>Laptop agent with OpenCV 5, AWS Lambda running the same decision code, CloudWatch logs and a zero-spend budget alarm.</figcaption></figure>
+    <figure class="fig"><img src="img/agent_loop.png" alt="Drystone agent loop: perceive, twin, simulate, decide, act, check, and the branches when perception fails" loading="lazy" width="1920" height="1080"><figcaption>Perceive, twin, simulate, decide, act, check, and what happens when perception fails.</figcaption></figure>
+  </section>
+
+  <section class="block closing" aria-label="Try it">
+    <p class="closing-line">Place it once. Place it right.</p>
+    <a class="btn-cta" href="#demo">Try the demo &rarr;</a>
   </section>
 </div>
 </div>
 <div class="view" id="view-demo" data-title="Demo" hidden>
 <div class="hero hero-demo"><div class="wrap page-head">
   <span class="problem-label">DEMO</span>
-  <h1 class="page-title">Run a real check on a real photo.</h1>
-  <p class="page-lead">Three photos from our calibrated webcam. Every check runs OpenCV and MuJoCo on AWS Lambda. The first run can take ~10 s.</p>
+  <h1 class="page-title">Try a placement.<span class="acc">No camera needed.</span></h1>
+  <p class="page-lead">Pick a real photo from our test stack, choose where the next box goes, and the same code that runs the laptop agent decides, live on AWS Lambda.</p>
+  <p class="demo-note">The first check can take ~10 s while the server wakes up. Supervisor choices are logged without your IP address.</p>
 </div></div>
 <main class="wrap">
   <section class="try" aria-labelledby="h-try">
     <div class="try-head">
-      <h2 id="h-try">Try it</h2>
-      <span>Pick a photo, then tap a spot on the ruler.</span>
+      <h2 id="h-try" class="sr">Try a placement</h2>
     </div>
     <div class="try-grid">
       <div class="card card-left" id="left">
@@ -538,14 +595,14 @@ try +9 cm (+31%): P = 1%; 1 cm further out (+10 cm P = 4%) also green -&gt; sugg
         </div>
         <div>
           <div class="ruler-head">
-            <strong id="h-ruler">Placement ruler</strong>
-            <span>Next box, cm right of the box below</span>
+            <strong id="h-ruler">Where should the next box go?</strong>
+            <span>cm to the right of the box below</span>
           </div>
           <div class="ruler-box">
             <div class="ruler" id="ruler" aria-labelledby="h-ruler"></div>
           </div>
-          <div class="stepper" role="group" aria-label="Fine-tune the shift">
-            <span class="lbl">Fine-tune:</span>
+          <div class="stepper" role="group" aria-label="Or pick any shift">
+            <span class="lbl">Or pick any shift</span>
             <button type="button" class="sbtn" id="minus" aria-label="1 cm left">&minus;</button>
             <span class="sval" id="shift-value" aria-live="polite">0 cm</span>
             <button type="button" class="sbtn" id="plus" aria-label="1 cm right">+</button>
@@ -553,9 +610,9 @@ try +9 cm (+31%): P = 1%; 1 cm further out (+10 cm P = 4%) also green -&gt; sugg
           </div>
         </div>
         <div class="legend">
-          <span><i style="background:var(--green)"></i><b>GREEN</b> &lt;10% &middot; guide</span>
-          <span><i style="background:var(--yellow)"></i><b>YELLOW</b> 10&ndash;50% &middot; ask supervisor</span>
-          <span><i style="background:var(--red)"></i><b>RED</b> &gt;50% &middot; reject</span>
+          <span><i style="background:var(--green)"></i><b>GREEN</b> &lt;10% &middot; place it</span>
+          <span><i style="background:var(--yellow)"></i><b>YELLOW</b> 10&ndash;50% &middot; ask</span>
+          <span><i style="background:var(--red)"></i><b>RED</b> &gt;50% &middot; move it</span>
         </div>
       </div>
 
@@ -578,99 +635,83 @@ try +9 cm (+31%): P = 1%; 1 cm further out (+10 cm P = 4%) also green -&gt; sugg
 <div class="view" id="view-evidence" data-title="Evidence" hidden>
 <div class="band"><div class="wrap page-head">
   <span class="problem-label">EVIDENCE</span>
-  <h1 class="page-title">Locked evaluation, 25 new trials.</h1>
-  <p class="page-lead">Protocol locked in git before any data (commit <code>8a953e4</code>): 25 pre-set trials in a shuffled order, settings frozen, every outcome confirmed by the worker. All 25 ran on 18 Oct in 26 minutes.</p>
+  <h1 class="page-title">25 real stacks.<span class="acc">Locked before the first box moved.</span></h1>
+  <p class="page-lead">The test plan, all 25 setups and the pass criteria went into git before any trial ran (commit 8a953e4). We ran all 25 and report every result.</p>
 </div></div>
 <div class="wrap">
   <section class="block" aria-labelledby="h-crit">
-    <div class="verdict-banner"><b>Verdict: FAIL</b> under the locked criteria, because of C2b: one fall more than the upper end of the interval (z = 1.96). The model under-predicts falls. Four of five criteria passed.</div>
-    <h2 id="h-crit">Locked criteria</h2>
-    <div class="table-wrap"><table><thead><tr><th scope="col">Criterion (locked)</th><th scope="col">Result</th><th scope="col">Target</th><th scope="col"></th></tr></thead><tbody><tr><th scope="row">C1 falls in the GREEN zone</th><td><b>0 of 8</b> GREEN trials</td><td>0</td><td><span class="verdict v-pass">PASS</span></td></tr><tr><th scope="row">C2a accuracy on clear trials (P &lt; 10% or &gt; 70%)</th><td><b>14/14 (100%)</b></td><td>&ge; 85%</td><td><span class="verdict v-pass">PASS</span></td></tr><tr><th scope="row">C2b total falls inside the 90% interval of the predicted number</th><td><b>12 falls</b>; &Sigma;p = 8.537, sd 1.772, interval 5.62&ndash;11.45 &rarr; 6&ndash;11</td><td>inside</td><td><span class="verdict v-fail">FAIL</span></td></tr><tr><th scope="row">C3 Brier score</th><td><b>0.125</b></td><td>&le; 0.20</td><td><span class="verdict v-pass">PASS</span></td></tr><tr><th scope="row">C4 trials with an outcome</th><td><b>25 of 25</b></td><td>&ge; 20</td><td><span class="verdict v-pass">PASS</span></td></tr></tbody></table></div>
-    <p class="fine">A calibrated model with these P would see 12 or more falls only 4.7% of the time. Overall accuracy (P &ge; 50% predicts a fall), not a criterion: 84% (21/25), against 82% in Test 2.</p>
+    <h2 id="h-crit" class="sr">Locked criteria</h2>
+    <div class="table-wrap"><table><thead><tr><th scope="col">Criterion</th><th scope="col">What it asks</th><th scope="col">Result</th></tr></thead><tbody><tr><th scope="row" class="mono">C1</th><td>No GREEN placement falls</td><td>0 of 8 fell <span class="verdict v-pass">PASS</span></td></tr><tr><th scope="row" class="mono">C2a</th><td>At least 85% right on clear cases (P &lt; 10% or &gt; 70%)</td><td>14 of 14 <span class="verdict v-pass">PASS</span></td></tr><tr><th scope="row" class="mono">C2b</th><td>Total falls inside the model&rsquo;s 90% band</td><td>12 fell; 8.5 predicted (band 5.6&ndash;11.5) <span class="verdict v-fail">FAIL</span></td></tr><tr><th scope="row" class="mono">C3</th><td>Brier score at most 0.20</td><td>0.125 <span class="verdict v-pass">PASS</span></td></tr><tr><th scope="row" class="mono">C4</th><td>At least 20 valid trials</td><td>25 trials with an outcome <span class="verdict v-pass">PASS</span></td></tr></tbody></table></div>
   </section>
 
-  <section class="block" aria-labelledby="h-zones">
-    <h2 id="h-zones">By zone</h2>
-    <div class="table-wrap"><table><thead><tr><th scope="col">Zone</th><th scope="col">Trials</th><th scope="col">Falls</th><th scope="col">Fall rate</th><th scope="col">Mean P(fall)</th></tr></thead><tbody><tr><th scope="row"><span class="z z-g">GREEN</span></th><td>8</td><td>0</td><td>0%</td><td>3%</td></tr><tr><th scope="row"><span class="z z-y">YELLOW</span></th><td>9</td><td>4</td><td>44%</td><td>25%</td></tr><tr><th scope="row"><span class="z z-r">RED</span></th><td>8</td><td>8</td><td>100%</td><td>75%</td></tr></tbody></table></div>
-    <p class="fine">The check after placement agreed with the outcome the worker confirmed in 25/25 trials, and detected 12/12 falls as FELL (7/7 in the practice). Decisions on AWS Lambda: median 7.6 s, max 11.1 s.</p>
+  <section class="block" aria-labelledby="h-cracks">
+    <h2 id="h-cracks">Where the wall cracks.<span class="acc">Reported, not patched.</span></h2>
+    <div class="cards3">
+      <div class="card3 warn"><b>YELLOW is riskier than its number</b><p>4 of 9 YELLOW placements fell, while the model gave them 25% on average. With a centre-of-mass margin of +0.5 to +2.5 cm, 4 of 8 trials fell (T16, T17, T01, T25). Treat YELLOW as more dangerous than its number says.</p></div>
+      <div class="card3"><b>No quiet fixes</b><p>After the run we searched simulator settings for one that closes the gap. None did, so Drystone stays exactly as tested.</p></div>
+      <div class="card3"><b>A simple rule is just as accurate</b><p>A static tipping check also gets 84% right on these trials. Drystone&rsquo;s edge is calibration (Brier 0.125 vs 0.160), not more hits.</p></div>
+    </div>
   </section>
 
-  <section class="block" aria-labelledby="h-fails">
-    <h2 id="h-fails">Failure cases</h2>
-    <p class="block-lead">The four wrong predictions are all YELLOW trials that fell:</p>
-    <div class="table-wrap"><table><thead><tr><th scope="col">Trial</th><th scope="col">Stack</th><th scope="col">Shift</th><th scope="col">Centre-of-mass margin</th><th scope="col">P(fall)</th><th scope="col">Outcome</th></tr></thead><tbody><tr><th scope="row">T16</th><td>3 boxes, ID 1 at &minus;4.6 cm</td><td>+12 cm</td><td>+2.5 cm</td><td>14%</td><td>fell</td></tr><tr><th scope="row">T17</th><td>3 boxes, ID 1 at &minus;0.2 cm</td><td>&minus;12 cm</td><td>+2.5 cm</td><td>17%</td><td>fell</td></tr><tr><th scope="row">T01</th><td>2 boxes</td><td>+14 cm</td><td>+0.5 cm</td><td>35%</td><td>fell</td></tr><tr><th scope="row">T25</th><td>3 boxes, ID 1 at +5.2 cm</td><td>+14 cm</td><td>+0.5 cm</td><td>43%</td><td>fell</td></tr></tbody></table></div>
-    <p class="fine">Every trial with a margin of &minus;0.5 cm or less fell (8/8, all predicted RED); every trial with +3.5 cm or more stood (9/9). In between, from +0.5 to +2.5 cm, 4 of 8 fell while the model predicted 12&ndash;43%: the model ranks the risk correctly and keeps GREEN safe, but it is too optimistic in the middle band. A post-hoc check of nine other simulation settings (not used by the system) found no setting that fixes it: Brier 0.121&ndash;0.132.</p>
+  <section class="block" aria-labelledby="h-agent">
+    <h2 id="h-agent">The agent, under test.</h2>
+    <div class="agent-grid">
+      <div class="ev"><span class="num">25/25</span><span>placements checked correctly afterwards</span></div>
+      <div class="ev"><span class="num">12/12</span><span>falls detected (7/7 in rehearsal)</span></div>
+      <div class="ev"><span class="num">4</span><span>setups refused until fixed</span></div>
+      <div class="ev"><span class="num">0</span><span>retakes, 0 fallbacks</span></div>
+    </div>
   </section>
 
   <section class="block" aria-labelledby="h-limits">
-    <h2 id="h-limits">Limits &amp; responsible use</h2>
-    <div class="two">
-      <ul class="plain">
-        <li>Markers are required on every box; faded markers in dim light can be missed.</li>
-        <li>One calibration per camera and resolution; the service is calibrated for one webcam at 1280&times;720.</li>
-        <li>Three measured boxes of one type (29 &times; 17 &times; 19.4&ndash;19.6 cm, 1.0 kg, load in the middle); other boxes, uneven or soft loads are untested.</li>
-        <li>The model under-predicts falls near the edge. Treat YELLOW as more dangerous than its number says.</li>
-        <li>On the evaluation trials the simulation is no more accurate than a static centre-of-mass check (both 84%); it is better calibrated (Brier 0.125 vs 0.160).</li>
-        <li>Small samples: Test 2 has 11 counted trials; the evaluation has 25.</li>
-      </ul>
-      <ul class="plain">
-        <li>Use Drystone to support a person&rsquo;s judgement, never as the only safeguard. It is not certified for safety.</li>
-        <li>Keep people, hands and the laptop out of the direction a box can fall when testing risky placements.</li>
-        <li>Overrides exist so that a person stays in charge; they are logged with a name and a reason.</li>
-        <li>Logs and photos show people and rooms; they stay on the laptop. Published data has no photos and no names.</li>
-      </ul>
-    </div>
-    <a class="more" data-link="report" href="#">Full report, post-hoc analysis &amp; sources &rarr;</a>
+    <h2 id="h-limits">Limits and responsible use.</h2>
+    <ul class="plain">
+      <li>Tested on three identical 1 kg boxes (29 &times; 17 &times; 19.4&ndash;19.6 cm), one floor, one laptop camera.</li>
+      <li>Every box needs a printed ArUco marker.</li>
+      <li>A decision aid prototype, not a certified safety device.</li>
+      <li>Photos show boxes only, no faces.</li>
+    </ul>
+    <a class="more" data-link="report" href="#">Full report &amp; failure cases &rarr;</a>
   </section>
 </div>
 </div>
 <div class="view" id="view-setup" data-title="Setup" hidden>
 <div class="band"><div class="wrap page-head">
   <span class="problem-label">SETUP</span>
-  <h1 class="page-title">Four ways to run Drystone.</h1>
-  <p class="page-lead">Windows Command Prompt, Python 3.12, from the repository folder. One command per line.</p>
+  <h1 class="page-title">Lay the first stone.<span class="acc">Start with zero install. End with a real camera.</span></h1>
+  <p class="page-lead">Pinned versions throughout (Python 3.12, OpenCV 5.0, MuJoCo 3.15). Commands are copied from README.md and aws/README.md; Windows Command Prompt, from the repository folder, one command per line.</p>
 </div></div>
 <div class="wrap">
   <section class="block level" aria-labelledby="h-l1">
-    <span class="lvl">1</span><h2 id="h-l1">On the web, nothing to install</h2>
-    <p class="block-lead">Open the <a href="#demo">Demo</a> tab: pick a sample photo and tap a spot on the ruler. The check runs on AWS Lambda.</p>
+    <span class="lvl" role="img" aria-label="In the browser"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.7 3.8 5.7 3.8 9s-1.3 6.3-3.8 9M12 3c-2.5 2.7-3.8 5.7-3.8 9s1.3 6.3 3.8 9"/></svg></span><h2 id="h-l1">No install</h2>
+    <p class="block-lead">The Demo tab runs the full decision on AWS Lambda with three real photos.</p>
+    <a class="more" href="#demo">Open the demo &rarr;</a>
   </section>
   <section class="block level" aria-labelledby="h-l2">
-    <span class="lvl">2</span><h2 id="h-l2">On your laptop, with the sample photos</h2>
-    <p class="block-lead">Same handler as Lambda, no camera needed.</p>
-    <div class="code"><pre><code>git clone <span data-clone>&lt;repository URL&gt;</span></code></pre><button type="button" class="copy" aria-label="Copy command">Copy</button></div>
-    <div class="code"><pre><code>cd drystone</code></pre><button type="button" class="copy" aria-label="Copy command">Copy</button></div>
-    <div class="code"><pre><code>python -m venv .venv</code></pre><button type="button" class="copy" aria-label="Copy command">Copy</button></div>
-    <div class="code"><pre><code>.venv\Scripts\activate</code></pre><button type="button" class="copy" aria-label="Copy command">Copy</button></div>
-    <div class="code"><pre><code>pip install -r requirements-dev.txt</code></pre><button type="button" class="copy" aria-label="Copy command">Copy</button></div>
-    <div class="code"><pre><code>python tools/web_local.py</code></pre><button type="button" class="copy" aria-label="Copy command">Copy</button></div>
-    <p class="fine">Then open http://127.0.0.1:8000/. Run the tests with:</p>
-    <div class="code"><pre><code>python -m pytest tests -q</code></pre><button type="button" class="copy" aria-label="Copy command">Copy</button></div>
+    <span class="lvl" role="img" aria-label="On a laptop"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="4" y="5" width="16" height="11" rx="1.5"/><path d="M2 19h20"/></svg></span><h2 id="h-l2">On your laptop, with our photos</h2>
+    <p class="block-lead">Clone the repo, install, and run the same page locally (cloning is the only step not in the README).</p>
+    <div class="code"><pre><code>git clone <span data-clone>&lt;repository URL&gt;</span></code></pre><button type="button" class="copy" aria-label="Copy command" title="Copy"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="9" y="9" width="11" height="11" rx="2.5"/><path d="M15 9V6.5A2.5 2.5 0 0 0 12.5 4h-6A2.5 2.5 0 0 0 4 6.5v6A2.5 2.5 0 0 0 6.5 15H9"/></svg></button></div><div class="code"><pre><code>cd drystone</code></pre><button type="button" class="copy" aria-label="Copy command" title="Copy"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="9" y="9" width="11" height="11" rx="2.5"/><path d="M15 9V6.5A2.5 2.5 0 0 0 12.5 4h-6A2.5 2.5 0 0 0 4 6.5v6A2.5 2.5 0 0 0 6.5 15H9"/></svg></button></div><div class="code"><pre><code>python -m venv .venv</code></pre><button type="button" class="copy" aria-label="Copy command" title="Copy"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="9" y="9" width="11" height="11" rx="2.5"/><path d="M15 9V6.5A2.5 2.5 0 0 0 12.5 4h-6A2.5 2.5 0 0 0 4 6.5v6A2.5 2.5 0 0 0 6.5 15H9"/></svg></button></div><div class="code"><pre><code>.venv\Scripts\activate</code></pre><button type="button" class="copy" aria-label="Copy command" title="Copy"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="9" y="9" width="11" height="11" rx="2.5"/><path d="M15 9V6.5A2.5 2.5 0 0 0 12.5 4h-6A2.5 2.5 0 0 0 4 6.5v6A2.5 2.5 0 0 0 6.5 15H9"/></svg></button></div><div class="code"><pre><code>pip install -r requirements-dev.txt</code></pre><button type="button" class="copy" aria-label="Copy command" title="Copy"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="9" y="9" width="11" height="11" rx="2.5"/><path d="M15 9V6.5A2.5 2.5 0 0 0 12.5 4h-6A2.5 2.5 0 0 0 4 6.5v6A2.5 2.5 0 0 0 6.5 15H9"/></svg></button></div><div class="code"><pre><code>python tools/web_local.py</code></pre><button type="button" class="copy" aria-label="Copy command" title="Copy"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="9" y="9" width="11" height="11" rx="2.5"/><path d="M15 9V6.5A2.5 2.5 0 0 0 12.5 4h-6A2.5 2.5 0 0 0 4 6.5v6A2.5 2.5 0 0 0 6.5 15H9"/></svg></button></div>
+    <p class="fine">Then open http://127.0.0.1:8000/.</p>
   </section>
   <section class="block level" aria-labelledby="h-l3">
-    <span class="lvl">3</span><h2 id="h-l3">Full: webcam, real boxes and printed markers</h2>
-    <p class="block-lead">This level needs real things: cardboard boxes, a printed 80 mm ArUco marker (DICT_4X4_50, IDs 0&ndash;11) in the middle of each box&rsquo;s front face, and a webcam. Print <code>assets/opencv_marker_kalibrasi.pdf</code>, glue the ChArUco board to a flat hard board and measure the square size. List your boxes (size and weight per marker ID) in <code>config/boxes.json</code>.</p>
-    <p class="fine">Calibrate your camera; repeat until the verdict is LAYAK:</p>
-    <div class="code"><pre><code>python tools/calibrate.py --name laptop --square-mm 29.8 --auto</code></pre><button type="button" class="copy" aria-label="Copy command">Copy</button></div>
+    <span class="lvl" role="img" aria-label="With a camera"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.5"/></svg></span><h2 id="h-l3">The full agent: camera + markers</h2>
+    <p class="block-lead">You need a webcam, printed ArUco markers (DICT_4X4_50, 80 mm, IDs 0&ndash;2), a ChArUco board on something rigid and flat, and boxes listed in <code>config/boxes.json</code>. Measure what you printed. A calibration is only used if it passes the built-in quality check.</p>
+    <p class="fine">Calibrate (print <code>assets/opencv_marker_kalibrasi.pdf</code>; repeat until the verdict is LAYAK):</p>
+    <div class="code"><pre><code>python tools/calibrate.py --name laptop --square-mm 29.8 --auto</code></pre><button type="button" class="copy" aria-label="Copy command" title="Copy"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="9" y="9" width="11" height="11" rx="2.5"/><path d="M15 9V6.5A2.5 2.5 0 0 0 12.5 4h-6A2.5 2.5 0 0 0 4 6.5v6A2.5 2.5 0 0 0 6.5 15H9"/></svg></button></div>
     <p class="fine">Run the agent on the laptop:</p>
-    <div class="code"><pre><code>python tools/agent.py --calib data/camera_laptop.yaml --marker-mm 80</code></pre><button type="button" class="copy" aria-label="Copy command">Copy</button></div>
-    <p class="fine">Or with decisions on AWS Lambda (your own deployment, level 4):</p>
-    <div class="code"><pre><code>set DRYSTONE_URL=&lt;your Function URL&gt;</code></pre><button type="button" class="copy" aria-label="Copy command">Copy</button></div>
-    <div class="code"><pre><code>python tools/agent.py --calib data/camera_laptop.yaml --marker-mm 80 --aws %DRYSTONE_URL%</code></pre><button type="button" class="copy" aria-label="Copy command">Copy</button></div>
+    <div class="code"><pre><code>python tools/agent.py --calib data/camera_laptop.yaml --marker-mm 80</code></pre><button type="button" class="copy" aria-label="Copy command" title="Copy"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="9" y="9" width="11" height="11" rx="2.5"/><path d="M15 9V6.5A2.5 2.5 0 0 0 12.5 4h-6A2.5 2.5 0 0 0 4 6.5v6A2.5 2.5 0 0 0 6.5 15H9"/></svg></button></div>
+    <p class="fine">Or with decisions on your own AWS Lambda:</p>
+    <div class="code"><pre><code>set DRYSTONE_URL=&lt;your-function-url&gt;</code></pre><button type="button" class="copy" aria-label="Copy command" title="Copy"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="9" y="9" width="11" height="11" rx="2.5"/><path d="M15 9V6.5A2.5 2.5 0 0 0 12.5 4h-6A2.5 2.5 0 0 0 4 6.5v6A2.5 2.5 0 0 0 6.5 15H9"/></svg></button></div><div class="code"><pre><code>python tools/agent.py --calib data/camera_laptop.yaml --marker-mm 80 --aws %DRYSTONE_URL%</code></pre><button type="button" class="copy" aria-label="Copy command" title="Copy"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="9" y="9" width="11" height="11" rx="2.5"/><path d="M15 9V6.5A2.5 2.5 0 0 0 12.5 4h-6A2.5 2.5 0 0 0 4 6.5v6A2.5 2.5 0 0 0 6.5 15H9"/></svg></button></div>
   </section>
   <section class="block level" aria-labelledby="h-l4">
-    <span class="lvl">4</span><h2 id="h-l4">Deploy your own Lambda</h2>
-    <p class="block-lead">Container image in Amazon ECR, Lambda x86_64, 2048 MB, 60 s, Function URL. First time: create the ECR repository <code>drystone-service</code>, then create the function from the image in the console. Docker Desktop must be running.</p>
-    <div class="code"><pre><code>docker build --provenance=false -f aws/Dockerfile -t drystone-service .</code></pre><button type="button" class="copy" aria-label="Copy command">Copy</button></div>
-    <div class="code"><pre><code>for /f %i in ('aws sts get-caller-identity --query Account --output text') do set ACC=%i</code></pre><button type="button" class="copy" aria-label="Copy command">Copy</button></div>
-    <div class="code"><pre><code>for /f %i in ('git rev-parse --short HEAD') do set TAG=%i</code></pre><button type="button" class="copy" aria-label="Copy command">Copy</button></div>
-    <div class="code"><pre><code>set REPO=%ACC%.dkr.ecr.ap-southeast-1.amazonaws.com/drystone-service</code></pre><button type="button" class="copy" aria-label="Copy command">Copy</button></div>
-    <div class="code"><pre><code>aws ecr get-login-password --region ap-southeast-1 | docker login --username AWS --password-stdin %ACC%.dkr.ecr.ap-southeast-1.amazonaws.com</code></pre><button type="button" class="copy" aria-label="Copy command">Copy</button></div>
-    <div class="code"><pre><code>docker tag drystone-service:latest %REPO%:%TAG%</code></pre><button type="button" class="copy" aria-label="Copy command">Copy</button></div>
-    <div class="code"><pre><code>docker push %REPO%:%TAG%</code></pre><button type="button" class="copy" aria-label="Copy command">Copy</button></div>
-    <div class="code"><pre><code>aws lambda update-function-code --function-name drystone --image-uri %REPO%:%TAG% --region ap-southeast-1 --query LastUpdateStatus</code></pre><button type="button" class="copy" aria-label="Copy command">Copy</button></div>
-    <div class="code"><pre><code>aws lambda wait function-updated --function-name drystone --region ap-southeast-1</code></pre><button type="button" class="copy" aria-label="Copy command">Copy</button></div>
-    <p class="fine">The account is billed above the always-free quota: keep a zero-spend budget alarm on. Full notes: <code>aws/README.md</code>.</p>
+    <span class="lvl" role="img" aria-label="On AWS"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M7 18h10a4 4 0 0 0 .6-7.95A6 6 0 0 0 6.2 10.4 3.8 3.8 0 0 0 7 18z"/></svg></span><h2 id="h-l4">Your own AWS Lambda</h2>
+    <p class="block-lead">Build the container, push it to ECR, and put a Lambda Function URL in front of it. Set a budget alarm first. Full steps are in <code>aws/README.md</code>.</p>
+    <div class="code"><pre><code>docker build --provenance=false -f aws/Dockerfile -t drystone-service .</code></pre><button type="button" class="copy" aria-label="Copy command" title="Copy"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="9" y="9" width="11" height="11" rx="2.5"/><path d="M15 9V6.5A2.5 2.5 0 0 0 12.5 4h-6A2.5 2.5 0 0 0 4 6.5v6A2.5 2.5 0 0 0 6.5 15H9"/></svg></button></div><div class="code"><pre><code>set REPO=&lt;account&gt;.dkr.ecr.ap-southeast-1.amazonaws.com/drystone-service</code></pre><button type="button" class="copy" aria-label="Copy command" title="Copy"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="9" y="9" width="11" height="11" rx="2.5"/><path d="M15 9V6.5A2.5 2.5 0 0 0 12.5 4h-6A2.5 2.5 0 0 0 4 6.5v6A2.5 2.5 0 0 0 6.5 15H9"/></svg></button></div><div class="code"><pre><code>for /f %i in ('git rev-parse --short HEAD') do set TAG=%i</code></pre><button type="button" class="copy" aria-label="Copy command" title="Copy"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="9" y="9" width="11" height="11" rx="2.5"/><path d="M15 9V6.5A2.5 2.5 0 0 0 12.5 4h-6A2.5 2.5 0 0 0 4 6.5v6A2.5 2.5 0 0 0 6.5 15H9"/></svg></button></div><div class="code"><pre><code>aws ecr get-login-password --region ap-southeast-1 | docker login --username AWS --password-stdin &lt;account&gt;.dkr.ecr.ap-southeast-1.amazonaws.com</code></pre><button type="button" class="copy" aria-label="Copy command" title="Copy"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="9" y="9" width="11" height="11" rx="2.5"/><path d="M15 9V6.5A2.5 2.5 0 0 0 12.5 4h-6A2.5 2.5 0 0 0 4 6.5v6A2.5 2.5 0 0 0 6.5 15H9"/></svg></button></div><div class="code"><pre><code>docker tag drystone-service:latest %REPO%:%TAG%</code></pre><button type="button" class="copy" aria-label="Copy command" title="Copy"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="9" y="9" width="11" height="11" rx="2.5"/><path d="M15 9V6.5A2.5 2.5 0 0 0 12.5 4h-6A2.5 2.5 0 0 0 4 6.5v6A2.5 2.5 0 0 0 6.5 15H9"/></svg></button></div><div class="code"><pre><code>docker push %REPO%:%TAG%</code></pre><button type="button" class="copy" aria-label="Copy command" title="Copy"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="9" y="9" width="11" height="11" rx="2.5"/><path d="M15 9V6.5A2.5 2.5 0 0 0 12.5 4h-6A2.5 2.5 0 0 0 4 6.5v6A2.5 2.5 0 0 0 6.5 15H9"/></svg></button></div><div class="code"><pre><code>aws lambda update-function-code --function-name drystone --image-uri %REPO%:%TAG% --region ap-southeast-1 --query LastUpdateStatus</code></pre><button type="button" class="copy" aria-label="Copy command" title="Copy"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="9" y="9" width="11" height="11" rx="2.5"/><path d="M15 9V6.5A2.5 2.5 0 0 0 12.5 4h-6A2.5 2.5 0 0 0 4 6.5v6A2.5 2.5 0 0 0 6.5 15H9"/></svg></button></div><div class="code"><pre><code>aws lambda wait function-updated --function-name drystone --region ap-southeast-1</code></pre><button type="button" class="copy" aria-label="Copy command" title="Copy"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="9" y="9" width="11" height="11" rx="2.5"/><path d="M15 9V6.5A2.5 2.5 0 0 0 12.5 4h-6A2.5 2.5 0 0 0 4 6.5v6A2.5 2.5 0 0 0 6.5 15H9"/></svg></button></div>
+  </section>
+  <section class="block level" aria-labelledby="h-l5">
+    <span class="lvl" role="img" aria-label="Verify"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3l7 3v5c0 4.5-3 8.3-7 10-4-1.7-7-5.5-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg></span><h2 id="h-l5">Check our work</h2>
+    <p class="block-lead">Run the test suite, and rebuild the evaluation summary from an evaluation log. Our logs stay on our laptop (their photos show people); the published <code>data/eval_report/trials.csv</code> holds every per-trial number.</p>
+    <div class="code"><pre><code>python -m pytest tests -q</code></pre><button type="button" class="copy" aria-label="Copy command" title="Copy"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="9" y="9" width="11" height="11" rx="2.5"/><path d="M15 9V6.5A2.5 2.5 0 0 0 12.5 4h-6A2.5 2.5 0 0 0 4 6.5v6A2.5 2.5 0 0 0 6.5 15H9"/></svg></button></div><div class="code"><pre><code>python tools/eval_report.py --logs data/agent_20261018_152640/log.jsonl</code></pre><button type="button" class="copy" aria-label="Copy command" title="Copy"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="9" y="9" width="11" height="11" rx="2.5"/><path d="M15 9V6.5A2.5 2.5 0 0 0 12.5 4h-6A2.5 2.5 0 0 0 4 6.5v6A2.5 2.5 0 0 0 6.5 15H9"/></svg></button></div>
   </section>
 </div>
 </div>
@@ -678,15 +719,10 @@ try +9 cm (+31%): P = 1%; 1 cm further out (+10 cm P = 4%) also green -&gt; sugg
 <footer>
   <div class="wrap">
     <div class="foot-l">
-      <strong>Decision aid prototype, not a certified safety device.</strong>
-      <span class="mono">OpenCV 5 &middot; MuJoCo &middot; AWS Lambda</span>
-      <p class="foot-small">Decisions run on AWS Lambda with the same code as the laptop agent. Identical requests are
-        answered from a short-lived cache and marked &ldquo;cached&rdquo;. Supervisor choices are logged without your IP address.</p>
+      <strong>Drystone &middot; a decision aid prototype for box stacking, not a certified safety device.</strong>
+      <span class="mono">Built by Yasin &amp; Vincent for the OpenCV AI Competition 2026 &middot; OpenCV 5 &middot; MuJoCo &middot; AWS Lambda</span>
     </div>
-    <nav class="foot-links" aria-label="Links">
-      <a data-link="repo" href="#">GitHub repo</a>
-      <a data-link="video" href="#">Video</a>
-    </nav>
+    <span class="foot-lic">MIT License</span>
   </div>
 </footer>
 
@@ -701,7 +737,8 @@ try +9 cm (+31%): P = 1%; 1 cm further out (+10 cm P = 4%) also green -&gt; sugg
   var tok = function (n) { return css.getPropertyValue(n).trim(); };
   var ZONE = { GREEN: tok("--green"), YELLOW: tok("--yellow"), RED: tok("--red") };
   var BRAND = tok("--brand"), MARKER = tok("--brand-edge");
-  var ACTION = { GUIDE: "GUIDE", ASK_SUPERVISOR: "ASK SUPERVISOR", REJECT: "REJECT" };
+  var ACTION = { GUIDE: "GUIDE", ASK_SUPERVISOR: "ASK_SUPERVISOR", REJECT: "REJECT" };   // code, shown as a small badge
+  var SAY = { GREEN: "place it", YELLOW: "ask", RED: "move it" };                            // the zone in words
   var STAGES = [
     ["Marker detection (OpenCV)", "ArUco markers read from the photo"],
     ["Digital twin", "Stack rebuilt from the markers and the box catalog"],
@@ -821,8 +858,8 @@ try +9 cm (+31%): P = 1%; 1 cm further out (+10 cm P = 4%) also green -&gt; sugg
 
   function renderStepper() {
     var v = state.shift === null ? 0 : state.shift;
-    el("shift-value").innerHTML = signed(v) + ' cm <span class="oh">(' + signed(overhang(v)) + "% overhang)</span>";
-    el("analyze").textContent = "Check " + signed(v) + " cm";
+    el("shift-value").innerHTML = signed(v) + ' cm <span class="oh">(' + Math.abs(overhang(v)) + "% overhang)</span>";
+    el("analyze").textContent = "Check";
     var range = state.meta.offset_range_cm;
     el("minus").disabled = state.busy || v <= range[0];
     el("plus").disabled = state.busy || v >= range[1];
@@ -862,17 +899,17 @@ try +9 cm (+31%): P = 1%; 1 cm further out (+10 cm P = 4%) also green -&gt; sugg
                          signal: ctl ? ctl.signal : undefined })
       .then(function (r) {
         return r.json().catch(function () { return {}; }).then(function (j) {
-          if (r.status === 429) throw new Problem("Too many checks at once.",
-            "The demo allows a limited number of checks per minute from one network. Wait a minute, then try again.");
+          if (r.status === 429) throw new Problem("Too many checks.",
+            "Too many checks from your network this minute. Wait a moment, then try again.");
           if (!r.ok) throw new Problem("The simulator didn't answer.",
-            (j.problem ? j.problem + ". " : "") + "Nothing was decided. Your photo and spot are kept.");
+            (j.problem ? j.problem + ". " : "") + "Nothing was decided, and your photo and spot are kept.");
           return j;
         });
       }, function (e) {
         if (e && e.name === "AbortError") throw new Problem("The simulator didn't answer.",
-          "AWS Lambda took longer than " + TIMEOUT_MS / 1000 + " seconds, so nothing was decided. Your photo and spot are kept. No zone is shown until a real result comes back.");
-        throw new Problem("Can't reach the simulator.",
-          "The page could not reach AWS Lambda. Check your connection, then try again. Your photo and spot are kept.");
+          "Nothing was decided, and your photo and spot are kept.");
+        throw new Problem("The simulator didn't answer.",
+          "Nothing was decided, and your photo and spot are kept. Check your connection, then try again.");
       })
       .then(function (j) { clearTimeout(timer); return j; }, function (e) { clearTimeout(timer); throw e; });
   }
@@ -894,7 +931,7 @@ try +9 cm (+31%): P = 1%; 1 cm further out (+10 cm P = 4%) also green -&gt; sugg
     }, function (e) {
       if (id !== state.req) return;
       state.result = null; state.status = "error";
-      state.error = e instanceof Problem ? e : new Problem("The simulator didn't answer.", "Something went wrong. Try again.");
+      state.error = e instanceof Problem ? e : new Problem("The simulator didn't answer.", "Nothing was decided, and your photo and spot are kept.");
     }).then(function () {
       clearInterval(tick);
       if (id !== state.req) return;
@@ -909,16 +946,14 @@ try +9 cm (+31%): P = 1%; 1 cm further out (+10 cm P = 4%) also green -&gt; sugg
     if (state.status === "idle") {
       var yel = s && s.examples.YELLOW !== undefined ? s.examples.YELLOW : null;
       h = '<div class="pad"><span class="idle">Tap a marker on the ruler to run the check.</span>' +
-        (yel !== null ? '<span class="soft-text">Not sure where to start? The ' + signed(yel) + ' cm marker is expected to be YELLOW, ' +
-          'so a supervisor has to decide: approve, use the safer spot, or reject.</span>' +
+        (yel !== null ? '<span class="soft-text">Not sure where to start? The ' + signed(yel) + ' cm marker is expected to be YELLOW (ask): ' +
+          'a supervisor approves, takes the safer spot, or rejects.</span>' +
           '<button type="button" class="cta" data-act="try-example">Check <span class="mono">' + signed(yel) + ' cm</span></button>' : "") +
         "</div>";
     } else if (state.status === "loading") {
-      h = '<div class="pad"><span class="load-title">Running Monte Carlo on AWS Lambda…</span>' +
+      h = '<div class="pad"><span class="load-title">Simulating the next box on AWS Lambda\u2026</span>' +
         '<div class="loader" role="progressbar" aria-label="Running the check"><i></i></div>' +
-        '<span class="soft-text">Simulated drops of the next box at <span class="mono" style="color:var(--text)">' +
-        signed(state.shift) + ' cm</span>, with 1 cm placement and 2 cm load uncertainty. The first run can take ~10 s ' +
-        "while the server starts. Photos and ruler are locked until it answers.</span>" +
+        '<span class="soft-text">Up to 600 simulated placements. Photo and ruler are locked until it answers.</span>' +
         '<span class="elapsed mono" id="elapsed">0.0 s</span></div>';
     } else if (state.status === "error") {
       h = '<div class="pad"><span class="err-title">' + esc(state.error.title) + '</span><span class="err-text">' +
@@ -932,7 +967,7 @@ try +9 cm (+31%): P = 1%; 1 cm further out (+10 cm P = 4%) also green -&gt; sugg
     var r = state.result, say = "";
     if (state.status === "loading") say = "Running the check at " + signed(state.shift) + " cm.";
     else if (state.status === "error") say = state.error.title;
-    else if (state.status === "result" && r && r.ok) say = r.decision.zone + ", P(fall) " + pct(r.decision.p) + ", " + ACTION[r.decision.action] + ".";
+    else if (state.status === "result" && r && r.ok) say = r.decision.zone + ", " + SAY[r.decision.zone] + ", P(fall) " + pct(r.decision.p) + ".";
     else if (state.status === "result" && r) say = "The photo could not be read.";
     if (el("announce").textContent !== say) el("announce").textContent = say;
   }
@@ -943,8 +978,8 @@ try +9 cm (+31%): P = 1%; 1 cm further out (+10 cm P = 4%) also green -&gt; sugg
         esc(r.problem || "unknown problem") + '.</span></div>';
     }
     var d = r.decision, a = d.alternative, z = d.zone, h = "";
-    h += '<div class="zone ' + z + '"><div class="zone-row"><span class="zone-word">' + z + '</span><span class="pill">' +
-      ACTION[d.action] + "</span></div>";
+    h += '<div class="zone ' + z + '"><div class="zone-row"><span class="zone-word">' + z + '</span><span class="zone-say">' + SAY[z] +
+      '</span><span class="pill pill-sm">' + ACTION[d.action] + "</span></div>";
     h += '<div class="p-row"><span class="k">P(fall)</span><span class="p">' + pct(d.p) + '</span><span class="ci">&plusmn; ' +
       pct(d.ci) + " (95% CI, " + d.n + " runs)</span></div>";
     h += '<div class="meter" aria-hidden="true"><div class="bar"><div class="fill" style="width:' + Math.min(100, d.p * 100) +
@@ -963,7 +998,7 @@ try +9 cm (+31%): P = 1%; 1 cm further out (+10 cm P = 4%) also green -&gt; sugg
         '<button type="button" class="choice" data-act="reject">Reject</button></div></div>';
     }
     if (z === "RED") {
-      h += '<div class="sup"><span class="sup-label">Go on anyway only with a logged override. It never changes the decision.</span>';
+      h += '<div class="sup"><span class="sup-label">Going ahead anyway needs a name and a reason. It is logged, and the decision stays RED.</span>';
       if (state.overrideOpen) {
         h += '<div class="form"><label>Supervisor name (required)<input id="sup-name" maxlength="60" autocomplete="name"></label>' +
           '<label>Reason (required)<textarea id="sup-reason" maxlength="300"></textarea></label></div>' +
@@ -985,12 +1020,12 @@ try +9 cm (+31%): P = 1%; 1 cm further out (+10 cm P = 4%) also green -&gt; sugg
 
   function advice(r) {
     var d = r.decision, a = d.alternative;
-    if (d.zone === "GREEN") return "Place at " + signed(r.offset_cm) + " cm. The agent guides the box in, then checks the placement against the plan.";
-    if (!a) return "No safe spot found in the search range. Do not add a box to this stack.";
+    if (d.zone === "GREEN") return "Place it. Drystone guides the box to " + signed(r.offset_cm) + " cm, then checks it landed as planned.";
+    if (!a) return (d.zone === "RED" ? "Move it. " : "Ask a supervisor. ") + "No safe spot found in the search range. Do not add a box to this stack.";
     var sv = signed(Math.round(a.offset_cm)), far = a.p_further === null ? "" : " (" + pct(a.p_further) + " there)";
-    if (d.zone === "YELLOW") return "A supervisor approves, uses the suggestion, or rejects. Safer: " + sv +
-      " cm stays green even if the box lands 1 cm further out" + far + ".";
-    return "Refused. Try " + sv + " cm: it stays green even if the box lands 1 cm further out" + far + ".";
+    if (d.zone === "YELLOW") return "Ask a supervisor. Approve, take the safer spot (" + sv + " cm, " + pct(a.p) +
+      "), or reject. The choice is logged; the zone stays YELLOW.";
+    return "Move it. Refused at " + signed(r.offset_cm) + " cm. Try " + sv + " cm: it stays green even if the box lands 1 cm further out" + far + ".";
   }
 
   /* ---------- trace ---------- */
@@ -1123,20 +1158,16 @@ try +9 cm (+31%): P = 1%; 1 cm further out (+10 cm P = 4%) also green -&gt; sugg
     var s = state.meta.samples.filter(function (x) { return x.id === REC.sample; })[0];
     if (!s) { el("proof").hidden = true; return; }
     var d = REC.decision, a = d.alternative, pv = el("proof-view"), g = pv.getContext("2d"), img = new Image();
-    el("proof-cmd").textContent = "check \u00b7 sample " + REC.sample + " \u00b7 next box " + signed(REC.offset_cm) + " cm";
-    el("proof-zone").textContent = d.zone; el("proof-action").textContent = ACTION[d.action];
+    el("proof-cmd").textContent = "next box \u2192 " + signed(REC.offset_cm) + " cm";
+    el("proof-zone").textContent = d.zone + " \u00b7 " + SAY[d.zone]; el("proof-action").textContent = ACTION[d.action];
     el("proof-p").textContent = pct(d.p);
     var lines = [
-      ["OpenCV", "found " + REC.markers.length + " marker" + (REC.markers.length === 1 ? "" : "s") + ": ID " +
-        REC.markers.map(function (m) { return m.id; }).join(", ")],
-      ["Twin", "box ID " + REC.box_id + " at " + signed(REC.offset_cm) + " cm, " + Math.round(d.overhang_pct) + "% overhang"],
-      ["MuJoCo", d.n + " simulated drops, \u00b1 " + pct(d.ci) + " (95% CI)"]
+      "overhang: " + Math.round(d.overhang_pct) + "% of the box below",
+      d.n + " simulated placements on AWS Lambda"
     ];
-    el("proof-lines").innerHTML = lines.map(function (l) {
-      return '<li data-step><span class="k">' + esc(l[0]) + "</span><span>" + esc(l[1]) + "</span></li>";
-    }).join("");
-    el("proof-safe").innerHTML = a ? esc("Safer spot " + signed(Math.round(a.offset_cm)) + " cm \u00b7 P(fall) " + pct(a.p) + " \u00b7 GREEN") +
-      "<small>stays green even 1 cm further out</small>" : "No safe spot in the search range";
+    el("proof-lines").innerHTML = lines.map(function (l) { return "<li data-step>" + esc(l) + "</li>"; }).join("");
+    el("proof-safe").innerHTML = a ? esc("Safer spot: " + signed(Math.round(a.offset_cm)) + " cm \u00b7 still green 1 cm further out (" +
+      pct(a.p_further) + ")") : "No safe spot in the search range";
     var crop = null;
     function cropBox() {
       // the part of the photo around the markers and boxes, at the canvas aspect ratio
@@ -1171,10 +1202,10 @@ try +9 cm (+31%): P = 1%; 1 cm further out (+10 cm P = 4%) also green -&gt; sugg
       card.classList.add("anim"); paint(0);
       el("proof-head").classList.remove(d.zone); el("proof-p").textContent = "\u2014";
       var t = [
-        [450, function () { paint(1); steps[0].classList.add("on"); }],
-        [1050, function () { paint(2); steps[1].classList.add("on"); }],
+        [450, function () { paint(1); }],
+        [1050, function () { paint(2); steps[0].classList.add("on"); }],
         [1650, function () {
-          paint(3); steps[2].classList.add("on");
+          paint(3); steps[1].classList.add("on");
           var t0 = performance.now();
           (function count() {
             var k = Math.min(1, (performance.now() - t0) / 800);
@@ -1199,14 +1230,6 @@ try +9 cm (+31%): P = 1%; 1 cm further out (+10 cm P = 4%) also green -&gt; sugg
       io.observe(el("proof"));
     };
     img.src = photoUrl(s);
-    // the same check, run live on AWS Lambda
-    el("proof-run").addEventListener("click", function (e) {
-      e.preventDefault();
-      if (state.busy) return;
-      if (state.sample !== s) selectSample(s);
-      if (location.hash !== "#demo") location.hash = "#demo"; else showView("demo");
-      analyze(REC.offset_cm, true);
-    });
   }
 
   /* ---------- tabs: hash routing, one file ---------- */
@@ -1218,7 +1241,7 @@ try +9 cm (+31%): P = 1%; 1 cm further out (+10 cm P = 4%) also green -&gt; sugg
       if (a.dataset.view === name) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current");
     });
     var t = el("view-" + name).dataset.title;
-    document.title = name === "home" ? "Drystone demo" : t + " \u00b7 Drystone";
+    document.title = name === "home" ? "Drystone \u00b7 Every stack is a drystone wall" : t + " \u00b7 Drystone";
     window.scrollTo(0, 0);
     if (name === "how") drawCam();
     if (name === "demo") draw();
@@ -1229,7 +1252,13 @@ try +9 cm (+31%): P = 1%; 1 cm further out (+10 cm P = 4%) also green -&gt; sugg
   Array.prototype.forEach.call(document.querySelectorAll(".copy"), function (b) {
     b.addEventListener("click", function () {
       var text = b.parentNode.querySelector("code").textContent;
-      function done(ok) { b.textContent = ok ? "Copied" : "Select it"; setTimeout(function () { b.textContent = "Copy"; }, 1500); }
+      var icon = b.innerHTML;
+      function done(ok) {
+        // a check mark for a moment; if the browser blocks the clipboard, say so in the tooltip
+        if (ok) { b.classList.add("ok"); b.innerHTML = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>'; }
+        b.title = ok ? "Copied" : "Copy blocked by the browser: select the text";
+        setTimeout(function () { b.classList.remove("ok"); b.innerHTML = icon; b.title = "Copy"; }, 1500);
+      }
       if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(function () { done(true); }, function () { done(false); });
       else done(false);
     });
@@ -1262,11 +1291,10 @@ try +9 cm (+31%): P = 1%; 1 cm further out (+10 cm P = 4%) also green -&gt; sugg
       });
       REC2.polygons.forEach(function (p) { if (p.role === "candidate") box(p.corners, ZONE[d.zone], lw * 1.8, []); });
       G = ctx;
-      el("cam-cap").textContent = "Sample " + REC2.sample + ", next box at " + signed(REC2.offset_cm) + " cm. Light blue: the ArUco markers with their IDs. " +
-        "White: the digital twin of the stack. Solid " + d.zone.toLowerCase() + ": the planned box, " + d.zone + " (P(fall) " + pct(d.p) + "). " +
-        "Dashed blue: the suggested spot, " + signed(Math.round(a.offset_cm)) + " cm.";
+      el("cam-cap").textContent = "Sample " + REC2.sample + ", next box at " + signed(REC2.offset_cm) + " cm: " + d.zone + " (" + SAY[d.zone] + "), P(fall) " +
+        pct(d.p) + ". Light blue: markers. White: the twin of the stack. Solid: the next box. Dashed blue: the safer spot, " + signed(Math.round(a.offset_cm)) + " cm.";
     } else {
-      el("cam-cap").textContent = "The raw photo from the calibrated laptop webcam (1280\u00d7720): two boxes, one marker each.";
+      el("cam-cap").textContent = "Sample " + REC2.sample + ": the photo from the calibrated laptop webcam (1280\u00d7720).";
     }
     Array.prototype.forEach.call(document.querySelectorAll(".seg-b"), function (b) { b.setAttribute("aria-pressed", String(b.dataset.cam === camMode)); });
   }
