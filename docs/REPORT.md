@@ -320,11 +320,12 @@ boxes; measure box-on-box and box-on-floor friction with a tilt test; model the 
 tilt when the box is let go); then lock new settings and test them on new trials again.
 
 ### 7.5 Software tests and live checks
-- **53 automated tests** (pytest). Synthetic camera photos are rendered through the real calibration, so the same
+- **56 automated tests** (pytest). Synthetic camera photos are rendered through the real calibration, so the same
   OpenCV code runs as on real photos:
   - the web endpoint: page, sample photos, the two diagrams, the zone and suggestion of every example (with the 1 cm
     margin), the recorded checks replayed on the page, cache,
-    request limits (400, 413, 429), the photo API used by the agent;
+    request limits (400, 413, 429), the photo API used by the agent, and the page's links staying hidden until
+    they are filled in;
   - the check after placement, on the laptop and through the Lambda handler: a box fallen upright or lying next to
     the stack, a box out of view, a box placed as planned, a box 3 cm off, a turned fallen box;
   - the whole agent loop with a fake camera, on the laptop and through the Lambda handler: fall → FELL → pick up →

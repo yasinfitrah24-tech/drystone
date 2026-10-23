@@ -60,7 +60,7 @@ Drystone is a decision-support prototype, **not a certified safety device**. We 
   photo API and the judges' page with its API, and supervisor choices go to CloudWatch Logs. Deploys are tagged with
   the git commit, and a lifecycle policy keeps the previous version for rollback. The service also has request
   limits, a cache and a zero-spend budget alarm.
-- Testing: 53 automated tests. Many use synthetic camera photos rendered through the real calibration, including
+- Testing: 56 automated tests. Many use synthetic camera photos rendered through the real calibration, including
   the whole agent loop with a fake camera, both on the laptop and through the Lambda handler.
 
 ## Challenges we ran into
