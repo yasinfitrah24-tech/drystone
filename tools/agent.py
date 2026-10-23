@@ -28,6 +28,7 @@ import urllib.request
 import cv2
 import numpy as np
 
+import agent_hud as hud
 import common
 import drystone_core as core
 from predict_test import FLIP_Z, detect_poses, load_catalog
@@ -436,13 +437,7 @@ def fallen_message(ids):
 
 
 def print_decision(d):
-    print(f"\n[agent] decision for box ID {d['box_id']} overhanging {d['overhang_pct']:+.0f}%:")
-    for line in d["trace"]:
-        print(f"  - {line}")
-    print(f"  => P(fall) {d['p']:.0%} (+-{d['ci']:.0%}, {d['n']} simulations) -> {d['zone']}: {d['action']}")
-    if d["alternative"]:
-        a = d["alternative"]
-        print(f"  => suggestion: move to {a['offset_m'] * 100:+.0f} cm ({a['overhang_pct']:+.0f}%), P(fall) {a['p']:.0%}")
+    hud.decision_block(d)
 
 
 def handle_decision(d, frame, log, supervisor):
@@ -454,6 +449,8 @@ def handle_decision(d, frame, log, supervisor):
         return True, d["offset_m"], "automatic"
     if d["zone"] == "YELLOW":
         print("  [agent] YELLOW: supervisor approval needed.")
+        print(hud.rule())
+        print("  " + hud.label("SUPERVISOR", "WARN"))
         choice = ask("  Supervisor: a = approve, s = use the agent's suggestion, r = reject: ", "asr")
         if choice == "a":
             name = supervisor or ask_text("  Supervisor name: ")
@@ -461,6 +458,8 @@ def handle_decision(d, frame, log, supervisor):
             return True, d["offset_m"], f"approved by {name}"
     else:
         print("  [agent] RED: REJECTED. This position will most likely fall.")
+        print(hud.rule())
+        print("  " + hud.label("SUPERVISOR", "RED"))
         choice = ask("  s = use the agent's suggestion, o = override (reason required), c = cancel: ", "soc")
         if choice == "o":
             name = supervisor or ask_text("  Supervisor name: ")
@@ -597,13 +596,12 @@ def main():
                                         "friction": args.friction, "marker_mm": args.marker_mm,
                                         "p_green": core.P_GREEN, "p_red": core.P_RED},
               decisions_on="aws" if args.aws else "laptop")
-    if args.aws:
-        print("Decisions are computed on AWS Lambda (fallback: laptop).")
+    hud.banner(f"{calib_size[0]}x{calib_size[1]}", args.calib,
+               "AWS Lambda (fallback: laptop)" if args.aws else "laptop")
     detector = common.make_marker_detector()
     cap = common.open_camera(args.source, calib_size[0], calib_size[1])
     cv2.namedWindow(WIN, cv2.WINDOW_NORMAL)
     cv2.resizeWindow(WIN, 960, 540)
-    print(__doc__.split("\n    python")[0])
     ev = Evaluation(args.eval_plan, args.eval_start, log) if args.eval_plan else None
     if ev:
         print(f"\nEVALUATION MODE ({len(ev.trials)} trials). A/D are off; the shift comes from the trial list.")
@@ -617,6 +615,8 @@ def main():
     fallen = []           # boxes that fell off: not placed any more, planned again once picked up
     expected = [args.base_id]  # box IDs the agent last saw standing on the stack (after a check)
     stats = {"decisions": 0, "GREEN": 0, "YELLOW": 0, "RED": 0, "override": 0, "fell": 0, "retry_after_fall": 0}
+    check_hud = None      # display only: the last check result, shown for a few seconds
+    where = "AWS" if args.aws else "laptop"
     try:
         while True:
             ok, frame = cap.read()
@@ -626,58 +626,71 @@ def main():
             poses = detect_poses(detector, frame, catalog, obj, K, dist, args.base_id)
             view = frame.copy()
             for i, (_, _, c4) in poses.items():
-                cv2.polylines(view, [c4.astype(np.int32)], True, (0, 255, 0), 2)
-                outlined(view, f"ID {i}", tuple(int(v) for v in c4[0]), 0.6, (0, 255, 0))
-            lines = []
+                cv2.polylines(view, [c4.astype(np.int32)], True, hud.BGR["EDGE"], 2, cv2.LINE_AA)
+                outlined(view, f"ID {i}", tuple(int(v) for v in c4[0]), 0.6, hud.BGR["EDGE"])
+            notes, keys, right = [], "Q quit", ""          # display only: the same messages as before, as a HUD
             if args.base_id in poses:
                 stack, R0, t0 = smoother.update(poses, catalog, args.base_id)
+                for b in stack:
+                    draw_box(view, b, catalog, R0, t0, K, dist, hud.BGR["WHITE"], 1)
+                right = f"stack {[b['id'] for b in stack]}"
                 if plan:
-                    draw_box(view, plan["box"], catalog, R0, t0, K, dist, COLORS[plan["zone"]], 3)
-                    lines.append(f"place box ID {plan['box']['id']} in the wireframe, let go, then SPACE = check")
+                    draw_box(view, plan["box"], catalog, R0, t0, K, dist, hud.BGR[plan["zone"]], 3)
+                    notes.append((f"place box ID {plan['box']['id']} in the wireframe, let go, then SPACE = check", "info"))
+                    right = f"Box ID {plan['box']['id']} \u00b7 planned {offset * 100:+.0f} cm"
+                    keys = "SPACE check \u00b7 X cancel \u00b7 Q quit"
                 elif ev is not None:
                     if ev.trial is None:
-                        lines.append("evaluation finished | Q quit")
+                        notes.append(("evaluation finished | Q quit", "info"))
                     else:
                         what, setup = ev.state(stack)
-                        lines.append("EVAL " + ev.describe())
+                        notes.append(("EVAL " + ev.describe(), "info"))
                         if what == "setup":
                             sid, sshift = setup
                             draw_box(view, core.candidate_box(stack, sid, sshift, catalog), catalog, R0, t0, K, dist,
-                                     COLORS["CANDIDATE"], 2)
-                            lines.append(f"setup (not scored): place ID {sid} at {sshift * 100:+.0f} cm")
+                                     hud.BGR["MUTED"], 2)
+                            notes.append((f"setup (not scored): place ID {sid} at {sshift * 100:+.0f} cm", "info"))
                         elif what == "shift":
                             sid, want, seen = setup
                             draw_box(view, core.candidate_box(stack[:-1], sid, want, catalog), catalog, R0, t0, K,
-                                     dist, COLORS["CANDIDATE"], 2)
-                            lines.append(f"setup (not scored): move ID {sid} to {want * 100:+.0f} cm "
-                                         f"(now {seen * 100:+.1f} cm)")
+                                     dist, hud.BGR["MUTED"], 2)
+                            notes.append((f"setup (not scored): move ID {sid} to {want * 100:+.0f} cm "
+                                          f"(now {seen * 100:+.1f} cm)", "warn"))
                         elif what == "wrong":
-                            lines.append(f"take boxes off: this trial needs the stack {ev.needed_ids()}")
+                            notes.append((f"take boxes off: this trial needs the stack {ev.needed_ids()}", "warn"))
                         else:
                             offset = ev.trial["shift_cm"] / 100.0
                             cand = core.candidate_box(stack, ev.trial["box_id"], offset, catalog)
-                            draw_box(view, cand, catalog, R0, t0, K, dist, COLORS["CANDIDATE"], 2)
-                            lines.append("SPACE decide | Q quit")
+                            draw_box(view, cand, catalog, R0, t0, K, dist, hud.BGR["MUTED"], 2)
+                            right = f"Box ID {ev.trial['box_id']} \u00b7 candidate {offset * 100:+.0f} cm"
+                            keys = "SPACE decide \u00b7 Q quit"
                 else:
                     if fallen:
-                        lines.append(fallen_message(fallen))
+                        notes.append((fallen_message(fallen), "alert"))
                     nid = next_box_id(stack, catalog)
                     if nid is not None:
                         cand = core.candidate_box(stack, nid, offset, catalog)
-                        color = COLORS[last["zone"]] if last else COLORS["CANDIDATE"]
+                        color = hud.BGR[last["zone"]] if last else hud.BGR["MUTED"]
                         draw_box(view, cand, catalog, R0, t0, K, dist, color, 2)
                         if last and last["alternative"]:
                             alt = core.candidate_box(stack, nid, last["alternative"]["offset_m"], catalog)
-                            draw_box(view, alt, catalog, R0, t0, K, dist, COLORS["GREEN"], 1)
-                        lines.append(f"candidate ID {nid}: {offset * 100:+.0f} cm ({core.overhang_pct(stack, cand, catalog):+.0f}%)"
-                                     + (f" | {last['zone']} {last['p']:.0%}" if last else ""))
-                        lines.append("A/D move 1 cm | SPACE decide | Q quit")
-                lines.insert(0, f"stack: {[b['id'] for b in stack]}"
-                             + "".join(f" | ID {b['id']} off the stack ({b['where']})" for b in smoother.loose))
+                            hud.suggested(view, project_box(alt, catalog, R0, t0, K, dist))
+                        right = (f"Box ID {nid} \u00b7 candidate {offset * 100:+.0f} cm "
+                                 f"({core.overhang_pct(stack, cand, catalog):+.0f}%)"
+                                 + (f" \u00b7 {last['zone']} {last['p']:.0%}" if last else ""))
+                        keys = "A / D move 1 cm \u00b7 SPACE decide \u00b7 Q quit"
+                for b in smoother.loose:
+                    notes.append((f"ID {b['id']} off the stack ({b['where']})", "warn"))
             else:
-                lines.append(f"bottom box marker (ID {args.base_id}) not visible")
-            for row, text in enumerate(lines):
-                outlined(view, text, (10, 30 + 30 * row))
+                notes.append((f"bottom box marker (ID {args.base_id}) not visible", "warn"))
+            if check_hud and hud.ago(check_hud["t"]) < 6:
+                hud.check_banner(view, check_hud["status"], check_hud["message"], check_hud["zone_now"],
+                                 check_hud["p_now"])
+            hud.top_bar(view, (right + " \u00b7 " if right else "") + where)
+            y = view.shape[0] - hud.BOTTOM_H - 10 - len(notes) * 41
+            for note, kind in notes:
+                y = hud.pill(view, note, y, kind)
+            hud.bottom_bar(view, keys)
             cv2.imshow(WIN, view)
             key = cv2.waitKey(1) & 0xFF
 
@@ -741,6 +754,15 @@ def main():
                     print(f"  [agent] planning box ID {nid} again after it fell.")
                 if args.aws:
                     print("  [agent] sending photos to AWS ...")
+                    wait = shot.copy()             # display only: a static card while the request runs
+                    hud.top_bar(wait, f"Box ID {nid} · candidate {offset * 100:+.0f} cm · AWS")
+                    hud.waiting(wait, 3)
+                    hud.bottom_bar(wait, "waiting for AWS Lambda")
+                    cv2.imshow(WIN, wait)
+                    try:
+                        cv2.pollKey()              # lets the window draw; the key, if any, is not used
+                    except cv2.error:
+                        pass
                     d, problem = decide_aws(args.aws, cap, shot, stack, nid, offset, catalog, settings)
                     if d is None:
                         print(f"  [agent] {problem}. Fix the stack or camera, then press SPACE again.")
@@ -757,7 +779,20 @@ def main():
                 snap = shot.copy()
                 draw_box(snap, core.candidate_box(stack, nid, offset, catalog), catalog, R0, t0, K, dist, COLORS[d["zone"]], 3)
                 outlined(snap, f"ID {nid} {d['overhang_pct']:+.0f}%: P(fall) {d['p']:.0%} {d['zone']} -> {d['action']}", (10, 30))
-                cv2.imshow(WIN, snap)
+                disp = shot.copy()                 # display only; the log keeps snap as before
+                draw_box(disp, core.candidate_box(stack, nid, offset, catalog), catalog, R0, t0, K, dist,
+                         hud.BGR[d["zone"]], 3)
+                if d["alternative"]:
+                    hud.suggested(disp, project_box(core.candidate_box(stack, nid, d["alternative"]["offset_m"], catalog),
+                                                    catalog, R0, t0, K, dist))
+                hud.top_bar(disp, f"Box ID {nid} \u00b7 candidate {offset * 100:+.0f} cm \u00b7 "
+                                  + ("AWS" if d.get("source") == "aws" else "laptop"))
+                hud.decision_banner(disp, d, "Place the box in the wireframe, then SPACE to check."
+                                    if d["zone"] == "GREEN" or ev is not None else "Supervisor: answer in the terminal.")
+                hud.bottom_bar(disp, "answer in the terminal" if d["zone"] != "GREEN" and ev is None else
+                               "SPACE check \u00b7 X cancel \u00b7 Q quit")
+                check_hud = None
+                cv2.imshow(WIN, disp)
                 cv2.waitKey(1)
                 if ev is not None:
                     approved, off, how = eval_decision(d, snap, log, args.supervisor, ev, stack)
@@ -785,12 +820,14 @@ def main():
                     continue                       # bad reading (box turned, shaky...): keep the plan, worker fixes it
                 else:
                     v = core.verify(plan["before"], stack, plan["box"], catalog, loose=loose)
-                print(f"\n[agent] check: {v['status']} - {v['message']}")
+                print(f"\n[agent] check: {hud.status_tag(v['status'])} - {v['message']}")
                 answer = None
                 if v["status"] == "FELL" and stack is not None and not_visible_only(plan, stack, loose):
                     # nothing on the floor and the stack below is intact: maybe SPACE came before the box did,
                     # or its marker was not read. The worker can see it; the camera cannot.
                     bid = plan["box"]["id"]
+                    print(hud.rule())
+                    print("  " + hud.label("QUESTION", "WARN"))
                     answer = ask(f"  box ID {bid} is not visible. f = it fell out of view, "
                                  "p = not placed yet (look again): ", "fp")
                     if answer == "p":
@@ -818,6 +855,8 @@ def main():
                     on_stack = {b["id"] for b in stack} if stack is not None else set()
                     fell_ids = sorted({plan["box"]["id"]} | {b["id"] for b in plan["before"] if b["id"] not in on_stack
                                                              and b["id"] != args.base_id})
+                check_hud = {"status": v["status"], "message": v["message"], "zone_now": extra.get("zone_now"),
+                             "p_now": extra.get("p_now"), "t": time.time()}
                 log.write("check", shot, **v, planned_by=plan["how"], planned_zone=plan["zone"],
                           planned_p=plan["p"], checked_on=src, fell_ids=fell_ids, worker_answer=answer, **extra)
                 if v["status"] == "NOT_PLACED":
@@ -825,6 +864,7 @@ def main():
                 if ev is not None and ev.trial is not None:
                     fell_auto = v["status"].startswith("FELL")
                     tid = ev.trial["trial_id"]
+                    print("  " + hud.label("CONFIRM", "BRAND"))
                     ans = ask(f"  [eval] {tid}: the check says the box {'FELL' if fell_auto else 'STOOD'}. "
                               "Enter or y = confirm, n = the opposite: ", "yn", allow_empty=True)
                     fell = fell_auto if ans in ("", "y") else not fell_auto
