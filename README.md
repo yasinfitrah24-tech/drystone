@@ -215,7 +215,8 @@ published `trials.csv` holds every per-trial number.
   system),
   `drystone_core.py` (decision rules and simulation), `agent.py` (live agent), `service.py` (Lambda handler and
   the judges' page API), `web_local.py` (local server), `capture_sample.py` (sample photos),
-  `make_placeholder_samples.py` (synthetic renders used by the tests), `common.py`
+  `make_placeholder_samples.py` (synthetic renders used by the tests), `ghost_boxes.py` (the judges' page's
+  "not checked yet" outline of the next box, from the same projection as the service), `common.py`
 - `web/`: the judges' page (`index.html`) and sample photos (`samples/`)
 - `aws/`: Dockerfile, Lambda requirements, deployment notes, endpoint test
 - `config/boxes.json`: box catalogue by marker ID

@@ -271,3 +271,19 @@ def test_links_hidden_until_filled(links, shown):
         assert out["[data-clone]"][0]["textContent"] == "https://github.com/example/drystone.git"
     else:
         assert all(a["href"] == "#" for a in out["[data-link]"])
+
+
+def test_ghost_boxes_match_the_service():
+    """The page's dashed 'not checked yet' outlines are current and are the service's candidate polygons."""
+    import ghost_boxes
+    html = _page_html()
+    start = html.index("  var GHOST = ") + len("  var GHOST = ")
+    page = json.loads(html[start:html.index(";\n", start)])
+    data = ghost_boxes.compute()
+    assert page == data, "run: python tools/ghost_boxes.py --write"
+    lo, hi = META["offset_range_cm"]
+    assert all(len(v) == hi - lo + 1 for v in page.values())
+    for sample, off in (("s2", S2["YELLOW"]), ("s1", 16)):        # answers other tests already compute (cached)
+        status, r, _ = call("POST", "/", {"sample": sample, "offset_cm": off})
+        cand = next(p["corners"] for p in r["polygons"] if p["role"] == "candidate")
+        assert page[sample][str(off)] == cand

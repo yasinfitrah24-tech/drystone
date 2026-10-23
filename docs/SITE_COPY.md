@@ -62,7 +62,7 @@ where the page follows REPORT or the code instead of the draft.
   - OpenCV 5: Calibrated camera, ArUco markers, pose averaged over 10 frames.
   - MuJoCo: 150 to 600 simulated placements per check, with 1 cm position and 2 cm load uncertainty.
   - AWS Lambda: Same decision code as the laptop agent. Supervisor choices logged in CloudWatch.
-- Mono line: 56 tests · 25 locked trials · every decision logged
+- Mono line: 57 tests · 25 locked trials · every decision logged
 
 ### Closing band
 The camera measures. The simulation estimates. The rules decide. The supervisor signs.
@@ -122,6 +122,7 @@ Place it once. Place it right. [button: Try the demo →]
 - Note: The first check can take up to 10 s while the server wakes up. Supervisor choices are logged without your IP address.
 - Photo labels: s1 · One box / s2 · Two boxes, aligned / s3 · Two boxes, top one shifted
 - Ruler: Where should the next box go? (sub: cm to the right of the box below) · small label: Tap or drag (the check runs when the finger or mouse is lifted)
+- Ghost box: while a shift is picked and not checked yet (ruler, drag, − / +), the photo shows the next box at that shift as a dashed grey outline, and a dashed chip at the bottom left of the photo says "next box +X cm · not checked yet". No zone colour until Check; the outline is the same one the service draws after the check (`tools/ghost_boxes.py`).
 - Free shift: Or pick any shift · [–] +16 cm (55% overhang) [+] · Check
 - Legend: GREEN <10% · place it / YELLOW 10–50% · ask / RED >50% · move it
 - Start card: Tap a marker on the ruler below the photo to run the check.
