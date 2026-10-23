@@ -258,24 +258,24 @@ def _dashed(img, p, q, color, thick=2, dash=10):
 LEGEND = (("marker", "EDGE", False), ("stack", "WHITE", False), ("suggested spot", "BRAND", True), ("next box", "MUTED", False))
 
 
-def _legend_w(size):
-    return sum(text_w(name, size, 400) + 46 for name, _, _ in LEGEND) - 18
+def _legend_w(size, legend=LEGEND):
+    return sum(text_w(name, size, 400) + 46 for name, _, _ in legend) - 18
 
 
-def bottom_bar(img, keys):
+def bottom_bar(img, keys, legend=LEGEND):
     h, w = img.shape[:2]
     y0 = h - BOTTOM_H
     panel(img, 0, y0, w, h, BGR["NAVY"], 0.82)
     ks, ls = 16, 14
-    while ks > 11 and text_w(keys, ks) + 2 * GAP + _legend_w(ls) > w - 2 * M:
+    while ks > 11 and text_w(keys, ks) + 2 * GAP + _legend_w(ls, legend) > w - 2 * M:
         ks, ls = ks - 1, max(11, ls - 1)
     text(img, keys, (M, _baseline(y0, h, ks)), ks, BGR["WHITE"], 500)
-    if text_w(keys, ks) + 2 * GAP + _legend_w(ls) > w - 2 * M:
+    if text_w(keys, ks) + 2 * GAP + _legend_w(ls, legend) > w - 2 * M:
         return                                         # a very narrow frame: the keys only
     by = _baseline(y0, h, ls, 400)
     mid = by - metrics(ls, 400)[0] // 2
     x = w - M
-    for name, col, dashed in reversed(LEGEND):
+    for name, col, dashed in reversed(legend):
         x -= text_w(name, ls, 400)
         text(img, name, (x, by), ls, BGR["MUTED"], 400)
         x -= 28
@@ -288,7 +288,7 @@ def bottom_bar(img, keys):
 
 PILL_SIZE, PILL_VPAD, PILL_GAP = 17, 11, 8
 PILL_COLORS = {"warn": (BGR["YELLOW"], BGR["INK"]), "alert": (BGR["ORANGE"], BGR["WHITE"]),
-               "info": (BGR["NAVY"], BGR["WHITE"])}
+               "info": (BGR["NAVY"], BGR["WHITE"]), "ok": (BGR["GREEN"], BGR["WHITE"])}
 
 
 def pills(img, notes):
@@ -353,6 +353,11 @@ def _card(img, rows, fill, ink, alpha=0.9):
             cv2.rectangle(img, (bx, bb - cb - 8), (bx + text_w(bt, bs, 700) + 16, bb + 8), ink, 1, cv2.LINE_AA)
             text(img, bt, (bx + 8, bb), bs, ink, 700)
     return y0 + ch
+
+
+def card(img, rows, fill=BGR["NAVY"], ink=BGR["WHITE"], alpha=0.85):
+    """A card under the top bar (rows as in _card); returns its bottom y. Used by tools/calibrate.py."""
+    return _card(img, rows, fill, ink, alpha)
 
 
 def decision_banner(img, d, hint=""):

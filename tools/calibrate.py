@@ -33,6 +33,7 @@ import time
 import cv2
 import numpy as np
 
+import agent_hud as hud
 import common
 
 MIN_CORNERS = 8          # ChArUco corners needed to keep a view
@@ -172,29 +173,46 @@ def assess(views, size, rms, K, sd):
     return ("ULANGI" if fixes else "LAYAK"), fixes, f_sd, cells, sides
 
 
+def _rule():
+    return hud.rule() if hud.COLOR else "-" * 72      # the box-drawing line only on a terminal (cp1252 pipes)
+
+
+def _tag(text, kind):
+    """A coloured label on a terminal, the plain word otherwise (files, pipes)."""
+    return hud.label(text, kind) if hud.COLOR else text
+
+
+def _row(key, value):
+    print(f"  {hud.paint(f'{key:<15}', fg='MUTED')}{value}")
+
+
 def report_and_save(views, size, result, args, frames_dir):
     rms, K, dist, sd, per_view = result
     verdict, fixes, f_sd, cells, sides = assess(views, size, rms, K, sd)
-    mark = lambda good: "OK" if good else "TOO LOW"
-    print("\n=== Calibration result ===")
-    print(f"Views used     : {len(views)} different board positions")
-    print(f"RMS error      : {rms:.3f} px  {mark(rms <= MAX_RMS_PX)}  (max {MAX_RMS_PX}, good < 0.5)")
-    print(f"Uncertainty    : fx {100 * sd[0] / K[0, 0]:.2f}%, fy {100 * sd[1] / K[1, 1]:.2f}%  "
-          f"{mark(f_sd <= MAX_F_SD_PCT)}  (max {MAX_F_SD_PCT}%)")
-    print(f"Image coverage : {cells.sum()}/{cells.size} cells  {mark(cells.sum() >= MIN_CELLS)}  "
-          f"(min {MIN_CELLS}; # = covered, . = empty)")
+    mark = lambda good: hud.paint("OK", fg="GREEN", bold=True) if good else hud.paint("TOO LOW", fg="WARN", bold=True)
+    print()
+    print(_rule())
+    print("  " + _tag("CALIBRATION RESULT", "BRAND"))
+    _row("Views used", f"{len(views)} different board positions")
+    _row("RMS error", f"{rms:.3f} px  {mark(rms <= MAX_RMS_PX)}  (max {MAX_RMS_PX}, good < 0.5)")
+    _row("Uncertainty", f"fx {100 * sd[0] / K[0, 0]:.2f}%, fy {100 * sd[1] / K[1, 1]:.2f}%  "
+                        f"{mark(f_sd <= MAX_F_SD_PCT)}  (max {MAX_F_SD_PCT}%)")
+    _row("Image coverage", f"{cells.sum()}/{cells.size} cells  {mark(cells.sum() >= MIN_CELLS)}  "
+                           f"(min {MIN_CELLS}; # = covered, . = empty)")
     for row in cells:
-        print("                 " + " ".join("#" if c else "." for c in row))
-    print(f"Tilt sides     : {', '.join(s for s in SIDES if s in sides) or 'none yet'}  "
-          f"(estimate, >= {MIN_TILT_DEG:.0f} degrees)")
-    print(f"fx, fy         : {K[0, 0]:.1f}, {K[1, 1]:.1f}  (+- {sd[0]:.1f}, {sd[1]:.1f})")
-    print(f"cx, cy         : {K[0, 2]:.1f}, {K[1, 2]:.1f}  (+- {sd[2]:.1f}, {sd[3]:.1f}; image {size[0]}x{size[1]})")
-    print("Distortion     : " + ", ".join(f"{v:.4f}" for v in dist.ravel()[:5]))
+        print(" " * 17 + " ".join(hud.paint("#", fg="GREEN", bold=True) if c else hud.paint(".", fg="MUTED")
+                                  for c in row))
+    _row("Tilt sides", f"{', '.join(s for s in SIDES if s in sides) or 'none yet'}  "
+                       f"(estimate, >= {MIN_TILT_DEG:.0f} degrees)")
+    _row("fx, fy", f"{K[0, 0]:.1f}, {K[1, 1]:.1f}  (+- {sd[0]:.1f}, {sd[1]:.1f})")
+    _row("cx, cy", f"{K[0, 2]:.1f}, {K[1, 2]:.1f}  (+- {sd[2]:.1f}, {sd[3]:.1f}; image {size[0]}x{size[1]})")
+    _row("Distortion", ", ".join(f"{v:.4f}" for v in dist.ravel()[:5]))
     worst = np.argsort(per_view)[::-1][:3]
-    print("Worst views    : " + ", ".join(f"{views[i].name} ({per_view[i]:.2f} px)" for i in worst))
-    print(f"VERDICT        : {common.VERDICT_TEXT[verdict]}")
+    _row("Worst views", ", ".join(f"{views[i].name} ({per_view[i]:.2f} px)" for i in worst))
+    print()
+    _row("VERDICT", _tag(common.VERDICT_TEXT[verdict], "GREEN" if verdict == common.CALIB_PASS else "YELLOW"))
     for fix in fixes:
-        print("  - " + fix)
+        print("  - " + hud.paint(fix, fg="WARN"))
     if verdict == common.CALIB_PASS and rms > 0.5:
         # simulated: a board sagging 1 mm still passes at ~0.6 px but shifts fx by ~2.5%
         print("  Note: RMS above 0.5 px usually means the board is not quite flat or the image not quite sharp. "
@@ -208,9 +226,10 @@ def report_and_save(views, size, result, args, frames_dir):
     common.save_calibration(out, K, dist, size, rms, len(views), args.square_mm, extra={
         "quality": verdict, "f_sd_pct": float(f_sd), "coverage_cells": int(cells.sum()),
         "tilt_sides": ",".join(s for s in SIDES if s in sides), "frames": frames_dir})
-    print(f"Saved          : {out}")
+    _row("Saved", out)
     if verdict != common.CALIB_PASS:
-        print(f"                 (draft; data/camera_{args.name}.yaml is not overwritten)")
+        print(" " * 17 + hud.paint(f"(draft; data/camera_{args.name}.yaml is not overwritten)", dim=True))
+    print(_rule())
     print()
     return verdict
 
@@ -254,70 +273,119 @@ def mean_shift(a, b):
     return float(np.mean([np.linalg.norm(a[k] - b[k]) for k in common_ids]))
 
 
-def put(canvas, text, row, color):
-    org = (10, 28 + 30 * row)
-    cv2.putText(canvas, text, org, cv2.FONT_HERSHEY_SIMPLEX, 0.65, (0, 0, 0), 4, cv2.LINE_AA)
-    cv2.putText(canvas, text, org, cv2.FONT_HERSHEY_SIMPLEX, 0.65, color, 2, cv2.LINE_AA)
+# ---------------------------------------------------------------- camera window (display only, agent_hud style)
+
+WIN = "Drystone calibration"
+SAVED_DOT = (154, 214, 127)          # BGR of #7FD69A, the page's "copied" green
+LEGEND = (("board now", "EDGE", False), ("covered cell", "GREEN", False))
+CHIP_SIZE, CHIP_PAD = 15, 9
 
 
-def draw_guide(frame, views, cur, corners, ids, n, size, status, keys):
-    """Live view: covered grid cells in green, saved corners as dots, current tilt, what is still missing."""
+def side_chips(img, y, sides):
+    """A row of rounded chips under the card: one per side, green once a saved view is tilted that way."""
+    cap = hud.metrics(CHIP_SIZE, 600)[0]
+    h = cap + 2 * CHIP_PAD
+    x = hud.M
+    chips = [(f"tilt {MIN_TILT_DEG:.0f}+ deg", hud.BGR["NAVY"], hud.BGR["MUTED"])]
+    chips += [(s, hud.BGR["GREEN"], hud.BGR["WHITE"]) if s in sides else (s, hud.BGR["NAVY"], hud.BGR["MUTED"])
+              for s in SIDES]
+    for t, fill, ink in chips:
+        w = hud.text_w(t, CHIP_SIZE, 600) + 2 * 12
+        hud.rounded(img, x, y, x + w, y + h, h // 2, fill, 0.88)
+        hud.text(img, t, (x + 12, y + CHIP_PAD + cap), CHIP_SIZE, ink, 600)
+        x += w + 6
+
+
+def next_step(views, cur, n, size, cells, sides):
+    """What the person should do now, as (text, pill kind)."""
+    missing = [s for s in SIDES if s not in sides]
+    if cur is None:
+        return f"show the whole board: {n} corners found, at least {MIN_CORNERS} needed", "warn"
+    if cur.outline is not None and cv2.contourArea(cur.outline) < 0.05 * size[0] * size[1]:
+        return "board too small in the image: move it closer", "warn"
+    if missing:
+        return f"no board tilted toward: {', '.join(missing)} yet", "info"
+    if cells.sum() < cells.size:
+        return "move the board to cells that are not green yet (corners and edges)", "info"
+    if len(views) < MIN_VIEWS:
+        return f"add frames at other positions (at least {MIN_VIEWS})", "info"
+    return "coverage and tilts complete: press C to calibrate", "ok"
+
+
+def draw_guide(frame, views, cur, corners, n, size, status, keys, title, note=None):
+    """Live view: covered grid cells in green, saved corners as dots, the board now in blue, a card with the
+    counts and the current tilt, chips for the four tilt sides, then the next step (and the last verdict) as pills."""
     cells = coverage(views, size)
     cw, ch = size[0] / GRID[0], size[1] / GRID[1]
     canvas = frame.copy()
-    if cells.any():
-        tint = canvas.copy()
-        for r, c in zip(*np.nonzero(cells)):
-            cv2.rectangle(tint, (int(c * cw), int(r * ch)), (int((c + 1) * cw), int((r + 1) * ch)), (0, 200, 0), -1)
-        canvas = cv2.addWeighted(tint, 0.25, canvas, 0.75, 0)
+    over = canvas.copy()
+    for r, c in zip(*np.nonzero(cells)):
+        cv2.rectangle(over, (int(c * cw), int(r * ch)), (int((c + 1) * cw), int((r + 1) * ch)), hud.BGR["GREEN"], -1)
+    canvas = cv2.addWeighted(over, 0.3, canvas, 0.7, 0)
+    lines = canvas.copy()
     for c in range(1, GRID[0]):
-        cv2.line(canvas, (int(c * cw), 0), (int(c * cw), size[1]), (210, 210, 210), 1)
+        cv2.line(lines, (int(c * cw), 0), (int(c * cw), size[1]), hud.BGR["WHITE"], 1, cv2.LINE_AA)
     for r in range(1, GRID[1]):
-        cv2.line(canvas, (0, int(r * ch)), (size[0], int(r * ch)), (210, 210, 210), 1)
+        cv2.line(lines, (0, int(r * ch)), (size[0], int(r * ch)), hud.BGR["WHITE"], 1, cv2.LINE_AA)
+    canvas = cv2.addWeighted(lines, 0.4, canvas, 0.6, 0)
     for v in views:
         for x, y in v.img:
-            cv2.circle(canvas, (int(x), int(y)), 2, (0, 255, 0), -1)
+            cv2.circle(canvas, (int(x), int(y)), 2, SAVED_DOT, -1, cv2.LINE_AA)
+    if cur is not None and cur.outline is not None:
+        cv2.polylines(canvas, [cur.outline.astype(np.int32)], True, hud.BGR["EDGE"], 2, cv2.LINE_AA)
     if n:
-        # OpenCV 5 returns (N,2) corners and (N,) ids; the drawing function wants (N,1,2) and (N,1)
-        cv2.aruco.drawDetectedCornersCharuco(canvas, np.asarray(corners).reshape(-1, 1, 2).astype(np.float32),
-                                             np.asarray(ids).reshape(-1, 1).astype(np.int32), (255, 160, 0))
+        for x, y in np.asarray(corners).reshape(-1, 2):
+            cv2.circle(canvas, (int(x), int(y)), 5, hud.BGR["NAVY"], -1, cv2.LINE_AA)
+            cv2.circle(canvas, (int(x), int(y)), 3, hud.BGR["EDGE"], -1, cv2.LINE_AA)
     sides = set().union(*(tilt_sides(v.normal) for v in views)) if views else set()
-    put(canvas, f"corners: {n}  saved: {len(views)}  coverage: {cells.sum()}/{cells.size}  {keys}",
-        0, (0, 220, 0) if n >= MIN_CORNERS else (0, 0, 255))
-    if cur is not None:
-        tilted = bool(tilt_sides(cur.normal))
-        put(canvas, tilt_text(cur.normal), 1, (0, 230, 0) if tilted else (255, 255, 255))
-    put(canvas, f"tilt >= {MIN_TILT_DEG:.0f}: " + "  ".join(f"{s} [{'x' if s in sides else ' '}]" for s in SIDES), 2, (255, 255, 255))
-    if not status:
-        missing = [s for s in SIDES if s not in sides]
-        if cur is not None and cur.outline is not None and cv2.contourArea(cur.outline) < 0.05 * size[0] * size[1]:
-            status = "board too small in the image: move it closer"
-        elif missing:
-            status = f"no board tilted toward: {', '.join(missing)} yet"
-        elif cells.sum() < cells.size:
-            status = "move the board to cells that are not green yet (corners and edges)"
-        elif len(views) < MIN_VIEWS:
-            status = f"add frames at other positions (at least {MIN_VIEWS})"
-        else:
-            status = "coverage and tilts complete: press C to calibrate"
-    if status:
-        put(canvas, status, 3, (0, 220, 255))
+    hud.top_bar(canvas, title)
+    y = hud.card(canvas, [
+        {"segs": [(f"{n} corners", 20, 700), ("·", 20, 500), (f"{len(views)} saved", 20, 500), ("·", 20, 500),
+                  (f"coverage {cells.sum()}/{cells.size}", 20, 500)]},
+        {"segs": [(tilt_text(cur.normal) if cur is not None else
+                   "board only partly in view" if n else "no board in view", 16, 500)], "gap": 8}])
+    side_chips(canvas, y + 8, sides)
+    hud.pills(canvas, [p for p in (note, status or next_step(views, cur, n, size, cells, sides)) if p])
+    hud.bottom_bar(canvas, keys, LEGEND)
     return canvas
+
+
+def intro(args, frames_dir):
+    print()
+    print(hud.paint("Drystone", fg="EDGE", bold=True) + hud.paint(" · Camera calibration", bold=True))
+    print(_rule())
+    for k, v in (("Camera", f"{args.name} (source {args.source}, {args.width}x{args.height})"),
+                 ("Board square", f"{args.square_mm:g} mm"), ("Frames", frames_dir),
+                 ("Saves", f"data/camera_{args.name}.yaml when the verdict is PASS")):
+        print(f"  {hud.paint(f'{k:<15}', fg='MUTED')}{v}")
+    print()
+    keys = (("C", "calibrate now"), ("Q", "quit")) if args.auto else \
+        (("SPACE", "save frame"), ("C", "calibrate"), ("Q", "quit"))
+    for k, v in keys:
+        print(f"  {hud.paint(f'{k:<8}', fg='EDGE', bold=True)}{v}")
+    print()
+    first = ("Hold the board still at a new position: the frame is saved by itself." if args.auto else
+             "Press SPACE at each new position and tilt.")
+    for s in (first,
+              "Fill the green grid (corners and edges) and tilt the board left, right, up and down.",
+              f"After {args.target} frames the calibration runs by itself; C runs it at any time." if args.auto else
+              f"After at least {MIN_VIEWS} frames, press C to calibrate.",
+              "Repeat until the verdict is PASS."):
+        print(f"  {hud.paint(s, dim=True)}")
+    print(_rule())
 
 
 def run_camera(args, board, detector):
     cap = common.open_camera(args.source, args.width, args.height)
     frames_dir = os.path.join(common.DATA_DIR, f"calib_{args.name}", time.strftime("%Y%m%d_%H%M%S"))
     os.makedirs(frames_dir, exist_ok=True)
-    print(f"Frames are saved in: {frames_dir}")
-    if args.auto:
-        print(f"Auto mode: hold the board still at a new position and the frame is saved by itself. "
-              f"After {args.target} frames the calibration runs by itself. C = calibrate, Q = quit")
-    else:
-        print("SPACE = save frame, C = calibrate, Q = quit")
-    keys = "C calibrate | Q quit" if args.auto else "SPACE save | C calibrate | Q quit"
+    intro(args, frames_dir)
+    keys = "C calibrate · Q quit" if args.auto else "SPACE save · C calibrate · Q quit"
+    title = f"Calibration · {args.name} · {args.square_mm:g} mm squares" + (" · auto" if args.auto else "")
     views, size = [], None
-    prev, still_since, auto_done, flash = {}, None, False, 0
+    prev, still_since, auto_done, flash, note = {}, None, False, 0, None
+    cv2.namedWindow(WIN, cv2.WINDOW_NORMAL | cv2.WINDOW_KEEPRATIO)   # scale the whole frame, never crop it
+    cv2.resizeWindow(WIN, 960, 540)
 
     def save(frame, view):
         view.name = f"{len(views) + 1:02d}.png"
@@ -326,8 +394,14 @@ def run_camera(args, board, detector):
         print(f"{view.name} saved ({len(view.img)} corners, {tilt_text(view.normal)})")
 
     def compute():
+        nonlocal note
         result = calibrate(views, size)
-        if result and report_and_save(views, size, result, args, frames_dir) != common.CALIB_PASS:
+        if not result:
+            note = (f"only {len(views)} different board positions: at least {MIN_VIEWS} needed", "warn")
+        elif report_and_save(views, size, result, args, frames_dir) == common.CALIB_PASS:
+            note = (f"PASS · saved data/camera_{args.name}.yaml · Q to quit", "ok")
+        else:
+            note = ("RETRY · the terminal says what to fix · add frames, then C", "warn")
             print("Add frames as suggested above, then press C to calibrate again.")
 
     while True:
@@ -341,11 +415,11 @@ def run_camera(args, board, detector):
         same = find_repeat(cur, views) if cur is not None else None
         positions = corner_map(corners, ids) if n else {}
         if same is None:
-            status = ""
+            status = None
         elif same is views[-1]:
-            status = f"{same.name} saved. Move to a new position or tilt"
+            status = (f"{same.name} saved · move to a new position or tilt", "ok")
         else:
-            status = f"like {same.name}: move or tilt the board"
+            status = (f"like {same.name}: move or tilt the board", "warn")
         if args.auto and (cur is None or same):
             still_since = None
         elif args.auto:
@@ -353,18 +427,18 @@ def run_camera(args, board, detector):
             still_since = (still_since or time.time()) if still else None
             if still_since and time.time() - still_since >= STILL_SEC:
                 save(frame, cur)
-                still_since, flash, status = None, 4, ""
+                still_since, flash, status = None, 4, None
                 if len(views) >= args.target and not auto_done:
                     auto_done = True
                     compute()
             else:
-                status = "hold still..."
+                status = ("hold still...", "info")
         prev = positions
-        canvas = draw_guide(frame, views, cur, corners, ids, n, size, status, keys)
+        canvas = draw_guide(frame, views, cur, corners, n, size, status, keys, title, note)
         if flash:
-            cv2.rectangle(canvas, (0, 0), (size[0] - 1, size[1] - 1), (255, 255, 255), 12)
+            cv2.rectangle(canvas, (0, 0), (size[0] - 1, size[1] - 1), hud.BGR["GREEN"], 10)
             flash -= 1
-        cv2.imshow("ChArUco calibration", canvas)
+        cv2.imshow(WIN, canvas)
         key = cv2.waitKey(1) & 0xFF
         if key == ord(" "):
             if cur is None:
