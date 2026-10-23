@@ -240,7 +240,7 @@ def test_links_start_hidden():
     """Links whose LINKS value is still empty are hidden in the HTML itself, before any script runs."""
     html = _page_html()
     tags = re.findall(r"<a [^>]*data-link=[^>]*>", html)
-    assert len(tags) == 4 and all(" hidden" in t for t in tags)
+    assert len(tags) == 6 and all(" hidden" in t for t in tags)   # video, repo, report x2, markers, board
 
 
 @pytest.mark.parametrize("links, shown", [

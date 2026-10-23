@@ -147,8 +147,14 @@ python -m venv .venv
 pip install -r requirements-dev.txt
 ```
 
-Calibrate your camera (print `assets/opencv_marker_kalibrasi.pdf`, glue the ChArUco board to a flat hard board and
-measure the square size; repeat until the verdict is LAYAK):
+Print the sheets at 100% (actual size, not "fit to page"): [`docs/print/markers_A4.pdf`](docs/print/markers_A4.pdf)
+(box markers ID 0–2, ArUco DICT_4X4_50, 80 mm, with a 100 mm ruler to check the scale) and
+[`docs/print/charuco_A4.pdf`](docs/print/charuco_A4.pdf) (ChArUco 7×5 calibration board, 30 mm squares, 22 mm
+markers, DICT_5X5_100, A4 landscape). Both are made by `python tools/make_print_sheets.py` from the settings in
+`tools/common.py`. Measure what you printed.
+
+Calibrate your camera (glue the ChArUco board to a flat hard board and measure the square size; repeat until the
+verdict is LAYAK):
 ```
 python tools/calibrate.py --name laptop --square-mm 29.8 --auto
 ```
