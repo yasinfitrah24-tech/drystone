@@ -62,7 +62,7 @@ where the page follows REPORT or the code instead of the draft.
   - OpenCV 5: Calibrated camera, ArUco markers, pose averaged over 10 frames.
   - MuJoCo: 150 to 600 simulated placements per check, with 1 cm position and 2 cm load uncertainty.
   - AWS Lambda: Same decision code as the laptop agent. Supervisor choices logged in CloudWatch.
-- Mono line: 57 tests · 25 locked trials · every decision logged
+- Mono line: 66 tests · 25 locked trials · every decision logged
 
 ### Closing band
 The camera measures. The simulation estimates. The rules decide. The supervisor signs.
@@ -121,12 +121,11 @@ Place it once. Place it right. [button: Try the demo →]
 - Body: Pick a real photo from our test stack, choose where the next box goes, and the same code that runs the laptop agent decides, live on AWS Lambda.
 - Note: The first check can take up to 10 s while the server wakes up. Supervisor choices are logged without your IP address.
 - Photo labels: s1 · One box / s2 · Two boxes, aligned / s3 · Two boxes, top one shifted
-- Ruler: Where should the next box go? (sub: cm to the right of the box below) · small label: Tap or drag (the check runs when the finger or mouse is lifted)
+- Shift control (draft 23 Oct, a slider in place of the ruler and the − / + row): Where should the next box go? (sub: cm from the box below: − left, + right). Example chips from the photo, to the left (−16 RED, −13 YELLOW, −9/−10 SUGGESTED, −6 GREEN) and to the right (GREEN, SUGGESTED, YELLOW, RED as before), each side as its own group; a tap moves the slider there, then one slider −16…+16 cm on a neutral blue track (ticks every 1 cm, numbers every 4 cm, coloured pins at the examples) with a value bubble on the handle. Picking a spot never runs a check: the ghost box and the bubble follow the slider or the chip. Only the button runs it, labelled with the spot ("Check +X cm"), or Enter on the slider. Under the slider: "+X cm · Y% overhang" and that button. Moving the slider after a result clears it back to the ghost box.
 - Ghost box: while a shift is picked and not checked yet (ruler, drag, − / +), the photo shows the next box at that shift as a dashed grey outline, and a dashed chip at the bottom left of the photo says "next box +X cm · not checked yet". No zone colour until Check; the outline is the same one the service draws after the check (`tools/ghost_boxes.py`).
-- Free shift: Or pick any shift · [–] +16 cm (55% overhang) [+] · Check
 - Legend: GREEN <10% · place it / YELLOW 10–50% · ask / RED >50% · move it
-- Start card: Tap a marker on the ruler below the photo to run the check.
-- Loading: Simulating the next box on AWS Lambda… (sub: Up to 600 simulated placements. Photo and ruler are locked until it answers.)
+- Start card: Pick a spot with the slider or an example, then press Check. (The quick button "Check +X cm" for the YELLOW example stays; its hint says "example", not "marker".)
+- Loading: Simulating the next box on AWS Lambda… (sub: Up to 600 simulated placements. Photo and slider are locked until it answers.)
 - Loading, after 8 s: The server is waking up. The first check can take up to 10 s.
 - GREEN result: Place it. Drystone guides the box to +X cm, then checks it landed as planned.
 - YELLOW result: Ask a supervisor. Approve, take the safer spot (+X cm, Y%), or reject. The choice is logged; the zone stays YELLOW.

@@ -1,5 +1,5 @@
 {
-  "_note": "Sample photos for the judges' page: real photos from the calibrated laptop webcam (1280x720, about 1 m, plain wall), taken with tools/capture_sample.py on 18 Oct. 'examples' = shifts (cm, relative to the box directly below) whose zone was computed with drystone_core from the photo, kept away from the 10% and 50% lines; 'suggestion_cm' = the agent's suggested shift for the YELLOW and RED examples (green there and 1 cm further out); tests/test_web.py checks both. Recompute both after replacing a photo, and set 'photos_version' to the first 10 hex of sha256 over the photos in list order (browsers cache photos for a day; tests/test_web.py checks it).",
+  "_note": "Sample photos for the judges' page: real photos from the calibrated laptop webcam (1280x720, about 1 m, plain wall), taken with tools/capture_sample.py on 18 Oct. 'examples' = shifts (cm, relative to the box directly below) whose zone was computed with drystone_core from the photo, kept away from the 10% and 50% lines; 'suggestion_cm' = the agent's suggested shift for the YELLOW and RED examples (green there and 1 cm further out); 'examples_left' and 'suggestion_left_cm' = the same for shifts to the left (negative, computed 23 Oct); tests/test_web.py checks all four. Recompute both after replacing a photo, and set 'photos_version' to the first 10 hex of sha256 over the photos in list order (browsers cache photos for a day; tests/test_web.py checks it).",
   "photos_version": "a7aba3ca6c",
   "box_length_cm": 29,
   "offset_range_cm": [-16, 16],
@@ -10,7 +10,9 @@
       "stack": "Box ID 0 on the floor",
       "next_box": 1,
       "examples": {"GREEN": 6, "YELLOW": 14, "RED": 16},
-      "suggestion_cm": {"YELLOW": 10, "RED": 10}
+      "suggestion_cm": {"YELLOW": 10, "RED": 10},
+      "examples_left": {"GREEN": -6, "YELLOW": -13, "RED": -16},
+      "suggestion_left_cm": {"YELLOW": -10, "RED": -10}
     },
     {
       "id": "s2",
@@ -18,7 +20,9 @@
       "stack": "Box ID 1 straight on top of box ID 0",
       "next_box": 2,
       "examples": {"GREEN": 6, "YELLOW": 13, "RED": 16},
-      "suggestion_cm": {"YELLOW": 9, "RED": 9}
+      "suggestion_cm": {"YELLOW": 9, "RED": 9},
+      "examples_left": {"GREEN": -6, "YELLOW": -13, "RED": -16},
+      "suggestion_left_cm": {"YELLOW": -9, "RED": -9}
     },
     {
       "id": "s3",
@@ -26,7 +30,9 @@
       "stack": "Box ID 1 sits about 6 cm to the right of box ID 0",
       "next_box": 2,
       "examples": {"GREEN": 4, "YELLOW": 12, "RED": 16},
-      "suggestion_cm": {"YELLOW": 9, "RED": 9}
+      "suggestion_cm": {"YELLOW": 9, "RED": 9},
+      "examples_left": {"GREEN": -6, "YELLOW": -13, "RED": -16},
+      "suggestion_left_cm": {"YELLOW": -9, "RED": -9}
     }
   ]
 }

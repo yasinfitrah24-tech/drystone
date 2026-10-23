@@ -17,7 +17,10 @@ import service
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 with open(os.path.join(ROOT, "web", "samples", "samples.json"), encoding="utf-8") as f:
     META = json.load(f)
-EXAMPLES = [(s["id"], zone, off) for s in META["samples"] for zone, off in s["examples"].items()]
+# (sample, zone, shift, key of its suggestion): examples to the right, then to the left
+EXAMPLES = [(s["id"], zone, off, sug) for s in META["samples"]
+            for ex, sug in (("examples", "suggestion_cm"), ("examples_left", "suggestion_left_cm"))
+            for zone, off in s[ex].items()]
 S2 = next(s for s in META["samples"] if s["id"] == "s2")["examples"]
 
 
@@ -73,8 +76,8 @@ def test_diagram_images_200_and_unknown_404():
     assert call("GET", "/img/../index.html")[0] == 404
 
 
-@pytest.mark.parametrize("sample,zone,offset", EXAMPLES)
-def test_example_zones(sample, zone, offset):
+@pytest.mark.parametrize("sample,zone,offset,sug_key", EXAMPLES)
+def test_example_zones(sample, zone, offset, sug_key):
     status, r, _ = call("POST", "/", {"sample": sample, "offset_cm": offset})
     assert status == 200 and r["ok"], r
     d = r["decision"]
@@ -88,7 +91,7 @@ def test_example_zones(sample, zone, offset):
         # margin: the spot 1 cm further out (more overhang) is green too, and it is the suggested shift
         assert alt["further_offset_cm"] == alt["offset_cm"] + (1 if alt["offset_cm"] >= 0 else -1)
         assert alt["p_further"] is not None and alt["p_further"] < 0.10
-        expected = next(x for x in META["samples"] if x["id"] == sample)["suggestion_cm"][zone]
+        expected = next(x for x in META["samples"] if x["id"] == sample)[sug_key][zone]
         assert round(alt["offset_cm"]) == expected
         assert {p["role"] for p in r["polygons"]} == {"stack", "candidate", "suggestion"}
     assert [s["name"].split(" (")[0] for s in r["stages"]] == [

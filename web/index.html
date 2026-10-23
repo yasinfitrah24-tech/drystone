@@ -140,44 +140,47 @@
   .ruler-head { display: flex; justify-content: space-between; align-items: baseline; gap: 4px 12px; flex-wrap: wrap; }
   .ruler-head strong { font-size: 15px; }
   .ruler-head span { font-size: 13px; color: var(--muted); }
-  .ruler-hint { font-weight: 600; color: var(--brand); }
-  .ruler-box { padding: 0 30px; margin-top: 6px; border-radius: 8px; --g: rgba(36,87,197,0.06); background-image: var(--grid); background-size: 14px 14px; }
-  .ruler { position: relative; height: 150px; cursor: crosshair; touch-action: none; }
-  .mk { position: absolute; bottom: 40px; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; }
-  .mk button { all: unset; box-sizing: border-box; cursor: pointer; min-width: 46px; min-height: 46px; padding: 4px 7px; border-radius: 7px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; outline: 2px solid transparent; outline-offset: 2px; }
-  .mk button:focus-visible { outline: 3px solid var(--brand); }
-  .mk button[aria-pressed="true"] { outline: 2px solid var(--brand); }
-  .mk .v { font: 600 15px/1 var(--mono); }
-  .mk .w { font-size: 11px; font-weight: 700; letter-spacing: 0.02em; line-height: 1.1; }
-  .mk .pin { flex: 1; width: 0; border-left: 2px solid; }
-  .mk.GREEN button { background: var(--green); color: #fff; border: 1.5px solid var(--green); }
-  .mk.YELLOW button { background: var(--yellow); color: var(--yellow-ink); border: 1.5px solid var(--yellow); }
-  .mk.RED button { background: var(--red); color: #fff; border: 1.5px solid var(--red); }
-  .mk.GREEN .pin { border-color: var(--green); } .mk.YELLOW .pin { border-color: var(--yellow); } .mk.RED .pin { border-color: var(--red); }
-  .mk.SUG button { background: var(--surface); color: var(--brand); border: 2px dashed var(--brand); }
-  .mk.SUG .pin { border-left-style: dashed; border-color: var(--brand); }
-  .mk.PICK { pointer-events: none; }
-  .mk.PICK .tag { min-width: 46px; min-height: 30px; padding: 3px 7px; border-radius: 7px; background: var(--brand); color: #fff; display: flex; align-items: center; justify-content: center; font: 600 14px/1 var(--mono); }
-  .mk.PICK .pin { border-color: var(--brand); }
-  .mk.PICK.GREEN .tag { background: var(--green); } .mk.PICK.YELLOW .tag { background: var(--yellow); color: var(--yellow-ink); } .mk.PICK.RED .tag { background: var(--red); }
-  .ruler-line { position: absolute; left: 0; right: 0; bottom: 38px; height: 2px; background: var(--brand); }
-  .tick { position: absolute; width: 1px; background: var(--tick); }
-  .tick-label { position: absolute; bottom: 6px; transform: translateX(-50%); font: 11px var(--mono); color: var(--brand); }
-  .busy .mk button, .busy .thumb, .busy .stepper button { opacity: 0.45; cursor: default; }
-  .busy .ruler { cursor: default; }
+  /* example chips from the photo: a tap runs the check */
+  .examples { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 16px; margin-top: 12px; }
+  .ex-side { display: flex; flex-wrap: wrap; gap: 8px; }
+  .ex-side + .ex-side { margin-left: auto; justify-content: flex-end; }   /* right-hand examples stay on the right */
+  .ex { all: unset; box-sizing: border-box; cursor: pointer; min-width: 52px; min-height: 44px; padding: 4px 10px; border-radius: 8px; display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; outline: 2px solid transparent; outline-offset: 2px; }
+  .ex .v { font: 600 14px/1 var(--mono); }
+  .ex .w { font-size: 10.5px; font-weight: 700; letter-spacing: 0.02em; line-height: 1; }
+  .ex.GREEN { background: var(--green); color: #fff; } .ex.YELLOW { background: var(--yellow); color: var(--yellow-ink); } .ex.RED { background: var(--red); color: #fff; }
+  .ex.SUG { background: var(--surface); color: var(--brand); border: 2px dashed var(--brand); }
+  .ex[aria-pressed="true"] { outline-color: var(--brand); }
+  .ex:focus-visible { outline: 3px solid var(--brand); }
+  /* the slider: neutral track (zones are only known after a check), value bubble on the handle */
+  .slider { position: relative; --th: 28px; margin-top: 40px; }
+  .slider input { -webkit-appearance: none; appearance: none; display: block; width: 100%; height: 44px; margin: 0; background: transparent; cursor: pointer; touch-action: pan-y; }
+  .slider input::-webkit-slider-runnable-track { height: 4px; border-radius: 2px; background: rgba(36,87,197,0.35); }
+  .slider input::-moz-range-track { height: 4px; border-radius: 2px; background: rgba(36,87,197,0.35); }
+  .slider input::-webkit-slider-thumb { -webkit-appearance: none; width: var(--th); height: var(--th); margin-top: calc((4px - var(--th)) / 2); border-radius: 50%; background: #fff; border: 3px solid var(--brand); box-shadow: 0 2px 6px rgba(19,41,75,0.25); }
+  .slider input::-moz-range-thumb { box-sizing: border-box; width: var(--th); height: var(--th); border-radius: 50%; background: #fff; border: 3px solid var(--brand); box-shadow: 0 2px 6px rgba(19,41,75,0.25); }
+  .slider input:focus-visible { outline: none; }
+  .slider input:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 5px rgba(36,87,197,0.30); }
+  .slider input:focus-visible::-moz-range-thumb { box-shadow: 0 0 0 5px rgba(36,87,197,0.30); }
+  .slider input:disabled { cursor: default; opacity: 0.45; }
+  .sl-bubble { position: absolute; top: -30px; transform: translateX(-50%); padding: 3px 8px; border-radius: 6px; background: var(--brand); color: #fff; font: 600 13px/1.2 var(--mono); white-space: nowrap; pointer-events: none; }
+  .sl-bubble::after { content: ""; position: absolute; left: 50%; bottom: -5px; transform: translateX(-50%); border: 5px solid transparent; border-bottom: 0; border-top-color: var(--brand); }
+  .sl-ticks { position: relative; height: 30px; }
+  .sl-ticks i, .sl-ticks b, .sl-ticks span { position: absolute; transform: translateX(-50%); }
+  .sl-ticks i { top: 0; width: 1px; height: 6px; background: var(--tick); }
+  .sl-ticks i.major { height: 10px; } .sl-ticks i.zero { width: 2px; height: 12px; background: var(--brand); }
+  .sl-ticks b { top: -2px; width: 3px; height: 14px; border-radius: 2px; }
+  .sl-ticks b.GREEN { background: var(--green); } .sl-ticks b.YELLOW { background: var(--yellow); } .sl-ticks b.RED { background: var(--red); }
+  .sl-ticks b.SUG { width: 0; border-left: 2px dashed var(--brand); border-radius: 0; }
+  .sl-ticks span { top: 14px; font: 11px var(--mono); color: var(--brand); }
+  .busy .ex, .busy .thumb { opacity: 0.45; cursor: default; }
 
-  .stepper { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--soft); font-size: 14px; color: var(--muted); }
+  .shift-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; margin-top: 8px; padding-top: 12px; border-top: 1px dashed var(--soft); }
+  .shift-row .sval, .shift-row .primary { white-space: nowrap; }
   .sval .oh { color: var(--muted); font-weight: 500; }
-  .stepper .lbl { margin-right: 2px; }
-  .sbtn { all: unset; box-sizing: border-box; cursor: pointer; min-width: 44px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--btn-border); border-radius: 8px; background: var(--surface); font: 600 18px var(--mono); color: var(--text); }
   .sval { min-width: 150px; font: 600 15px var(--mono); color: var(--text); }
-  @media (max-width: 520px) {
-    .stepper .lbl { flex-basis: 100%; }
-    .sval { min-width: 0; flex: 1; text-align: center; font-size: 14px; }
-    .sval .oh { display: none; }
-  }
+  @media (max-width: 520px) { .sval { min-width: 0; font-size: 14px; } .shift-row .primary { width: 100%; justify-content: center; } }
   .primary { all: unset; box-sizing: border-box; cursor: pointer; min-height: 46px; padding: 0 20px; display: inline-flex; align-items: center; border-radius: 8px; background: var(--brand); color: #fff; font-size: 15px; font-weight: 600; }
-  .sbtn:focus-visible, .primary:focus-visible, .cta:focus-visible, .choice:focus-visible { outline: 3px solid var(--brand); outline-offset: 2px; }
+  .primary:focus-visible, .cta:focus-visible, .choice:focus-visible { outline: 3px solid var(--brand); outline-offset: 2px; }
 
   .legend { display: flex; flex-wrap: wrap; gap: 8px 18px; padding-top: 14px; border-top: 1px solid var(--soft); font-size: 13px; color: var(--body); }
   .legend span { display: flex; align-items: center; gap: 6px; }
@@ -224,12 +227,12 @@
   .busy-card .cta, .busy-card .choice, .busy-card .primary { opacity: 0.45; cursor: default; }
   @media (hover: hover) {
     .thumb:not(:disabled):not([aria-pressed="true"]):hover { border-color: var(--tick); }
-    .sbtn:not(:disabled):hover, .choice:not(:disabled):hover { border-color: var(--text); }
+    .choice:not(:disabled):hover { border-color: var(--text); }
     .cta:not(:disabled):hover { background: rgba(36,87,197,0.06); }
     .primary:not(:disabled):hover { background: #1D4AAB; }
-    .mk button:not(:disabled):hover { transform: translateY(-1px); }
+    .ex:not(:disabled):hover { transform: translateY(-1px); }
   }
-  .sbtn:disabled, .primary:disabled { opacity: 0.45; cursor: default; }
+  .primary:disabled { opacity: 0.45; cursor: default; }
   .sup-fine { font-size: 13px; color: var(--muted); }
   .form { display: grid; gap: 8px; }
   .form label { font-size: 13px; color: var(--muted); display: grid; gap: 3px; }
@@ -540,7 +543,7 @@
         <div class="tech"><span class="tech-k">AWS Lambda</span><p>Same decision code as the laptop agent. Supervisor choices logged in CloudWatch.</p></div>
       </div>
     </div>
-    <p class="facts mono">57 tests &middot; 25 locked trials &middot; every decision logged</p>
+    <p class="facts mono">66 tests &middot; 25 locked trials &middot; every decision logged</p>
   </section>
 </div>
 <section class="roles" aria-label="Who does what">
@@ -628,16 +631,16 @@
         <div>
           <div class="ruler-head">
             <strong id="h-ruler">Where should the next box go?</strong>
-            <span>cm to the right of the box below &middot; <b class="ruler-hint">Tap or drag</b></span>
+            <span>cm from the box below: &minus; left, + right</span>
           </div>
-          <div class="ruler-box">
-            <div class="ruler" id="ruler" aria-labelledby="h-ruler"></div>
+          <div class="examples" id="ruler"></div>
+          <div class="slider">
+            <span class="sl-bubble" id="sl-bubble" aria-hidden="true" hidden></span>
+            <input type="range" id="shift" min="-16" max="16" step="1" value="0" aria-labelledby="h-ruler">
+            <div class="sl-ticks" id="sl-ticks" aria-hidden="true"></div>
           </div>
-          <div class="stepper" role="group" aria-label="Or pick any shift">
-            <span class="lbl">Or pick any shift</span>
-            <button type="button" class="sbtn" id="minus" aria-label="1 cm left">&minus;</button>
+          <div class="shift-row">
             <span class="sval" id="shift-value" aria-live="polite">0 cm</span>
-            <button type="button" class="sbtn" id="plus" aria-label="1 cm right">+</button>
             <button type="button" class="primary" id="analyze">Check</button>
           </div>
         </div>
@@ -651,7 +654,7 @@
       <p class="sr" id="announce" role="status" aria-live="polite"></p>
       <section class="card card-right" id="decision" aria-labelledby="h-decision">
         <div class="dhead"><span id="h-decision">DECISION</span><span id="dmeta-top"></span></div>
-        <div id="result"><div class="pad"><span class="idle">Tap a marker on the ruler below the photo to run the check.</span></div></div>
+        <div id="result"><div class="pad"><span class="idle">Pick a spot with the slider or an example, then press Check.</span></div></div>
       </section>
     </div>
   </section>
@@ -780,7 +783,7 @@
     ["Decision", "P(fall) mapped to a fixed zone"],
     ["Action", "Guide, ask a supervisor, or reject. If not green, it also searches for a safer spot with more simulations"]
   ];
-  var RULER_MAX = 16, TIMEOUT_MS = 30000;
+  var TIMEOUT_MS = 30000;
   var state = { meta: null, sample: null, img: null, shift: null, status: "idle", result: null, error: null,
                 busy: false, note: null, overrideOpen: false, chosen: false, req: 0 };
   var el = function (id) { return document.getElementById(id); };
@@ -877,51 +880,57 @@
     G.fillStyle = color; G.fillText(t, x, y); G.restore();
   }
 
-  /* ---------- ruler ---------- */
+  /* ---------- shift: example chips + one slider ---------- */
+  // examples to the left and to the right of the box below, each with the agent's suggested spot
   function rulerMarkers(s) {
-    var list = [];
-    ["GREEN", "YELLOW", "RED"].forEach(function (z) {
-      if (s.examples[z] !== undefined) list.push({ v: s.examples[z], kind: z });
+    var list = [], range = state.meta.offset_range_cm;
+    [[s.examples, s.suggestion_cm], [s.examples_left, s.suggestion_left_cm]].forEach(function (side) {
+      var ex = side[0] || {}, sug = side[1] || {};
+      ["GREEN", "YELLOW", "RED"].forEach(function (z) { if (ex[z] !== undefined) list.push({ v: ex[z], kind: z }); });
+      var sv = sug.RED !== undefined ? sug.RED : sug.YELLOW;
+      if (sv !== undefined && !list.some(function (m) { return m.v === sv; })) list.push({ v: sv, kind: "SUG" });
     });
-    var sug = s.suggestion_cm || {};
-    var sv = sug.RED !== undefined ? sug.RED : sug.YELLOW;
-    if (sv !== undefined && !list.some(function (m) { return m.v === sv; })) list.push({ v: sv, kind: "SUG" });
-    return list.filter(function (m) { return m.v >= 0 && m.v <= RULER_MAX; })
+    return list.filter(function (m) { return m.v >= range[0] && m.v <= range[1]; })
       .sort(function (a, b) { return a.v - b.v; });
   }
-  function pos(v) { return (v / RULER_MAX * 100) + "%"; }
+  // x of a shift along the slider: the handle centre runs from half a handle in to half a handle from the end
+  function along(v) {
+    var range = state.meta.offset_range_cm, f = (v - range[0]) / (range[1] - range[0]);
+    return "calc(var(--th) / 2 + (100% - var(--th)) * " + f.toFixed(4) + ")";
+  }
 
   function renderRuler() {
-    var s = state.sample, h = "", list = rulerMarkers(s);
-    for (var i = 0; i <= RULER_MAX; i++) {
-      h += '<div class="tick" style="left:' + pos(i) + ";bottom:" + (i % 2 ? 32 : 28) + "px;height:" + (i % 2 ? 6 : 10) + 'px"></div>';
-      if (i % 2 === 0) h += '<span class="tick-label" style="left:' + pos(i) + '">' + (i ? "+" + i : "0") + "</span>";
-    }
-    h += '<div class="ruler-line"></div>';
-    var onMarker = list.some(function (m) { return m.v === state.shift; });
-    list.forEach(function (m, i) {
+    var s = state.sample, list = rulerMarkers(s), range = state.meta.offset_range_cm, h = "", left = true;
+    h += '<div class="ex-side" role="group" aria-label="Examples to the left">';
+    list.forEach(function (m) {
+      if (left && m.v > 0) { h += '</div><div class="ex-side" role="group" aria-label="Examples to the right">'; left = false; }
       var word = m.kind === "SUG" ? "SUGGESTED" : m.kind;
       var aria = signed(m.v) + " cm, " + (m.kind === "SUG" ? "suggested spot" : "expected " + m.kind);
-      h += '<div class="mk ' + m.kind + '" style="left:' + pos(m.v) + ";top:" + (i % 2 ? 54 : 0) + 'px">' +
-        '<button type="button" data-v="' + m.v + '" aria-label="' + esc(aria) + '" aria-pressed="' + (state.shift === m.v) + '"' +
-        (state.busy ? " disabled" : "") + '><span class="v">' + signed(m.v) + '</span><span class="w">' + word + "</span></button>" +
-        '<div class="pin"></div></div>';
+      h += '<button type="button" class="ex ' + m.kind + '" data-v="' + m.v + '" aria-label="' + esc(aria) + '" aria-pressed="' +
+        (state.shift === m.v) + '"' + (state.busy ? " disabled" : "") + '><span class="v">' + signed(m.v) + '</span><span class="w">' +
+        word + "</span></button>";
     });
-    if (state.shift !== null && !onMarker && state.shift >= 0 && state.shift <= RULER_MAX) {
-      var done = state.status === "result" && state.result && state.result.ok && state.result.offset_cm === state.shift;
-      h += '<div class="mk PICK' + (done ? " " + state.result.decision.zone : "") + '" style="left:' + pos(state.shift) + ';top:54px" aria-hidden="true"><span class="tag">' +
-        signed(state.shift) + '</span><div class="pin"></div></div>';
+    el("ruler").innerHTML = h + "</div>";
+    var t = "";
+    for (var v = range[0]; v <= range[1]; v++) {
+      t += '<i class="' + (v === 0 ? "zero" : v % 4 === 0 ? "major" : "") + '" style="left:' + along(v) + '"></i>';
+      if (v % 4 === 0) t += '<span style="left:' + along(v) + '">' + (v ? signed(v) : "0") + "</span>";
     }
-    el("ruler").innerHTML = h;
+    list.forEach(function (m) { t += '<b class="' + m.kind + '" style="left:' + along(m.v) + '"></b>'; });
+    el("sl-ticks").innerHTML = t;
   }
 
   function renderStepper() {
-    var v = state.shift === null ? 0 : state.shift;
-    el("shift-value").innerHTML = signed(v) + ' cm <span class="oh">(' + Math.abs(overhang(v)) + "% overhang)</span>";
-    el("analyze").textContent = "Check";
-    var range = state.meta.offset_range_cm;
-    el("minus").disabled = state.busy || v <= range[0];
-    el("plus").disabled = state.busy || v >= range[1];
+    var v = state.shift === null ? 0 : state.shift, range = state.meta.offset_range_cm, sl = el("shift");
+    sl.min = range[0]; sl.max = range[1];
+    if (Number(sl.value) !== v) sl.value = v;
+    sl.disabled = state.busy;
+    sl.setAttribute("aria-valuetext", signed(v) + " cm, " + Math.abs(overhang(v)) + "% overhang");
+    var b = el("sl-bubble");
+    b.hidden = state.shift === null;
+    b.textContent = signed(v) + " cm"; b.style.left = along(v);
+    el("shift-value").innerHTML = signed(v) + ' cm <span class="oh">&middot; ' + Math.abs(overhang(v)) + "% overhang</span>";
+    el("analyze").textContent = "Check " + signed(v) + " cm";            // says exactly what will be checked
     el("analyze").disabled = state.busy;
   }
 
@@ -1006,15 +1015,15 @@
     el("dmeta-top").textContent = s ? s.id + (state.shift !== null ? " · " + signed(state.shift) + " cm" : "") : "";
     if (state.status === "idle") {
       var yel = s && s.examples.YELLOW !== undefined ? s.examples.YELLOW : null;
-      h = '<div class="pad"><span class="idle">Tap a marker on the ruler below the photo to run the check.</span>' +
-        (yel !== null ? '<span class="soft-text">Not sure where to start? The ' + signed(yel) + ' cm marker is expected to be YELLOW (ask): ' +
+      h = '<div class="pad"><span class="idle">Pick a spot with the slider or an example, then press Check.</span>' +
+        (yel !== null ? '<span class="soft-text">Not sure where to start? The ' + signed(yel) + ' cm example is expected to be YELLOW (ask): ' +
           'a supervisor approves, takes the safer spot, or rejects.</span>' +
           '<button type="button" class="cta" data-act="try-example">Check <span class="mono">' + signed(yel) + ' cm</span></button>' : "") +
         "</div>";
     } else if (state.status === "loading") {
       h = '<div class="pad"><span class="load-title">Simulating the next box on AWS Lambda\u2026</span>' +
         '<div class="loader" role="progressbar" aria-label="Running the check"><i></i></div>' +
-        '<span class="soft-text">Up to 600 simulated placements. Photo and ruler are locked until it answers.</span>' +
+        '<span class="soft-text">Up to 600 simulated placements. Photo and slider are locked until it answers.</span>' +
         '<span class="soft-text" id="wake" role="status" hidden>The server is waking up. The first check can take up to 10 s.</span>' +
         '<span class="elapsed mono" id="elapsed">0.0 s</span></div>';
     } else if (state.status === "error") {
@@ -1199,53 +1208,21 @@
   }
 
   /* ---------- events ---------- */
-  function rulerValue(x) {
-    var rect = el("ruler").getBoundingClientRect();
-    return Math.max(0, Math.min(RULER_MAX, Math.round((x - rect.left) / rect.width * RULER_MAX)));
-  }
-  el("ruler").addEventListener("click", function (e) {
-    if (dragClick) { dragClick = false; return; }       // the release of a drag already ran the check
+  // picking a spot (slider or example chip) only moves the ghost box; only Check (or Enter) runs a check
+  function pick(v) {
     if (state.busy || !state.sample) return;
-    state.note = null;
-    var b = e.target.closest("button[data-v]");
-    if (b) { analyze(Number(b.dataset.v), true); return; }
-    analyze(rulerValue(e.clientX), true);
-  });
-  // drag: the pin follows the pointer; one check runs when the finger or mouse is lifted
-  var drag = null, dragClick = false;
-  el("ruler").addEventListener("pointerdown", function (e) {
-    dragClick = false;
-    if (state.busy || !state.sample || e.button > 0) return;
-    drag = { id: e.pointerId, x: e.clientX, moved: false };
-  });
-  el("ruler").addEventListener("pointermove", function (e) {
-    if (!drag || e.pointerId !== drag.id) return;
-    if (!drag.moved) {
-      if (Math.abs(e.clientX - drag.x) < 6) return;
-      drag.moved = true; el("ruler").setPointerCapture(e.pointerId);
-    }
-    var v = rulerValue(e.clientX);
-    if (v !== state.shift || state.status !== "idle") {
-      state.shift = v; state.status = "idle"; state.result = null; state.note = null; renderAll();
-    }
-  });
-  function endDrag(e, run) {
-    if (!drag || e.pointerId !== drag.id) return;
-    var moved = drag.moved; drag = null;
-    if (!moved) return;
-    dragClick = true;
-    if (run) { state.note = null; analyze(rulerValue(e.clientX), true); }
-  }
-  el("ruler").addEventListener("pointerup", function (e) { endDrag(e, true); });
-  el("ruler").addEventListener("pointercancel", function (e) { endDrag(e, false); });
-  function step(d) {
-    var range = state.meta.offset_range_cm, v = (state.shift === null ? 0 : state.shift) + d;
-    state.shift = Math.max(range[0], Math.min(range[1], v));
-    if (state.status !== "loading") { state.status = "idle"; state.result = null; state.note = null; }
+    state.shift = v; state.status = "idle"; state.result = null; state.note = null;
     renderAll();
   }
-  el("minus").addEventListener("click", function () { step(-1); });
-  el("plus").addEventListener("click", function () { step(1); });
+  el("ruler").addEventListener("click", function (e) {
+    var b = e.target.closest("button[data-v]");
+    if (b) pick(Number(b.dataset.v));
+  });
+  el("shift").addEventListener("input", function () { pick(Number(el("shift").value)); });
+  el("shift").addEventListener("keydown", function (e) {
+    if (e.key !== "Enter" || state.busy || !state.sample) return;
+    e.preventDefault(); state.note = null; analyze(Number(el("shift").value));
+  });
   el("analyze").addEventListener("click", function () {
     state.note = null; analyze(state.shift === null ? 0 : state.shift, true);
   });
