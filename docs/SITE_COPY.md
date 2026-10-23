@@ -27,7 +27,7 @@ where the page follows REPORT or the code instead of the draft.
 - Eyebrow: THE PROBLEM
 - H2: Stacks are still built by eye.
 - Accent: One guess per box.
-- Body: Boxes have no mortar either. Whether a stack stays up depends on where each box lands, and that call is usually made in a second, by eye, with the next box already in hand.
+- Body: Boxes have no mortar either. Whether a stack stays up depends on where each box lands, and that call is usually made by eye, with the next box already in hand.
 - Three numbers:
   - 99,800 · injuries with days away from work in US transportation and warehousing (2020)
   - 12,100 · of them "struck by object or equipment", a category broader than falling stacks
