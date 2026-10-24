@@ -1,4 +1,21 @@
-# Drystone
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/img/logo-dark.svg">
+    <img src="docs/img/logo-light.svg" alt="Drystone" height="64">
+  </picture>
+</p>
+
+<h3 align="center">Every stack is a drystone wall.</h3>
+
+<p align="center"><sub>Nothing holds it but placement. Drystone checks where the next box goes, then tells you to place it,
+ask, or move it.</sub></p>
+
+<p align="center">
+  <a href="#live-demo-for-judges">Live demo</a> ·
+  Video (coming soon) ·
+  <a href="https://github.com/yasinfitrah24-tech/drystone/blob/main/docs/REPORT.md">Report</a> ·
+  <a href="#run-it-yourself">Setup</a>
+</p>
 
 **Predict before you stack.** Drystone watches a stack of boxes with one calibrated camera. OpenCV 5 reads an
 ArUco marker on each box, works out where every box sits, and builds a digital twin of the stack. Before the next
