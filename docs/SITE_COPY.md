@@ -169,6 +169,11 @@ Place it once. Place it right. [button: Try the demo →]
 - Error: The simulator didn't answer. Nothing was decided, and your photo and spot are kept. [button: Try again]
 - Rate limit: Too many checks from your network this minute. Wait a moment, then try again.
 - Trace title: How it decided
+- Decision panel (24 Okt, instrument style like the hero card): navy header "DECISION · s2 · +16 cm" (mono; before a spot: "DECISION · s2") with a small status lamp: grey = nothing decided, slow blue blink = checking, zone colour = decided. Start: a small dashed box outline, the start text above and the button filled blue: "Check +X cm" (the YELLOW example). Result: a zone band like the hero, "RED · move it" + the action code (REJECT / ASK_SUPERVISOR / GUIDE) + "P(fall) 69%" in mono. Threshold bar: 0–100% with lines at 10% and 50%, a mark at P, a band for ± the 95% CI from the answer, labels under the segments: GREEN · YELLOW · RED. Safer spot (YELLOW and RED with a suggestion), as on the hero: "Safer spot: +9 cm · still green 1 cm further out (Z%)" (Z = the answer's p_further), button "Use suggestion". Supervisor choices as one segmented control: YELLOW "Approve · Use suggestion · Reject" (name optional above), RED "Use suggestion · Override… · Cancel" (Override… opens name + reason, then "Log override"). The choice taken gets a ✓; all choices stay locked until the next check. Every number on the panel comes from the API answer.
+- Loading on the photo: the hero's scan line runs over the photo while the check runs, with the seconds timer and, after 8 s, the waking-up line. No simulation counter (the answer only arrives at the end).
+- How it decided: five steps as checkpoints (Marker detection → Digital twin → Simulation → Decision → Action), each with its time from the answer ("— ms" before a check) and a bar as long as its share of the slowest step; a "cached" tag when the answer came from the cache (times = first run).
+- Sample picker: photo cards with the sample id and its stack in short (One box / Two boxes, aligned / Two boxes, top one shifted); the picked one has a blue ring and glow.
+- Legend: three small chips, GREEN <10% · place it / YELLOW 10–50% · ask / RED >50% · move it.
 
 ## EVIDENCE
 - Eyebrow: EVIDENCE

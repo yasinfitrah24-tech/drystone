@@ -651,6 +651,141 @@
   .overlay-key { display: none; }
   @media (max-width: 600px) { .overlay-key { display: block; } }
 
+  /* ---------- Demo polish: the decision card as an instrument panel, in the hero card's style ---------- */
+  /* header: thin navy bar, mono label, a status lamp (grey = nothing decided, slow blue blink = checking, zone = decided) */
+  .card-right .dhead { justify-content: flex-start; align-items: center; gap: 8px; padding: 10px clamp(14px, 2vw, 20px); background: var(--band); color: #DCE5F5;
+    border-bottom: 1px solid rgba(143,176,240,0.25); font: 600 12px var(--mono); letter-spacing: 0.06em; }
+  .card-right .dhead #dmeta-top { color: var(--hero-sub); font-weight: 500; letter-spacing: 0.02em; }
+  .lamp { flex: none; width: 9px; height: 9px; border-radius: 50%; background: #8A93A3; box-shadow: 0 0 0 2px rgba(138,147,163,0.25); }
+  .lamp.busy { background: var(--brand-edge); box-shadow: 0 0 0 3px rgba(143,176,240,0.25), 0 0 10px rgba(143,176,240,0.7); animation: lamp-blink 1.4s ease-in-out infinite; }
+  .lamp.GREEN { background: #3FBF6E; box-shadow: 0 0 0 3px rgba(63,191,110,0.25), 0 0 8px rgba(63,191,110,0.6); }
+  .lamp.YELLOW { background: var(--yellow); box-shadow: 0 0 0 3px rgba(226,174,28,0.25), 0 0 8px rgba(226,174,28,0.6); }
+  .lamp.RED { background: #E5533D; box-shadow: 0 0 0 3px rgba(229,83,61,0.25), 0 0 8px rgba(229,83,61,0.6); }
+  @keyframes lamp-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+  /* start: a small dashed box in viewfinder corners, the start text, the filled button */
+  .idle-pad { align-items: flex-start; }
+  .idle-art { position: relative; width: 112px; height: 76px; display: flex; align-items: center; justify-content: center; color: var(--tick); }
+  .idle-art::before, .idle-art::after, .idle-art i::before, .idle-art i::after { content: ""; position: absolute; width: 10px; height: 10px; border: 0 solid var(--tick); }
+  .idle-art::before { top: 0; left: 0; border-top-width: 2px; border-left-width: 2px; } .idle-art::after { top: 0; right: 0; border-top-width: 2px; border-right-width: 2px; }
+  .idle-art i::before { bottom: 0; left: 0; border-bottom-width: 2px; border-left-width: 2px; } .idle-art i::after { bottom: 0; right: 0; border-bottom-width: 2px; border-right-width: 2px; }
+  .primary.try { align-self: flex-start; gap: 8px; box-shadow: 0 8px 22px rgba(36,87,197,0.28); }
+  /* result: the zone band as on the hero card */
+  .zband { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; padding: 14px clamp(16px, 2vw, 22px); min-height: 60px; color: #fff; }
+  .zband.GREEN { background: var(--green); } .zband.RED { background: var(--red); } .zband.YELLOW { background: var(--yellow); color: var(--yellow-ink); }
+  .zb-word { font-size: clamp(24px, 2.6vw, 30px); font-weight: 700; line-height: 1; letter-spacing: -0.02em; }
+  .zband .pill { background: transparent; color: inherit; border: 1px solid currentColor; opacity: 0.9; }
+  .zb-p { margin-left: auto; font: 500 14px var(--mono); white-space: nowrap; }
+  .zb-p b { font-size: clamp(26px, 2.6vw, 32px); font-weight: 600; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+  /* threshold bar: 0-100%, lines at 10% and 50%, the 95% CI as a band, the mark at P */
+  .pbar { padding: 16px clamp(16px, 2vw, 22px) 4px; }
+  .pb-cuts, .pb-labels { position: relative; height: 16px; font: 11px var(--mono); color: var(--muted); }
+  .pb-cuts span, .pb-labels span { position: absolute; transform: translateX(-50%); white-space: nowrap; }
+  .pb-labels { margin-top: 6px; font-weight: 600; letter-spacing: 0.04em; }
+  .pb-labels .g { color: var(--green-text); } .pb-labels .y { color: var(--yellow-text); } .pb-labels .r { color: var(--red-text); }
+  .pb-track { position: relative; height: 10px; border-radius: 5px; display: flex; overflow: visible; background: var(--soft); }
+  .pb-seg { display: block; height: 100%; opacity: 0.28; } .pb-seg.g { width: 10%; background: var(--green); border-radius: 5px 0 0 5px; }
+  .pb-seg.y { width: 40%; background: var(--yellow); } .pb-seg.r { width: 50%; background: var(--red); border-radius: 0 5px 5px 0; }
+  .pb-cut { position: absolute; top: -4px; bottom: -4px; width: 2px; margin-left: -1px; background: var(--text); opacity: 0.55; }
+  .pb-ci { position: absolute; top: 1px; bottom: 1px; border-radius: 4px; background: rgba(19,41,75,0.30); }
+  .pb-mark { position: absolute; top: -6px; width: 4px; height: 22px; margin-left: -2px; border-radius: 2px; background: var(--band); box-shadow: 0 0 0 2px #fff; }
+  .pb-ci-txt { display: block; margin-top: 6px; font: 12px var(--mono); color: var(--body); }
+  /* safer spot: the hero's dashed blue box, with the suggestion button */
+  .safe-box { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 14px; padding: 12px 14px; border: 1.5px dashed var(--brand);
+    border-radius: 10px; background: rgba(36,87,197,0.06); }
+  .safe-txt { font: 600 13px/1.45 var(--mono); color: var(--band); }
+  /* "Use suggestion" and "Log override" are filled buttons that also lock with the other choices (class choice) */
+  .primary.choice { min-height: 46px; padding: 0 20px; border: 0; border-radius: 8px; background: var(--brand); color: #fff; font-size: 15px; font-weight: 600;
+    box-shadow: 0 8px 22px rgba(36,87,197,0.28); transition: transform 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease; }
+  .primary.choice:disabled { opacity: 0.45; cursor: default; box-shadow: none; }
+  @media (hover: hover) { .primary.choice:not(:disabled):hover { background: #1D4AAB; transform: translateY(-1px); box-shadow: 0 10px 26px rgba(36,87,197,0.36); } }
+  /* supervisor choices: one segmented control; the choice taken gets a tick, all stay locked until the next check */
+  .segc { display: flex; flex-wrap: wrap; border: 1px solid var(--btn-border); border-radius: 10px; overflow: hidden; background: var(--surface); }
+  .segc .seg-c { all: unset; box-sizing: border-box; cursor: pointer; flex: 1 1 auto; min-height: 44px; padding: 0 16px; display: inline-flex; align-items: center;
+    justify-content: center; gap: 6px; font-size: 14px; font-weight: 600; color: var(--text); text-align: center; transition: background-color 0.18s ease, color 0.18s ease, box-shadow 0.18s ease; }
+  .segc .seg-c + .seg-c { border-left: 1px solid var(--btn-border); }
+  .segc .seg-c:focus-visible { outline: 3px solid var(--brand); outline-offset: -3px; }
+  .segc .seg-c[data-act="use_suggestion"] { color: var(--brand); }
+  .segc .seg-c.taken { background: var(--how-band); color: var(--brand); }
+  .segc .seg-c:disabled { cursor: default; opacity: 0.45; } .segc .seg-c.taken:disabled { opacity: 1; }
+  .segc .tick { font-weight: 700; }
+  @media (hover: hover) { .segc .seg-c:not(:disabled):hover { background: rgba(36,87,197,0.07); color: var(--brand); box-shadow: inset 0 0 0 1px var(--brand); } }
+  /* loading: the hero's scan line over the photo while the check runs */
+  .photo .scan { position: absolute; inset: 0; overflow: hidden; pointer-events: none; opacity: 0; transition: opacity 0.25s ease; }
+  .photo.scanning .scan { opacity: 1; }
+  .photo .scan i { position: absolute; inset: 0; transform: translateY(-100%); will-change: transform;
+    background: linear-gradient(to bottom, rgba(143,176,240,0) calc(100% - 26px), rgba(143,176,240,0.35) calc(100% - 2px), rgba(220,229,245,0.95) calc(100% - 2px)); }
+  .photo.scanning .scan i { animation: demo-scan 1.6s linear infinite; }
+  @keyframes demo-scan { from { transform: translateY(-100%); } to { transform: translateY(0); } }
+  /* How it decided: five checkpoints, each with its time and a bar for its share of the slowest step */
+  .how .tbar { display: none; }
+  .tline { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 14px; }
+  .tline > li { position: relative; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+  .tline > li:not(:last-child)::after { content: ""; position: absolute; top: 19px; left: 48px; right: -8px; height: 2px;
+    background-image: repeating-linear-gradient(90deg, var(--tick) 0 8px, transparent 8px 12px); opacity: 0.8; }
+  .ts-dot { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font: 600 13px var(--mono); color: var(--brand);
+    background: var(--surface); border: 1.5px solid var(--brand); box-shadow: 0 0 0 5px rgba(36,87,197,0.08); }
+  .tline > li.dim .ts-dot { border-style: dashed; color: var(--muted); border-color: var(--tick); box-shadow: none; }
+  .ts-name { font-size: 15px; font-weight: 600; line-height: 1.3; }
+  .ts-desc { font-size: 13px; line-height: 1.4; color: var(--muted); }
+  .ts-row { display: flex; align-items: center; gap: 8px; margin-top: 2px; }
+  .ts-ms { font: 600 13px var(--mono); white-space: nowrap; }
+  .ts-cached { font: 600 10.5px var(--mono); letter-spacing: 0.04em; color: var(--brand); border: 1px solid rgba(36,87,197,0.45); border-radius: 999px; padding: 1px 7px; }
+  .ts-bar { display: block; height: 6px; border-radius: 3px; background: rgba(36,87,197,0.12); overflow: hidden; }
+  .ts-bar i { display: block; height: 100%; border-radius: 3px; background: var(--brand); }
+  .tline details { font-size: 13px; }
+  .tline summary { cursor: pointer; color: var(--brand); font-size: 14px; font-weight: 500; min-height: 44px; display: flex; align-items: center; }
+  .tline details ul { margin: 4px 0 0; padding-left: 16px; color: var(--body); }
+  .tline details li { font: 12px/1.45 var(--mono); margin-bottom: 3px; overflow-wrap: anywhere; }
+  @media (max-width: 860px) {
+    .tline { grid-template-columns: minmax(0, 1fr); gap: 18px; }
+    .tline > li { display: grid; grid-template-columns: 40px minmax(0, 1fr); column-gap: 14px; row-gap: 4px; }
+    .tline > li > :not(.ts-dot) { grid-column: 2; }
+    .ts-dot { grid-row: 1 / span 4; }
+    .tline > li:not(:last-child)::after { top: 48px; bottom: -14px; left: 19px; right: auto; width: 2px; height: auto;
+      background-image: repeating-linear-gradient(180deg, var(--tick) 0 8px, transparent 8px 12px); }
+  }
+  /* sample picker: the picked card has a blue ring and glow; hover glows */
+  .thumb { transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease; }
+  .thumb[aria-pressed="true"] { border: 2px solid var(--brand); padding: 4px; box-shadow: 0 0 0 3px rgba(36,87,197,0.16), 0 8px 22px rgba(36,87,197,0.22); }
+  .thumb:focus-visible { outline: 3px solid var(--brand); outline-offset: 3px; }
+  @media (hover: hover) { .thumb:not(:disabled):hover { border-color: var(--brand); box-shadow: 0 6px 18px rgba(36,87,197,0.18); transform: translateY(-1px); } }
+  /* slider: the thumb glows on hover and while dragging */
+  .slider input::-webkit-slider-thumb { transition: box-shadow 0.18s ease, transform 0.18s ease; }
+  .slider input::-moz-range-thumb { transition: box-shadow 0.18s ease; }
+  @media (hover: hover) {
+    .slider input:not(:disabled):hover::-webkit-slider-thumb { box-shadow: 0 0 0 6px rgba(36,87,197,0.16), 0 4px 12px rgba(36,87,197,0.35); }
+    .slider input:not(:disabled):hover::-moz-range-thumb { box-shadow: 0 0 0 6px rgba(36,87,197,0.16), 0 4px 12px rgba(36,87,197,0.35); }
+  }
+  .slider input:not(:disabled):active::-webkit-slider-thumb { box-shadow: 0 0 0 8px rgba(36,87,197,0.20), 0 4px 14px rgba(36,87,197,0.45); transform: scale(1.08); }
+  .slider input:not(:disabled):active::-moz-range-thumb { box-shadow: 0 0 0 8px rgba(36,87,197,0.20), 0 4px 14px rgba(36,87,197,0.45); }
+  .sl-bubble { box-shadow: 0 4px 12px rgba(36,87,197,0.30); }
+  /* legend: three small chips */
+  .legend { gap: 8px; }
+  .legend .lg { gap: 6px; padding: 5px 11px; border-radius: 999px; border: 1px solid; font-size: 12.5px; line-height: 1.3; }
+  .legend .lg i { width: 8px; height: 8px; border-radius: 50%; }
+  .legend .lg.GREEN { border-color: rgba(38,125,71,0.35); background: var(--green-tint); } .legend .lg.GREEN i { background: var(--green); }
+  .legend .lg.YELLOW { border-color: rgba(201,154,18,0.45); background: var(--yellow-tint); } .legend .lg.YELLOW i { background: var(--yellow); }
+  .legend .lg.RED { border-color: rgba(201,58,37,0.35); background: var(--red-tint); } .legend .lg.RED i { background: var(--red); }
+  /* hover glow and a clear focus ring on the other Demo controls */
+  .ex { transition: transform 0.18s ease, box-shadow 0.18s ease; }
+  .primary:focus-visible { outline: 3px solid var(--brand); outline-offset: 3px; }
+  /* big numbers (Home and Evidence): the line above turns brand blue, the number brightens, the card lifts 2 px */
+  .stats li { transition: border-color 0.2s ease, transform 0.2s ease; }
+  .stat-num { transition: color 0.2s ease; }
+  .ev .num { transition: filter 0.2s ease; }
+  @media (hover: hover) {
+    .stats li:hover { border-top-color: var(--brand); transform: translateY(-2px); }
+    .stats li:hover .stat-num { color: #B4CBF6; }
+    .ev:hover { transform: translateY(-2px); border-top-color: var(--brand); }
+    .ev:hover .num { filter: brightness(1.15) saturate(1.1); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .lamp.busy, .photo.scanning .scan i { animation: none; }
+    .photo .scan { display: none; }
+    .stats li, .thumb, .segc .seg-c { transition: none; }
+    .stats li:hover, .ev:hover, .thumb:hover { transform: none !important; }
+  }
+
   /* hero card frame: the agent's top bar (navy 0.82) with the two live labels, instead of viewfinder corners;
      the replay itself is unchanged */
   .proof-screen::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 30px; background: rgba(19,41,75,0.82); z-index: 1; pointer-events: none; }
@@ -910,6 +1045,7 @@
         <div>
           <div class="photo">
             <canvas id="view" width="1280" height="720" aria-label="Sample photo with detected markers and box outlines"></canvas>
+            <div class="scan" aria-hidden="true"><i></i></div>
             <div class="hud" id="view-hud" aria-hidden="true"></div>
             <span class="chip" id="photo-chip"></span>
             <span class="chip chip-ph" id="ph-badge" hidden>placeholder image</span>
@@ -939,15 +1075,15 @@
           </div>
         </div>
         <div class="legend">
-          <span><i style="background:var(--green)"></i><b>GREEN</b> &lt;10% &middot; place it</span>
-          <span><i style="background:var(--yellow)"></i><b>YELLOW</b> 10&ndash;50% &middot; ask</span>
-          <span><i style="background:var(--red)"></i><b>RED</b> &gt;50% &middot; move it</span>
+          <span class="lg GREEN"><i></i><b>GREEN</b> &lt;10% &middot; place it</span>
+          <span class="lg YELLOW"><i></i><b>YELLOW</b> 10&ndash;50% &middot; ask</span>
+          <span class="lg RED"><i></i><b>RED</b> &gt;50% &middot; move it</span>
         </div>
       </div>
 
       <p class="sr" id="announce" role="status" aria-live="polite"></p>
       <section class="card card-right" id="decision" aria-labelledby="h-decision">
-        <div class="dhead"><span id="h-decision">DECISION</span><span id="dmeta-top"></span></div>
+        <div class="dhead"><span class="lamp" id="d-lamp" aria-hidden="true"></span><span id="h-decision">DECISION</span><span id="dmeta-top"></span></div>
         <div id="result"><div class="pad"><span class="idle">Pick a spot with the slider or an example, then press Check.</span></div></div>
       </section>
     </div>
@@ -957,7 +1093,7 @@
   <div class="wrap">
     <div class="sec-head"><h2 id="h-how">How it decided</h2><span class="mono" id="total">total &mdash; ms</span></div>
     <div class="tbar" id="tbar" aria-hidden="true"></div>
-    <ol class="stages" id="trace"></ol>
+    <ol class="tline" id="trace"></ol>
   </div>
 </section>
 </div>
@@ -1331,6 +1467,7 @@
     el("decision").classList.toggle("busy-card", state.busy);
     Array.prototype.forEach.call(el("samples").children, function (b) { b.disabled = state.busy; });
     renderRuler(); renderStepper(); renderDecision(); renderTrace(); draw();
+    document.querySelector(".photo").classList.toggle("scanning", state.status === "loading");   // the hero's scan line while checking
   }
 
   /* ---------- requests ---------- */
@@ -1387,13 +1524,16 @@
   /* ---------- decision card ---------- */
   function renderDecision() {
     var s = state.sample, h;
-    el("dmeta-top").textContent = s ? s.id + (state.shift !== null ? " · " + signed(state.shift) + " cm" : "") : "";
+    el("dmeta-top").textContent = s ? "\u00b7 " + s.id + (state.shift !== null ? " \u00b7 " + signed(state.shift) + " cm" : "") : "";
+    var rz = state.status === "result" && state.result && state.result.ok ? state.result.decision.zone : "";
+    el("d-lamp").className = "lamp" + (state.status === "loading" ? " busy" : rz ? " " + rz : "");
     if (state.status === "idle") {
       var yel = s && s.examples.YELLOW !== undefined ? s.examples.YELLOW : null;
-      h = '<div class="pad"><span class="idle">Pick a spot with the slider or an example, then press Check.</span>' +
+      h = '<div class="pad idle-pad"><span class="idle-art" aria-hidden="true"><i></i>' + IDLE_BOX + "</span>" +
+        '<span class="idle">Pick a spot with the slider or an example, then press Check.</span>' +
         (yel !== null ? '<span class="soft-text">Not sure where to start? The ' + signed(yel) + ' cm example is expected to be YELLOW (ask): ' +
           'a supervisor approves, takes the safer spot, or rejects.</span>' +
-          '<button type="button" class="cta" data-act="try-example">Check <span class="mono">' + signed(yel) + ' cm</span></button>' : "") +
+          '<button type="button" class="primary try" data-act="try-example">Check <span class="mono">' + signed(yel) + ' cm</span></button>' : "") +
         "</div>";
     } else if (state.status === "loading") {
       h = '<div class="pad"><span class="load-title">Simulating the next box on AWS Lambda\u2026</span>' +
@@ -1422,42 +1562,55 @@
     hudDemo();
   }
 
+  // a small dashed box (the next box, not checked yet) for the start of the panel
+  var IDLE_BOX = '<svg viewBox="0 0 80 52" width="80" height="52" fill="none" stroke="currentColor" stroke-width="1.6" stroke-dasharray="4 3" ' +
+    'stroke-linejoin="round"><path d="M10 18 L46 18 L46 46 L10 46 Z M10 18 L28 6 L64 6 L46 18 M64 6 L64 34 L46 46"/></svg>';
+  // one button of the supervisor's segmented control; the choice taken gets a tick (all stay locked until the next check)
+  function segBtn(act, label, taken) {
+    return '<button type="button" class="choice seg-c' + (taken ? " taken" : "") + '" data-act="' + act + '" aria-pressed="' + !!taken + '">' +
+      (taken ? '<span class="tick" aria-hidden="true">\u2713</span>' : "") + label + "</button>";
+  }
   function resultHtml(r) {
     if (!r.ok) {
       return '<div class="pad"><span class="err-title">The photo could not be read.</span><span class="err-text">' +
         esc(r.problem || "unknown problem") + '.</span></div>';
     }
-    var d = r.decision, a = d.alternative, z = d.zone, h = "";
-    h += '<div class="zone ' + z + '"><div class="zone-row"><span class="zone-word">' + z + '</span><span class="zone-say">' + SAY[z] +
-      '</span><span class="pill pill-sm">' + ACTION[d.action] + "</span></div>";
-    h += '<div class="p-row"><span class="k">P(fall)</span><span class="p">' + pct(d.p) + '</span><span class="ci">&plusmn; ' +
-      pct(d.ci) + " (95% CI, " + d.n + " runs)</span></div>";
-    h += '<div class="meter" aria-hidden="true"><div class="bar"><div class="fill" style="width:' + Math.min(100, d.p * 100) +
-      '%"></div></div><div class="mark" style="left:10%"></div><div class="mark" style="left:50%"></div>' +
-      '<span class="ml" style="left:10%">10%</span><span class="ml" style="left:50%">50%</span></div></div>';
-    h += '<div class="pad" style="padding-top:clamp(16px,2vw,24px)">';
+    var d = r.decision, a = d.alternative, z = d.zone, h = "", took = state.chosen ? state.choice : null;
+    // the zone band, as on the hero card
+    h += '<div class="zband ' + z + '"><span class="zb-word">' + z + " \u00b7 " + SAY[z] + '</span><span class="pill pill-sm">' + ACTION[d.action] +
+      '</span><span class="zb-p">P(fall) <b>' + pct(d.p) + "</b></span></div>";
+    // threshold bar: 0-100%, cuts at 10% and 50%, the 95% CI from the answer as a band, the mark at P
+    var lo = Math.max(0, d.p - d.ci), hi = Math.min(1, d.p + d.ci);
+    h += '<div class="pbar" role="img" aria-label="P(fall) ' + pct(d.p) + ", 95% CI " + pct(lo) + " to " + pct(hi) + ', zone limits 10% and 50%">' +
+      '<div class="pb-cuts" aria-hidden="true"><span style="left:10%">10%</span><span style="left:50%">50%</span></div>' +
+      '<div class="pb-track" aria-hidden="true"><i class="pb-seg g"></i><i class="pb-seg y"></i><i class="pb-seg r"></i>' +
+      '<span class="pb-ci" style="left:' + (lo * 100).toFixed(1) + "%;width:" + ((hi - lo) * 100).toFixed(1) + '%"></span>' +
+      '<span class="pb-cut" style="left:10%"></span><span class="pb-cut" style="left:50%"></span>' +
+      '<span class="pb-mark" style="left:' + (d.p * 100).toFixed(1) + '%"></span></div>' +
+      '<div class="pb-labels" aria-hidden="true"><span class="g" style="left:5%">GREEN</span><span class="y" style="left:30%">YELLOW</span><span class="r" style="left:75%">RED</span></div>' +
+      '<span class="pb-ci-txt">P(fall) ' + pct(d.p) + " &plusmn; " + pct(d.ci) + " (95% CI, " + d.n + " runs)</span></div>";
+    h += '<div class="pad" style="padding-top:clamp(14px,2vw,20px)">';
     h += '<p class="advice">' + esc(advice(r)) + "</p>";
-    if (a && z !== "GREEN") {
-      h += '<button type="button" class="cta" data-act="use_suggestion">Check <span class="mono">' +
-        signed(Math.round(a.offset_cm)) + " cm</span></button>";
+    if (a && z !== "GREEN") {                       // the safer spot, as on the hero card
+      h += '<div class="safe-box"><span class="safe-txt">Safer spot: ' + signed(Math.round(a.offset_cm)) + " cm" +
+        (a.p_further === null ? "" : " \u00b7 still green 1 cm further out (" + pct(a.p_further) + ")") + "</span>" +
+        '<button type="button" class="primary choice" data-act="use_suggestion">Use suggestion</button></div>';
     }
     if (z === "YELLOW") {
       h += '<div class="sup"><span class="sup-label">Supervisor choice (logged, never changes the decision)</span>' +
         '<div class="form"><label>Supervisor name (optional)<input id="sup-name" maxlength="60" autocomplete="name"></label></div>' +
-        '<div class="choices"><button type="button" class="choice" data-act="approve">Approve</button>' +
-        '<button type="button" class="choice" data-act="reject">Reject</button></div></div>';
+        '<div class="segc" role="group" aria-label="Supervisor choice">' + segBtn("approve", "Approve", took === "approve") +
+        (a ? segBtn("use_suggestion", "Use suggestion", false) : "") + segBtn("reject", "Reject", took === "reject") + "</div></div>";
     }
     if (z === "RED") {
-      h += '<div class="sup"><span class="sup-label">Going ahead anyway needs a name and a reason. It is logged, and the decision stays RED.</span>';
+      h += '<div class="sup"><span class="sup-label">Going ahead anyway needs a name and a reason. It is logged, and the decision stays RED.</span>' +
+        '<div class="segc" role="group" aria-label="Supervisor choice">' + (a ? segBtn("use_suggestion", "Use suggestion", false) : "") +
+        segBtn("override-open", "Override\u2026", took === "override") + segBtn("cancel", "Cancel", took === "cancel") + "</div>";
       if (state.overrideOpen) {
         h += '<div class="form"><label>Supervisor name (required)<input id="sup-name" maxlength="60" autocomplete="name"></label>' +
           '<label>Reason (required)<textarea id="sup-reason" maxlength="300"></textarea></label></div>' +
           '<span class="sup-fine">Drystone is a prototype decision aid, not a certified safety device.</span>' +
-          '<div class="choices"><button type="button" class="choice" data-act="override">Log override</button>' +
-          '<button type="button" class="choice" data-act="cancel">Cancel</button></div>';
-      } else {
-        h += '<div class="choices"><button type="button" class="choice" data-act="override-open">Override…</button>' +
-          '<button type="button" class="choice" data-act="cancel">Cancel</button></div>';
+          '<div class="choices"><button type="button" class="primary choice" data-act="override">Log override</button></div>';
       }
       h += "</div>";
     }
@@ -1484,14 +1637,16 @@
   function renderTrace() {
     var r = state.status === "result" && state.result ? state.result : null;
     var stages = r && r.stages ? r.stages : null, h = "";
+    var maxMs = stages ? Math.max.apply(null, stages.map(function (x) { return x.ms; }).concat([1])) : 1;
     STAGES.forEach(function (def, i) {
       var st = stages ? stages[i] : null;
       var name = st ? st.name : def[0];
       var desc = (STAGES.filter(function (x) { return x[0] === name; })[0] || def)[1];
-      var ms = !st ? "— ms" : (r.cached ? "cached" : st.ms < 1 ? "<1 ms" : st.ms.toLocaleString("en-US") + " ms");
-      h += '<li class="stage' + (st ? "" : " dim") + '"><div class="stage-top"><span class="stage-n">' + (i + 1) +
-        '</span><span class="stage-line"></span><span class="stage-ms">' + ms + "</span></div>" +
-        '<span class="stage-name">' + esc(name) + '</span><span class="stage-desc">' + esc(desc) + "</span>";
+      var ms = !st ? "\u2014 ms" : st.ms < 1 ? "<1 ms" : st.ms.toLocaleString("en-US") + " ms";
+      h += '<li class="' + (st ? "" : "dim") + '"><span class="ts-dot">' + (i + 1) + '</span><span class="ts-name">' + esc(name) + "</span>" +
+        '<span class="ts-desc">' + esc(desc) + '</span><span class="ts-row"><span class="ts-ms">' + ms + "</span>" +
+        (st && r.cached ? '<span class="ts-cached" title="From the cache; the time is the first run">cached</span>' : "") + "</span>" +
+        '<span class="ts-bar" aria-hidden="true"><i style="width:' + (st ? Math.max(st.ms, 0) / maxMs * 100 : 0).toFixed(1) + '%"></i></span>';
       if (st && st.lines.length) {
         h += "<details><summary>Trace (" + st.lines.length + ")</summary><ul>";
         st.lines.forEach(function (l) { h += "<li>" + esc(l) + "</li>"; });
@@ -1500,20 +1655,13 @@
       h += "</li>";
     });
     el("trace").innerHTML = h;
-    var total = "total — ms";
+    var total = "total \u2014 ms";
     if (stages) {
       var sum = stages.reduce(function (t, s) { return t + s.ms; }, 0);
-      total = r.cached ? "cached · first run " + sum.toLocaleString("en-US") + " ms"
+      total = r.cached ? "cached \u00b7 first run " + sum.toLocaleString("en-US") + " ms"
                        : "total " + sum.toLocaleString("en-US") + " ms";
     }
     el("total").textContent = total;
-    // timing bar: one segment per stage, width = share of the time (all equal before a result)
-    var bar = el("tbar"), sumMs = stages ? stages.reduce(function (t, x) { return t + x.ms; }, 0) : 0;
-    bar.className = "tbar" + (stages ? "" : " empty");
-    bar.innerHTML = STAGES.map(function (d, i) {
-      var grow = stages && sumMs ? Math.max(stages[i].ms, 0) / sumMs * 100 : 20;
-      return '<i style="flex:' + grow.toFixed(2) + ' 1 0" title="' + (i + 1) + '. ' + esc(d[0]) + '"></i>';
-    }).join("");
   }
 
   /* ---------- supervisor choices ---------- */
