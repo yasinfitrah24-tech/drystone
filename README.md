@@ -179,6 +179,7 @@ markers, DICT_5X5_100, A4 landscape). Both are made by `python tools/make_print_
 `tools/common.py`. Measure what you printed.
 
 Calibrate your camera: glue the ChArUco board to a flat hard board and measure one printed square. Match the board to the blue outline on screen; it saves by itself and moves to the next one. About 14 targets. Then the verdict is PASS or RETRY.
+PASS needs an RMS error of 1 px or less, a focal length uncertainty of 3% or less, and 9 of 12 image regions covered.
 PASS saves `data/camera_mycam.yaml`; on RETRY the terminal says what to fix. `data/camera_laptop.yaml` is our own
 webcam; calibrate yours.
 ```

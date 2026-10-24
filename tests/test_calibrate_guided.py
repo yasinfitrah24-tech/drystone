@@ -153,7 +153,7 @@ def test_verdict_labels(board, all_views, monkeypatch):
     monkeypatch.setattr(common, "save_calibration", lambda *a, **k: None)
     views = [v for v, _ in all_views[:3]]                                 # three views: little coverage
     K = np.array([[900.0, 0, 640], [0, 900.0, 360], [0, 0, 1]])
-    result = (1.4, K, np.zeros(5), np.array([20.0, 20.0, 3.0, 3.0]), np.zeros(len(views)))
+    result = (1.4, K, np.zeros(5), np.array([40.0, 40.0, 3.0, 3.0]), np.zeros(len(views)))
     out = io.StringIO()
     with redirect_stdout(out):
         c.report_and_save(views, SIZE, result, types.SimpleNamespace(name="labeltest", square_mm=29.8), "frames")
@@ -245,3 +245,12 @@ def test_one_skipped_target_still_passes(board, all_views, skip):
     views = [v for k, (v, _) in enumerate(all_views) if k != skip]
     rms, K, dist, sd, _ = c.calibrate(views, SIZE)
     assert c.assess(views, SIZE, rms, K, sd)[0] == common.CALIB_PASS
+
+
+@pytest.mark.parametrize("f_sd_pct, verdict", [(2.5, common.CALIB_PASS), (3.5, "ULANGI")])
+def test_focal_uncertainty_limit_is_three_percent(all_views, f_sd_pct, verdict):
+    """A hand-held print on 24 Okt ended at 2.5% (RMS 0.40 px, 12/12 cells): that passes now; over 3% does not."""
+    views = [v for v, _ in all_views]
+    K = np.array([[900.0, 0, 640], [0, 900.0, 360], [0, 0, 1]])
+    sd = np.array([9.0 * f_sd_pct, 9.0 * f_sd_pct, 3.0, 3.0])
+    assert c.assess(views, SIZE, 0.40, K, sd)[0] == verdict

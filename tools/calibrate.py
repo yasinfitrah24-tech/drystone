@@ -50,7 +50,9 @@ MIN_TILT_DEG = 20.0      # a view counts as tilted toward a side from this angle
 GRID = (4, 3)            # image coverage grid: columns, rows
 CELL_POINTS = 4          # saved corners a grid cell needs to count as covered
 MAX_RMS_PX = 1.0
-MAX_F_SD_PCT = 1.0       # 1-sigma uncertainty of fx and fy, in percent
+MAX_F_SD_PCT = 3.0       # 1-sigma uncertainty of fx and fy, in percent. 1% until 24 Okt: a focal length 5% off
+                         # moves the boxes relative to the bottom box by under 1 mm (tests/test_focal_error.py),
+                         # since depth and size scale together; only the camera distance changes.
 MIN_CELLS = 9
 STILL_PX = 2.0           # auto mode: corners moving less than this per frame count as held still
 STILL_SEC = 0.8          # ... for this long before the frame is saved

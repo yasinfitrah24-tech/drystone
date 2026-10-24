@@ -111,8 +111,10 @@ code; no rule is written twice, and no language model decides anything.
 - **Calibration.** ChArUco board 7×5 (DICT_5X5_100), printed with 30 mm squares that **measured 29.8 mm**, glued to a
   flat board; automatic capture rejects duplicate views. The laptop webcam: **61 views, RMS reprojection error 0.37
   px, focal length 900.0 ± 3.9 px (0.43%), 12/12 image regions covered** (`data/camera_laptop.yaml`). A calibration
-  is used only if it passes a quality check (verdict PASS: RMS ≤ 1 px, focal uncertainty ≤ 1%, ≥ 9/12 regions, ≥ 10
-  views; otherwise RETRY, saved as a draft). A first
+  is used only if it passes a quality check (verdict PASS: RMS ≤ 1 px, focal uncertainty ≤ 3%, ≥ 9/12 regions, ≥ 10
+  views; otherwise RETRY, saved as a draft). The focal limit was 1% until 24 Oct; hand-held printed boards ended at
+  2.5% with a clean RMS. A focal length 5% off moves the boxes relative to the bottom box by under 1 mm (only the
+  camera distance changes, since depth and size scale together), so 3% costs the decisions nothing (`tests/test_focal_error.py`). A first
   attempt with a hand-held paper board gave 1.18 px and a focal length off by ±75 px; it was rejected.
 - **Markers and pose.** An 80 mm ArUco marker (DICT_4X4_50) in the middle of each box's front face, detected with
   sub-pixel corner refinement; pose with `solvePnPGeneric` (IPPE square), and the ambiguous flat-marker solution

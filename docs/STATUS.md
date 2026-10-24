@@ -231,6 +231,13 @@ Latihan final 18 Okt 13.36–13.41, `agent.py --aws`, Lambda `drystone-service:3
 - **Deploy 23 Okt 08.34:** image `drystone-service:b0f4b7f` (+ `:latest`, digest `sha256:52ecb387…baa4`), Lambda `Successful`/`Active`. **Rollback target: `drystone-service:3ca4c46`.**
 - **Tes live (08.35–08.37):** `GET /` 200, copy baru ada (judul, kata zona place it/ask/move it, teks "can take ~10 s", ikon copy, logo OpenCV dan MuJoCo, ikon GitHub, tombol "View report") · lima tab, kedua diagram 200, `/img/web_desktop.png` → 404 · s1 +16 cm → RED 73% dan s2 +13 cm → YELLOW 27%, sama persis dengan rekaman · s2 +16 cm → RED 69%, usulan +9 cm · `aws/test_endpoint.py` → GREEN GUIDE · `/log` → 200 + CloudWatch · override tanpa alasan → 400 · 0 baris ERROR.
 
+### Batas ketidakpastian fokus kalibrasi 1% → 3% (24 Okt, keputusan Yasin)
+- Uji tangan dengan pencocokan longgar: ke-14 target selesai, RMS 0,40 px, cakupan 12/12, keempat sisi miring, tapi RETRY karena ketidakpastian fx 2,52% (batas 1%). Foto tambahan yang hampir datar tidak membantu. Karena RETRY, `data/camera_mycam.yaml` tidak dibuat, sehingga perintah agent di Setup macet (draft bisa dipakai, dengan peringatan).
+- Diukur: foto s2 dan tumpukan sintetis dibaca dengan fx, fy digeser ±3–5%. Posisi kardus terhadap kardus dasar bergeser < 1 mm (x 0,01 cm, y ≤ 0,05 cm); hanya jarak kamera yang ikut berubah (±2,5% → ±2,5 cm di 1 m), dan jarak itu tidak dipakai keputusan.
+- `tools/calibrate.py`: `MAX_F_SD_PCT` 1.0 → 3.0. RMS ≤ 1 px, cakupan ≥ 9/12 dan ≥ 10 foto tetap. `data/camera_laptop.yaml` (0,43%) tidak terpengaruh.
+- Tes: `tests/test_focal_error.py` (s2 dan sintetis, fx ±3–5% → kardus bergeser < 1 mm, jarak kamera ikut skala) dan penilaian 2,5% → PASS, 3,5% → RETRY; `test_verdict_labels` memakai 4,4% supaya tetap TOO HIGH. **111 tes lulus.**
+- REPORT §4 (batas 3% dan alasannya), Setup / README / SITE_COPY (satu kalimat: syarat PASS) ikut diubah. Halaman web berubah, belum deploy (live masih `2eff781`).
+
 ### Kalibrasi terpandu: pencocokan target jauh lebih longgar, kotak tetap (24 Okt)
 - Permintaan Yasin: kotak panduan tetap ada, tapi jangan terlalu ketat, karena di praktik cetakan, kamera dan cahaya membuatnya susah.
 - `tools/calibrate.py`, hanya pencocokan target: posisi 15% diagonal (sebelumnya 10%); ukuran ±40% (±25%); miring ±25° (±18°), dengan target miring minimal 10° ke arah yang diminta dan target sisi tetap ≥ 20° (`tilt_range`, `axis_ok`, dipakai juga oleh indikator); semua target cukup 8 sudut (target bukan-pojok sebelumnya 10); "diam" < 5 px/frame (3) selama 0,3 s (0,5). Petunjuk closer/further dan arah miring hanya muncul bila itu yang menghalangi kecocokan. Penilaian PASS/RETRY (RMS, ketidakpastian fx, cakupan) tidak berubah.
