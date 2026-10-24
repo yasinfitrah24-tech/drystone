@@ -66,6 +66,43 @@
     opacity: 0.85; will-change: transform, opacity; animation: hero-glow 16s ease-in-out infinite alternate; }
   @keyframes hero-glow { from { transform: translate(-6%, 4%) scale(1); opacity: 0.7; } to { transform: translate(6%, -4%) scale(1.05); opacity: 1; } }
   .hero.glow-off::after { animation-play-state: paused; }
+  /* Home hero: the grid and the light are alive (layers in .hero-fx, only transform and opacity move).
+     Grid: drifts one 24 px square every 25 s (one 120 px major square per loop, so the loop is seamless), breathes
+     between 60% and 100% of its strength (14 s), and a soft navy shade passes over it so an area fades and comes back
+     (22 s). Light: two blobs drifting in different directions, growing and shrinking a little, opacity 0.10-0.28,
+     12 s and 17 s, the main one around the proof card. All ease-in-out and alternate except the linear drift. */
+  #view-home .hero::before, #view-home .hero::after { content: none; }
+  .hero-fx { position: absolute; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
+  .hero-fx > *, .fx-grid i { position: absolute; display: block; will-change: transform, opacity; }
+  .fx-grid { inset: 0; animation: fx-breathe 14s ease-in-out infinite alternate;
+    -webkit-mask-image: radial-gradient(760px 600px at var(--bp-x) var(--bp-y), #000, rgba(0,0,0,0.55) 45%, transparent 80%);
+    mask-image: radial-gradient(760px 600px at var(--bp-x) var(--bp-y), #000, rgba(0,0,0,0.55) 45%, transparent 80%); }
+  .fx-grid i { left: -120px; top: -120px; right: 0; bottom: 0; animation: fx-drift 125s linear infinite;
+    background-image: linear-gradient(rgba(143,176,240,var(--bp-major)) var(--bp-mw), transparent var(--bp-mw)), linear-gradient(90deg, rgba(143,176,240,var(--bp-major)) var(--bp-mw), transparent var(--bp-mw)),
+      linear-gradient(rgba(143,176,240,var(--bp-minor)) 1px, transparent 1px), linear-gradient(90deg, rgba(143,176,240,var(--bp-minor)) 1px, transparent 1px);
+    background-size: 120px 120px, 120px 120px, 24px 24px, 24px 24px; }
+  .fx-shade { width: 560px; height: 560px; left: calc(var(--bp-x) - 280px); top: calc(var(--bp-y) - 280px);
+    background: radial-gradient(closest-side, rgba(19,41,75,0.9), rgba(19,41,75,0.55) 50%, transparent); animation: fx-shade 22s ease-in-out infinite alternate; }
+  .fx-glow { border-radius: 50%; }
+  .fx-glow.a { width: 1000px; height: 820px; left: calc(var(--bp-x) - 500px); top: calc(var(--bp-y) - 410px);
+    background: radial-gradient(closest-side, rgba(36,87,197,0.28), rgba(36,87,197,0.12) 45%, transparent); animation: fx-glow-a 12s ease-in-out infinite alternate; }
+  .fx-glow.b { width: 720px; height: 600px; left: calc(var(--bp-x) - 520px); top: calc(var(--bp-y) + 40px);
+    background: radial-gradient(closest-side, rgba(36,87,197,0.22), rgba(36,87,197,0.09) 50%, transparent); animation: fx-glow-b 17s ease-in-out infinite alternate; }
+  @keyframes fx-drift { from { transform: translate3d(0, 0, 0); } to { transform: translate3d(120px, 120px, 0); } }
+  @keyframes fx-breathe { from { opacity: 0.6; } to { opacity: 1; } }
+  @keyframes fx-shade { from { transform: translate(-75%, 18%); opacity: 0.2; } 50% { opacity: 1; } to { transform: translate(70%, -22%); opacity: 0.25; } }
+  @keyframes fx-glow-a { from { transform: translate(-11%, 7%) scale(0.94); opacity: 0.36; } to { transform: translate(10%, -9%) scale(1.08); opacity: 1; } }
+  @keyframes fx-glow-b { from { transform: translate(14%, -10%) scale(1.06); opacity: 1; } to { transform: translate(-13%, 9%) scale(0.92); opacity: 0.45; } }
+  .hero.glow-off .hero-fx *, .hero.glow-off .hero-fx { animation-play-state: paused; }
+  @media (max-width: 860px) {
+    .fx-glow.a { width: 760px; height: 700px; left: calc(var(--bp-x) - 380px); top: calc(var(--bp-y) - 350px); }
+    .fx-glow.b { width: 520px; height: 480px; left: calc(var(--bp-x) - 360px); top: calc(var(--bp-y) + 120px); }
+    .fx-shade { width: 420px; height: 420px; left: calc(var(--bp-x) - 210px); top: calc(var(--bp-y) - 210px); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .hero-fx, .hero-fx * { animation: none !important; }
+    .fx-glow.a { opacity: 0.8; } .fx-glow.b { opacity: 0.6; } .fx-shade { opacity: 0; }
+  }
   .hero.hero-demo::after { content: none; }
   @media (prefers-reduced-motion: reduce) { .hero::after { animation: none; } }
   @media (max-width: 860px) { .hero { --bp-x: 50%; --bp-y: 530px; --glow-w: 820px; --glow-h: 820px; } }
@@ -569,6 +606,60 @@
   .dl-links { display: flex; flex-wrap: wrap; gap: 4px 24px; margin: 0 0 4px; }
   .dl-links .more[hidden] { display: none; }
 
+  /* ---------- HUD on the photos: the agent window (tools/agent_hud.py), drawn by the page over the photo ----------
+     Sizes are the agent's px on its 1280-px frame times --hu (photo width / 1280), so the proportions match; text never
+     drops below 11 px. Colours: bars navy at 0.82, pills at 0.9, legend MUTED #A8B4BE, as in agent_hud.BGR. */
+  .photo, .cam { container-type: inline-size; }
+  .photo .chip { display: none; }                 /* the HUD bars say the same */
+  .hud { position: absolute; inset: 0; pointer-events: none; --hu: calc(100cqw / 1280); --bar: max(28px, calc(44 * var(--hu)));
+    --m: max(8px, calc(16 * var(--hu))); font-family: var(--sans); color: #fff; line-height: 1.2; transition: opacity 0.36s var(--ease-std, ease); }
+  .hud:empty, .hud.off { opacity: 0; }
+  .hud-top, .hud-bottom { position: absolute; left: 0; right: 0; height: var(--bar); display: flex; align-items: center; gap: var(--m);
+    padding: 0 var(--m); background: rgba(19,41,75,0.82); }
+  .hud-top { top: 0; } .hud-bottom { bottom: 0; justify-content: space-between; }
+  .hud-brand { flex: none; display: flex; align-items: center; gap: 0.48em; font-size: max(12px, calc(21 * var(--hu))); font-weight: 700; }
+  .hud-logo { display: flex; flex-direction: column; gap: 0.095em; }
+  .hud-logo i { display: block; width: 0.81em; height: 0.333em; background: var(--brand); border: 1px solid var(--brand-edge); box-sizing: border-box; }
+  .hud-logo i:first-child { margin-left: 0.238em; }
+  .hud-right { margin-left: auto; min-width: 0; display: flex; align-items: center; gap: 0.5em; font-size: max(11px, calc(17 * var(--hu))); font-weight: 500; white-space: nowrap; }
+  .hud-txt { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+  .hud-src, .hud-badge { flex: none; border: 1px solid currentColor; border-radius: 3px; padding: 0.08em 0.42em; font-size: max(11px, 0.82em); font-weight: 700; letter-spacing: 0.03em; }
+  .hud-keys { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: max(11px, calc(16 * var(--hu))); font-weight: 500; }
+  .hud-legend { flex: none; display: flex; align-items: center; gap: max(10px, calc(18 * var(--hu))); font-size: max(11px, calc(14 * var(--hu))); color: #A8B4BE; }
+  .hud-legend span { display: flex; align-items: center; gap: max(4px, calc(6 * var(--hu))); }
+  .hud-legend i { display: block; width: max(14px, calc(22 * var(--hu))); height: max(2px, calc(3 * var(--hu))); border-radius: 2px; }
+  .hud-legend .lk-marker { background: #8FB0F0; } .hud-legend .lk-stack { background: #fff; } .hud-legend .lk-next { background: #A8B4BE; }
+  .hud-legend .lk-sug { background: repeating-linear-gradient(90deg, #2457C5 0 max(4px, calc(6 * var(--hu))), transparent 0 max(8px, calc(12 * var(--hu)))); }
+  /* pills keep to the left third: in every sample the boxes stand in the middle, the left of the photo is wall and floor */
+  .hud-pills { position: absolute; left: var(--m); max-width: 34%; bottom: calc(var(--bar) + max(6px, calc(12 * var(--hu))));
+    display: flex; flex-direction: column; align-items: flex-start; gap: max(4px, calc(8 * var(--hu))); }
+  .hud-pill { max-width: 100%; padding: 0.62em 0.94em; border-radius: 1.3em; font-size: max(11px, calc(17 * var(--hu))); font-weight: 600; }
+  .hud-pill .hud-l1, .hud-pill .hud-l2 { display: block; }
+  .hud-pill .hud-l1 { display: flex; flex-wrap: wrap; align-items: center; gap: 0.2em 0.5em; }
+  .hud-pill .hud-l2 { margin-top: 0.2em; font-weight: 500; font-size: max(11px, 0.9em); }
+  .hud-pill.info { background: rgba(19,41,75,0.9); }
+  .hud-pill.warn { background: rgba(226,174,28,0.9); color: #26282B; }
+  .hud-pill.warn::before { content: ""; display: inline-block; width: 0.47em; height: 0.47em; margin-right: 0.5em; border-radius: 50%; background: #26282B; vertical-align: 0.1em; }
+  .hud-pill.alert { background: rgba(230,120,26,0.9); }
+  .hud-pill.z-GREEN { background: rgba(38,125,71,0.9); } .hud-pill.z-RED { background: rgba(201,58,37,0.9); }
+  .hud-pill.z-YELLOW { background: rgba(226,174,28,0.9); color: #26282B; }
+  .hud-card { position: absolute; left: var(--m); top: calc(var(--bar) + max(6px, calc(12 * var(--hu)))); padding: var(--m);
+    background: rgba(19,41,75,0.88); font-size: max(13px, calc(26 * var(--hu))); font-weight: 600; }
+  /* phones: the legend moves under the photo, the wordmark and the second pill line go, so the photo stays clear */
+  @container (max-width: 560px) { .hud-legend, .hud-more, .hud-pill.info, .hud-pill .hud-badge { display: none; } .hud-pill .hud-l2 { display: none; } }
+  @container (max-width: 440px) { .hud-word { display: none; } }
+  .overlay-key { display: none; }
+  @media (max-width: 600px) { .overlay-key { display: block; } }
+
+  /* hero card frame: the agent's top bar (navy 0.82) with the two live labels, instead of viewfinder corners;
+     the replay itself is unchanged */
+  .proof-screen::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 30px; background: rgba(19,41,75,0.82); z-index: 1; pointer-events: none; }
+  .proof-vf { display: none; }
+  .proof .proof-ov { z-index: 2; top: 0; height: 30px; display: flex; align-items: center; padding: 0; border-radius: 0; background: transparent;
+    font: 600 11.5px var(--sans); letter-spacing: 0.02em; }
+  .proof .proof-ov.ov-stage { left: 12px; } .proof .proof-ov.ov-count { right: 12px; }
+  @media (max-width: 520px) { .proof-screen::before, .proof .proof-ov { height: 26px; } .proof .proof-ov { font-size: 11px; } .proof .proof-ov.ov-stage { left: 10px; } .proof .proof-ov.ov-count { right: 10px; } }
+
   /* ---------- hover, cards, logo, toggle, reveal: the Subtext pattern in Drystone colours ----------
      Subtext: buttons 0.18s ease, primary translateY(-2px) + 0 12px 30px glow at 0.35 in its own colour, secondary
      border lights up; cards 0.2s ease, translateY(-3px) + a lighter border; reveal 0.7s cubic-bezier(.2,.7,.2,1)
@@ -672,6 +763,7 @@
 </header>
 <div class="view" id="view-home" data-title="Drystone · Every stack is a drystone wall">
 <div class="hero">
+  <div class="hero-fx" aria-hidden="true"><div class="fx-grid"><i></i></div><i class="fx-shade"></i><i class="fx-glow a"></i><i class="fx-glow b"></i></div>
   <div class="wrap">
     <section class="hero-main">
       <div class="hero-copy">
@@ -774,7 +866,7 @@
       <button type="button" class="seg-b" data-cam="photo" aria-pressed="true">Photo &middot; what you see</button>
       <button type="button" class="seg-b" data-cam="read" aria-pressed="false">Twin &middot; what Drystone reads</button>
     </div>
-    <div class="cam"><canvas id="cam-view" width="1280" height="720" aria-label="Sample s2: the photo, or the photo with the markers and the digital twin"></canvas></div>
+    <div class="cam"><canvas id="cam-view" width="1280" height="720" aria-label="Sample s2: the photo, or the photo with the markers and the digital twin"></canvas><div class="hud" id="cam-hud" aria-hidden="true"></div></div>
     <p class="cam-cap">Each 80 mm marker gives a box&rsquo;s position and rotation. With the measured box sizes, that is enough to rebuild the stack and test the next box before anyone lifts it.</p>
     <p class="fine" id="cam-cap"></p>
   </section>
@@ -818,6 +910,7 @@
         <div>
           <div class="photo">
             <canvas id="view" width="1280" height="720" aria-label="Sample photo with detected markers and box outlines"></canvas>
+            <div class="hud" id="view-hud" aria-hidden="true"></div>
             <span class="chip" id="photo-chip"></span>
             <span class="chip chip-ph" id="ph-badge" hidden>placeholder image</span>
             <span class="chip chip-ghost" id="ghost-chip" hidden></span>
@@ -826,7 +919,7 @@
             <span><i style="border-color:var(--brand-edge)"></i>marker</span>&nbsp;
             <span><i style="border-color:#fff;box-shadow:0 0 0 1px #888"></i>stack</span>&nbsp;
             <span><i style="border-color:var(--brand);border-top-style:dashed"></i>suggested spot</span>&nbsp;
-            <span><i id="key-next" style="border-color:#888"></i>next box (zone colour)</span>
+            <span><i id="key-next" style="border-color:#A8B4BE"></i>next box</span>
           </p>
         </div>
         <div>
@@ -1036,30 +1129,41 @@
     canvas.width = state.img.naturalWidth; canvas.height = state.img.naturalHeight;
     ctx.drawImage(state.img, 0, 0);
     var r = state.result, show = state.status === "result" && r && r.ok && r.sample === state.sample.id;
-    el("overlay-key").hidden = !show;
+    el("overlay-key").hidden = false;
     el("ghost-chip").hidden = true;
-    if (!show) { ghost(); return; }
-    el("key-next").style.borderColor = ZONE[r.decision.zone];
-    var lw = Math.max(2, canvas.width / 400);
-    (r.markers || []).forEach(function (m) {
-      poly(m.corners, MARKER, lw);
-      label("ID " + m.id, m.corners[0][0], m.corners[0][1] - 6, MARKER);
-    });
-    (r.polygons || []).forEach(function (p) {
-      if (p.role === "stack") box(p.corners, "#ffffff", lw, []);
-      if (p.role === "suggestion") box(p.corners, BRAND, lw * 1.4, [10, 8]);
-    });
-    (r.polygons || []).forEach(function (p) {
-      if (p.role === "candidate") box(p.corners, ZONE[r.decision.zone], lw * 1.8, []);
-    });
+    if (!show) { if (state.status !== "loading") ghost(); return; }   // while waiting the agent shows the photo only
+    agentView(ctx, canvas, r);
   }
-  // the next box at the picked shift before it is checked: dashed grey, no zone colour (outline from GHOST)
-  var GHOST_COLOR = "#E6E9EF";
+  // the agent's live view after a decision (tools/agent.py): markers 2 px + "ID i", stack 1 px white, next box 2 px in
+  // the zone colour, safer spot dashed brand blue 2 px. Widths are the agent's px, never thinner than in its 960-px window.
+  var MUTED = "#A8B4BE";
+  function lineScale(cv) { var w = cv.getBoundingClientRect().width; return w ? Math.max(1, 0.75 * cv.width / w) : 1; }
+  function agentView(g, cv, r) {
+    var k = lineScale(cv), d = r.decision;
+    G = g;
+    (r.markers || []).forEach(function (m) {
+      poly(m.corners, MARKER, 2 * k);
+      label("ID " + m.id, m.corners[0][0], m.corners[0][1], MARKER, Math.round(18 * k));
+    });
+    (r.polygons || []).forEach(function (p) { if (p.role === "stack") wire(p.corners, "#ffffff", 1 * k, []); });
+    (r.polygons || []).forEach(function (p) { if (p.role === "candidate") wire(p.corners, ZONE[d.zone], 2 * k, []); });
+    if (d.alternative) (r.polygons || []).forEach(function (p) { if (p.role === "suggestion") wire(p.corners, BRAND, 2 * k, [10 * k, 10 * k]); });
+    G = ctx;
+  }
+  // a wireframe as the agent draws it: plain lines, no shadow
+  function wire(c, color, w, dash) {
+    G.save(); G.setLineDash(dash); G.lineJoin = "round"; G.lineCap = "round"; G.strokeStyle = color; G.lineWidth = w;
+    G.beginPath();
+    for (var a = 0; a < 8; a++) for (var b = a + 1; b < 8; b++) {
+      var x = a ^ b; if (x === 1 || x === 2 || x === 4) { G.moveTo(c[a][0], c[a][1]); G.lineTo(c[b][0], c[b][1]); }
+    }
+    G.stroke(); G.restore();
+  }
+  // the next box at the picked shift before it is checked: the agent's grey (MUTED) 2 px wireframe (outline from GHOST)
   function ghost() {
     var g = state.sample && state.shift !== null && (GHOST[state.sample.id] || {})[String(state.shift)];
     if (!g) return;                                           // the chip stays hidden
-    var lw = Math.max(2, canvas.width / 400);
-    box(g, GHOST_COLOR, lw * 1.4, [10, 8]);
+    wire(g, MUTED, 2 * lineScale(canvas), []);
     el("ghost-chip").textContent = "next box " + signed(state.shift) + " cm · not checked yet";
     el("ghost-chip").hidden = false;
   }
@@ -1085,8 +1189,70 @@
   }
   function label(t, x, y, color, px) {
     G.save(); G.font = "600 " + (px || Math.round(canvas.width / 64)) + "px 'IBM Plex Sans', system-ui, sans-serif";
-    G.lineWidth = 4; G.strokeStyle = "rgba(0,0,0,.6)"; G.strokeText(t, x, y);
+    G.lineWidth = Math.max(4, (px || 20) / 4); G.lineJoin = "round"; G.strokeStyle = "rgba(0,0,0,.6)"; G.strokeText(t, x, y);
     G.fillStyle = color; G.fillText(t, x, y); G.restore();
+  }
+
+  /* ---------- HUD over the photos (the agent window, see .hud in the CSS) ---------- */
+  // Texts follow tools/agent.py: the top bar says what is being decided, the decision is the rows of the agent's
+  // decision card in its order (as a pill in the zone colour), notes are pills, the bottom bar holds the legend.
+  // Keyboard keys are laptop-only: the bottom bar names the sample and the shift instead.
+  function sg(v) { v = Math.round(v); return (v < 0 ? "" : "+") + v; }       // Python's {:+.0f}
+  var HUD_LEGEND = '<span class="hud-legend"><span><i class="lk-marker"></i>marker</span><span><i class="lk-stack"></i>stack</span>' +
+    '<span><i class="lk-sug"></i>suggested spot</span><span><i class="lk-next"></i>next box</span></span>';
+  function hudHtml(o) {
+    var h = '<div class="hud-top"><span class="hud-brand"><span class="hud-logo"><i></i><i></i><i></i></span><span class="hud-word">Drystone</span></span>' +
+      '<span class="hud-right"><span class="hud-txt">' + (o.rightHtml || esc(o.right || "")) + "</span>" + (o.src ? '<span class="hud-src">' + esc(o.src) + "</span>" : "") +
+      "</span></div>";
+    if (o.wait) h += '<div class="hud-card">Simulating on AWS Lambda\u2026</div>';
+    if (o.pills.length) h += '<div class="hud-pills">' + o.pills.map(function (p) {
+      return '<span class="hud-pill ' + p.kind + '">' + p.html + "</span>";
+    }).join("") + "</div>";
+    return h + '<div class="hud-bottom"><span class="hud-keys">' + esc(o.bottom || "") + "</span>" + HUD_LEGEND + "</div>";
+  }
+  // agent_hud.decision_banner: "ZONE · say" [ACTION], "P(fall) p%", "at +x cm · overhang +o%", "Safer spot +y cm · P(fall) q%"
+  function zonePill(d, offsetCm) {
+    var z = d.zone, a = d.alternative;
+    return { kind: "z-" + z, html: '<span class="hud-l1"><b>' + z + " \u00b7 " + SAY[z] + '</b><span class="hud-badge">' + esc(d.action) +
+      "</span>P(fall) " + pct(d.p) + '</span><span class="hud-l2">' + esc("at " + sg(offsetCm) + " cm \u00b7 overhang " + sg(d.overhang_pct) + "%" +
+      (a ? " \u00b7 Safer spot " + sg(a.offset_cm) + " cm \u00b7 P(fall) " + pct(a.p) : "")) + "</span>" };
+  }
+  // the agent's live view after a decision: "Box ID n · candidate +x cm (+o%) · ZONE p%"
+  function liveRight(nid, r) {
+    var d = r.decision;
+    return "Box ID " + nid + " \u00b7 candidate " + sg(r.offset_cm) + ' cm<span class="hud-more"> (' + sg(d.overhang_pct) + "%)</span> \u00b7 " +
+      d.zone + " " + pct(d.p);
+  }
+  function hudDemo() {
+    var host = el("view-hud"), s = state.sample;
+    if (!host) return;
+    if (!s || !state.meta) { host.innerHTML = ""; return; }
+    var r = state.result, v = state.shift, ok = state.status === "result" && r && r.ok && r.sample === s.id;
+    var nid = ok && r.box_id != null ? r.box_id : s.next_box, o = { src: "AWS", pills: [] };
+    var cand = v === null ? "" : " \u00b7 candidate " + sg(v) + ' cm<span class="hud-more"> (' + sg(overhang(v)) + "%)</span>";
+    if (state.status === "loading") {                                        // agent: hud.waiting
+      o.right = "Box ID " + nid + " \u00b7 candidate " + sg(v) + " cm"; o.wait = true;
+      o.bottom = s.id + " \u00b7 next box " + signed(v) + " cm \u00b7 waiting for AWS Lambda";
+    } else if (ok) {
+      var planned = state.chosen && (state.choice === "approve" || state.choice === "override");
+      o.src = r.cached ? "cached" : "AWS";
+      if (planned) o.right = "Box ID " + nid + " \u00b7 planned " + sg(r.offset_cm) + " cm"; else o.rightHtml = liveRight(nid, r);
+      o.pills.push(zonePill(r.decision, r.offset_cm));
+      if (state.note) o.pills.push({ kind: state.note.bad ? "warn" : "info", html: esc(state.note.text) });
+      o.bottom = s.id + " \u00b7 next box " + signed(r.offset_cm) + " cm";
+    } else if (state.status === "result" && r && !r.ok) {                     // agent: a retake, warn pill
+      o.rightHtml = "Box ID " + nid + cand;
+      o.pills.push({ kind: "warn", html: "The photo could not be read." });
+      o.bottom = s.id + " \u00b7 next box " + signed(v) + " cm";
+    } else if (state.status === "error") {                                    // no laptop fallback on the web
+      o.rightHtml = "Box ID " + nid + cand;
+      o.pills.push({ kind: "warn", html: esc(state.error.title) });
+      o.bottom = s.id + " \u00b7 next box " + signed(v) + " cm";
+    } else {                                                                  // live view, nothing decided yet
+      o.rightHtml = "Box ID " + nid + cand;
+      o.bottom = v === null ? s.id + " \u00b7 " + s.title : s.id + " \u00b7 next box " + signed(v) + " cm \u00b7 not checked yet";
+    }
+    host.innerHTML = hudHtml(o);
   }
 
   /* ---------- shift: example chips + one slider ---------- */
@@ -1253,6 +1419,7 @@
     else if (state.status === "result" && r && r.ok) say = r.decision.zone + ", " + SAY[r.decision.zone] + ", P(fall) " + pct(r.decision.p) + ".";
     else if (state.status === "result" && r) say = "The photo could not be read.";
     if (el("announce").textContent !== say) el("announce").textContent = say;
+    hudDemo();
   }
 
   function resultHtml(r) {
@@ -1376,7 +1543,7 @@
           }
         });
       }
-      state.overrideOpen = false; state.chosen = true;
+      state.overrideOpen = false; state.chosen = true; state.choice = choice;
       state.note = { text: {
         approve: "Approved (logged). The box may be placed at " + signed(r.offset_cm) + " cm; the zone stays " + d.zone + ".",
         reject: "Rejected (logged). Nothing is placed.",
@@ -1398,6 +1565,7 @@
       meta.parentNode.insertBefore(box, meta);
     }
     box.className = "note" + (bad ? " bad" : ""); box.setAttribute("role", bad ? "alert" : "status"); box.textContent = text;
+    hudDemo();
   }
   // one message under the field it is about; an empty text clears it
   function fieldError(input, text) {
@@ -1870,20 +2038,17 @@
     cv.width = camImg.naturalWidth; cv.height = camImg.naturalHeight;
     g.drawImage(camImg, 0, 0);
     var d = REC2.decision, a = d.alternative;
+    var camHud = el("cam-hud");
     if (camMode === "read") {
-      G = g;
-      var lw = Math.max(2, cv.width / 400);
-      REC2.markers.forEach(function (m) { poly(m.corners, MARKER, lw); label("ID " + m.id, m.corners[0][0], m.corners[0][1] - 6, MARKER, Math.round(cv.width / 64)); });
-      REC2.polygons.forEach(function (p) {
-        if (p.role === "stack") box(p.corners, "#ffffff", lw, []);
-        if (p.role === "suggestion") box(p.corners, BRAND, lw * 1.4, [10, 8]);
-      });
-      REC2.polygons.forEach(function (p) { if (p.role === "candidate") box(p.corners, ZONE[d.zone], lw * 1.8, []); });
-      G = ctx;
+      agentView(g, cv, REC2);
+      camHud.innerHTML = hudHtml({ rightHtml: liveRight(REC2.box_id, REC2), src: "AWS", pills: [zonePill(d, REC2.offset_cm)],
+                                   bottom: REC2.sample + " \u00b7 next box " + signed(REC2.offset_cm) + " cm" });
+      camHud.classList.remove("off");
       el("cam-cap").textContent = "Sample " + REC2.sample + ", next box at " + signed(REC2.offset_cm) + " cm: " + d.zone + " (" + SAY[d.zone] + "), P(fall) " +
         pct(d.p) + ". Light blue: markers. White: the twin of the stack. Solid: the next box. Dashed blue: the safer spot, " + signed(Math.round(a.offset_cm)) + " cm.";
     } else {
       el("cam-cap").textContent = "Sample " + REC2.sample + ": the photo from the calibrated laptop webcam (1280\u00d7720).";
+      camHud.classList.add("off");                                   // what you see: the plain photo
     }
     Array.prototype.forEach.call(document.querySelectorAll(".seg-b"), function (b) { b.setAttribute("aria-pressed", String(b.dataset.cam === camMode)); });
     segPlace(segSlide);
@@ -1907,7 +2072,7 @@
     segInd.style.transform = "translateX(" + on.offsetLeft + "px)";
     if (!animate) { void segInd.offsetWidth; segInd.style.transition = ""; }
   }
-  window.addEventListener("resize", function () { segPlace(false); });
+  window.addEventListener("resize", function () { segPlace(false); draw(); if (!el("view-how").hidden) drawCam(); });   // line widths follow the photo size
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { segPlace(false); });
   function camFade(redraw) {
     var cv = el("cam-view");
