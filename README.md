@@ -195,8 +195,10 @@ python tools/agent.py --calib data/camera_mycam.yaml --marker-mm 80
 ```
 Keys in the agent window: A / D move candidate 1 cm · SPACE decide / check · X cancel · Q quit.
 
-Run the agent with decisions on your own AWS Lambda (see `aws/README.md`; the Lambda image uses the calibration in
-`data/camera_laptop.yaml`, so put yours in that file before you build it). Windows (cmd):
+Optional, only after you have deployed your own Lambda (first-time steps in `aws/README.md`): run the agent with
+decisions on that Lambda. The laptop keeps the camera and the window; each decision is computed on your Lambda, and if AWS fails the laptop computes it itself.
+The Lambda image uses the calibration in `data/camera_laptop.yaml`, so put yours in that file before you build it.
+Windows (cmd):
 ```
 for /f %i in ('aws lambda get-function-url-config --function-name drystone --region ap-southeast-1 --query FunctionUrl --output text') do set DRYSTONE_URL=%i
 ```
