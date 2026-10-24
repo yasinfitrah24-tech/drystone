@@ -94,8 +94,8 @@ def test_wrong_position_is_not_saved_and_the_hints_point_the_right_way(board, de
     z = c.target_pose(board, SIZE, c.TARGETS[0])[1][2]
     cases = [((0.30 * z, 0, 0), {}, "move left"),          # board too far right in the image
              ((-0.30 * z, 0, 0), {}, "move right"),
-             ((0, 0.15 * z, 0), {}, "move up"),     # (small enough to keep the whole board in view)
-             ((0, -0.15 * z, 0), {}, "move down"),
+             ((0, 0.20 * z, 0), {}, "move up"),     # (small enough to keep the whole board in view)
+             ((0, -0.20 * z, 0), {}, "move down"),
              ((0, 0, 0.5 * z), {}, "closer"),
              ((0, 0, -0.3 * z), {}, "further"),
              ((0, 0, 0), {"yaw": -25}, "face the camera")]
@@ -146,3 +146,51 @@ def test_verdict_labels(board, all_views, monkeypatch):
         line = next(l for l in text.splitlines() if row in l)
         assert label in line, line
     assert "TOO LOW" not in next(l for l in text.splitlines() if "Uncertainty" in l)
+
+
+def test_side_target_needs_a_tilt_that_counts_for_the_verdict(board, detector):
+    """Within the loose tolerance but under MIN_TILT_DEG for the verdict: no match, "tilt more"."""
+    g = c.Guide(board, SIZE)
+    g.i = 5                                                                # left edge, left side away (yaw -30)
+    v, n = seen(board, detector, *at_target(board, 5, yaw=-15))
+    assert "left" not in c.tilt_sides(v.normal)
+    matched, hints = g.check(v, n)
+    assert not matched and "tilt more: left side away" in hints, hints
+    v, n = seen(board, detector, *at_target(board, 5, yaw=-26))
+    matched, hints = g.check(v, n)
+    assert matched and "left" in c.tilt_sides(v.normal), hints
+
+
+def test_mirrored_window_speaks_in_what_the_person_sees(board, detector, monkeypatch):
+    monkeypatch.setattr(c, "MIRROR", True)
+    g = c.Guide(board, SIZE)
+    z = c.target_pose(board, SIZE, c.TARGETS[0])[1][2]
+    v, n = seen(board, detector, *at_target(board, 0, (0.30 * z, 0, 0)))   # board on the camera image's right
+    assert "move right" in g.check(v, n)[1]                                  # = the mirror's left: move it right
+    g.i = 5
+    v, n = seen(board, detector, *at_target(board, 5, yaw=0, pitch=0))
+    assert "tilt right side away" in g.check(v, n)[1]                        # the camera's left side is the mirror's right
+    assert c.say("top-left corner") == "top-right corner" and c.say("top away") == "top away"
+    # the drawing: the target on the camera image's left edge shows up on the right half of the window
+    frame = np.zeros((SIZE[1], SIZE[0], 3), np.uint8)
+    canvas = c.draw_guide(frame, [], None, None, 0, SIZE, None, "keys", "title", guide=g)
+    blue = np.all(canvas == hud_brand(), axis=2)
+    xs = np.nonzero(blue)[1]
+    assert xs.size and xs.mean() > SIZE[0] / 2
+
+
+def hud_brand():
+    import agent_hud
+    return np.array(agent_hud.BGR["BRAND"], np.uint8)
+
+
+def test_square_mm_note_only_when_the_option_is_missing(tmp_path):
+    import os
+    import subprocess
+    import sys
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    run = lambda *extra: subprocess.run([sys.executable, "tools/calibrate.py", "--name", "notetest", "--images",
+                                         str(tmp_path / "none" / "*.jpg"), *extra], cwd=root, capture_output=True,
+                                        text=True, timeout=120).stdout
+    assert "--square-mm not given" not in run("--square-mm", "30")
+    assert "--square-mm not given" in run()

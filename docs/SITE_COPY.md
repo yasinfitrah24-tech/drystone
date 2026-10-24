@@ -63,7 +63,7 @@ where the page follows REPORT or the code instead of the draft.
   - OpenCV 5: Calibrated camera, ArUco markers, pose averaged over 10 frames.
   - MuJoCo: 150 to 600 simulated placements per check, with 1 cm position and 2 cm load uncertainty.
   - AWS Lambda: Same decision code as the laptop agent. Supervisor choices logged in CloudWatch.
-- Mono line: 86 tests · 25 locked trials · every decision logged
+- Mono line: 89 tests · 25 locked trials · every decision logged
 
 ### Closing band
 The camera measures. The simulation estimates. The rules decide. The supervisor signs.

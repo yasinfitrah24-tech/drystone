@@ -32,6 +32,7 @@ is not overwritten. (In the YAML, `quality` keeps the values LAYAK / ULANGI: see
 """
 import argparse
 import os
+import re
 import sys
 import time
 
@@ -62,14 +63,17 @@ KEYS = {"guided": (("N", "skip target"), ("B", "back one target"), ("C", "calibr
 
 # ---------------------------------------------------------------- guided mode: one target outline at a time
 GUIDE_F = 0.7            # focal length guess (x image width) to draw the targets and read the tilt against them
-# Loosened after the first hand-held test (24 Okt): a webcam finds 12-22 of the 24 corners per frame, and a board held
-# by hand is rarely within 6% / 10 degrees of a target for long. The saved frames still pass the same checks.
-MATCH_POS = 0.08         # matched: the four outline corners within 8% of the image diagonal on average,
-MATCH_TILT_DEG = 15.0    # the tilt within 15 degrees of the target's,
+# Loosened twice after hand-held tests (24 Okt): a webcam finds 10-22 of the 24 corners per frame, and a board held
+# by hand is rarely within 6% / 10 degrees of a target for long. The saved frames still pass the same checks, and a
+# side target only matches when its tilt counts for the verdict (MIN_TILT_DEG toward that side, see Guide.check).
+MATCH_POS = 0.10         # matched: the four outline corners within 10% of the image diagonal on average,
+MATCH_TILT_DEG = 18.0    # the tilt within 18 degrees of the target's,
 MATCH_SEC = 0.5          # held still for half a second
-FULL_CORNERS = 12        # targets away from the image corners want at least half of the board's 24 corners
+GUIDE_STILL_PX = 3.0     # "still" for a hand-held board: corners moving less than this per frame
+FULL_CORNERS = 10        # targets away from the image corners want at least 10 of the board's 24 corners
+SIDE_TARGET_DEG = 30     # targets tilted this much are there for a tilt side: it must count (>= MIN_TILT_DEG)
 HINT_POS = 0.03          # hints: move when the centre is off by more than 3% of the diagonal,
-HINT_SCALE = 0.20        # closer / further when the size is off by more than 20% (also a condition for a match),
+HINT_SCALE = 0.25        # closer / further when the size is off by more than 25% (also a condition for a match),
 HINT_TILT_DEG = MATCH_TILT_DEG   # tilt only when the angle is what keeps it from matching
 # (name, centre x and y as fractions of the image, board width as a fraction of the image width when flat, yaw, pitch).
 # The widths keep the printed board (209 mm wide) about 50 cm from a laptop webcam at the centre target.
@@ -152,10 +156,22 @@ def tilt_sides(normal):
     return {side for side, hit in zip(SIDES, hits) if hit}
 
 
+# The camera modes show the picture as a mirror, like a selfie camera, so moving the board to your left moves it left
+# on the screen. Everything is measured on the camera image; say() turns left/right into what the person sees.
+# The saved frames, the YAML (tilt_sides) and --images mode stay in camera-image terms.
+MIRROR = False
+
+
+def say(text):
+    if not MIRROR:
+        return text
+    return re.sub(r"\b(left|right)\b", lambda m: "right" if m.group(1) == "left" else "left", text)
+
+
 def tilt_text(normal):
     yaw, pitch = turn(normal)
-    return (f"tilt {'left' if yaw < 0 else 'right'} {abs(yaw):.0f}, "
-            f"{'top' if pitch < 0 else 'bottom'} {abs(pitch):.0f} degrees")
+    return say(f"tilt {'left' if yaw < 0 else 'right'} {abs(yaw):.0f}, "
+               f"{'top' if pitch < 0 else 'bottom'} {abs(pitch):.0f} degrees")
 
 
 def find_repeat(view, saved):
@@ -226,8 +242,11 @@ class Guide:
         self.targets = []
         for k, t in enumerate(TARGETS):
             R, tvec = target_pose(board, size, t)
+            sides = ({"left" if t[4] < 0 else "right"} if abs(t[4]) >= SIDE_TARGET_DEG else set()) | \
+                    ({"top" if t[5] < 0 else "bottom"} if abs(t[5]) >= SIDE_TARGET_DEG else set())
             self.targets.append({"name": t[0], "quad": project_outline(board, R, tvec, size), "yaw": t[4],
-                                 "pitch": t[5], "need": MIN_CORNERS if k in CORNER_TARGETS else FULL_CORNERS})
+                                 "pitch": t[5], "need": MIN_CORNERS if k in CORNER_TARGETS else FULL_CORNERS,
+                                 "sides": sides})
 
     @property
     def done(self):
@@ -241,6 +260,11 @@ class Guide:
         t = self.target()
         if view is None or view.outline is None or n < t["need"]:
             return False, ["show the whole board"]
+        hints, matched = self._check(view, t)
+        return matched, [say(h) for h in hints]
+
+    def _check(self, view, t):
+        """(hints, matched) in camera-image terms."""
         q, tq = view.outline, t["quad"]
         hints = []
         d = (tq.mean(axis=0) - q.mean(axis=0)) / self.diag
@@ -259,12 +283,16 @@ class Guide:
                                         (dp, t["pitch"] == 0, "tilt top away", "tilt bottom away")):
             if abs(delta) > HINT_TILT_DEG:
                 hints.append("face the camera" if flat else less if delta < 0 else more)
+        # a side target must give that side for the verdict: its tilt as assess() reads it, MIN_TILT_DEG or more
+        short = sorted(t["sides"] - tilt_sides(view.normal))
+        if short and not any(h.startswith("tilt") for h in hints):
+            hints += [f"tilt more: {side} {'side ' if side in ('left', 'right') else ''}away" for side in short]
         hints = list(dict.fromkeys(hints))                 # "face the camera" only once
         matched = (quad_distance(q, tq) < MATCH_POS * self.diag and abs(scale - 1) <= HINT_SCALE
-                   and abs(dy) <= MATCH_TILT_DEG and abs(dp) <= MATCH_TILT_DEG)
+                   and abs(dy) <= MATCH_TILT_DEG and abs(dp) <= MATCH_TILT_DEG and not short)
         if matched:
-            return True, []
-        return False, hints or ["line the corners up with the blue outline"]
+            return [], True
+        return hints or ["line the corners up with the blue outline"], False
 
     def update(self, view, n, views, now, still=True):
         """One camera frame. Returns (event, hints): "save" (the caller saves the view, then calls next()), "hold",
@@ -331,7 +359,7 @@ def assess(views, size, rms, K, sd):
         # with a bent board the focal length drifts too; then the RMS fix above comes first
         if missing:
             fixes.append("Focal length not certain yet: tilt the board 20-40 degrees, especially toward the "
-                         + ", ".join(missing) + ".")
+                         + say(", ".join(missing)) + ".")
         elif rms <= MAX_RMS_PX:
             fixes.append("Focal length not certain yet: tilt the board further (30-40 degrees) and add frames.")
     if cells.sum() < MIN_CELLS:
@@ -368,7 +396,7 @@ def report_and_save(views, size, result, args, frames_dir):
     for row in cells:
         print(" " * 17 + " ".join(hud.paint("#", fg="GREEN", bold=True) if c else hud.paint(".", fg="MUTED")
                                   for c in row))
-    _row("Tilt sides", f"{', '.join(s for s in SIDES if s in sides) or 'none yet'}  "
+    _row("Tilt sides", f"{say(', '.join(s for s in SIDES if s in sides)) or 'none yet'}  "
                        f"(estimate, >= {MIN_TILT_DEG:.0f} degrees)")
     _row("fx, fy", f"{K[0, 0]:.1f}, {K[1, 1]:.1f}  (+- {sd[0]:.1f}, {sd[1]:.1f})")
     _row("cx, cy", f"{K[0, 2]:.1f}, {K[1, 2]:.1f}  (+- {sd[2]:.1f}, {sd[3]:.1f}; image {size[0]}x{size[1]})")
@@ -454,8 +482,8 @@ def side_chips(img, y, sides):
     h = cap + 2 * CHIP_PAD
     x = hud.M
     chips = [(f"tilt {MIN_TILT_DEG:.0f}+ deg", hud.BGR["NAVY"], hud.BGR["MUTED"])]
-    chips += [(s, hud.BGR["GREEN"], hud.BGR["WHITE"]) if s in sides else (s, hud.BGR["NAVY"], hud.BGR["MUTED"])
-              for s in SIDES]
+    chips += [(say(s), hud.BGR["GREEN"], hud.BGR["WHITE"]) if s in sides else (say(s), hud.BGR["NAVY"], hud.BGR["MUTED"])
+              for s in sorted(SIDES, key=lambda x: SIDES.index(say(x)))]          # left, right, top, bottom as seen
     for t, fill, ink in chips:
         w = hud.text_w(t, CHIP_SIZE, 600) + 2 * 12
         hud.rounded(img, x, y, x + w, y + h, h // 2, fill, 0.88)
@@ -495,7 +523,7 @@ def next_step(views, cur, n, size, cells, sides):
     if cur.outline is not None and cv2.contourArea(cur.outline) < 0.05 * size[0] * size[1]:
         return "board too small in the image: move it closer", "warn"
     if missing:
-        return f"no board tilted toward: {', '.join(missing)} yet", "info"
+        return say(f"no board tilted toward: {', '.join(missing)} yet"), "info"
     if cells.sum() < cells.size:
         return "move the board to cells that are not green yet (corners and edges)", "info"
     if len(views) < MIN_VIEWS:
@@ -530,6 +558,8 @@ def draw_guide(frame, views, cur, corners, n, size, status, keys, title, note=No
         for x, y in np.asarray(corners).reshape(-1, 2):
             cv2.circle(canvas, (int(x), int(y)), 5, hud.BGR["NAVY"], -1, cv2.LINE_AA)
             cv2.circle(canvas, (int(x), int(y)), 3, hud.BGR["EDGE"], -1, cv2.LINE_AA)
+    if MIRROR:                                          # the picture and its lines as a mirror; the text stays readable
+        canvas = cv2.flip(canvas, 1)
     sides = set().union(*(tilt_sides(v.normal) for v in views)) if views else set()
     hud.top_bar(canvas, title)
     rows = [{"segs": [(f"{n} corners", 20, 700), ("·", 20, 500), (f"{len(views)} saved", 20, 500), ("·", 20, 500),
@@ -539,7 +569,7 @@ def draw_guide(frame, views, cur, corners, n, size, status, keys, title, note=No
     if guide is not None:
         t = guide.target()
         rows.insert(0, {"segs": [(f"target {min(guide.i + 1, len(guide.targets))}/{len(guide.targets)}", 22, 700),
-                                 ("·", 20, 500), (t["name"] if t else "all targets done", 20, 500)]})
+                                 ("·", 20, 500), (say(t["name"]) if t else "all targets done", 20, 500)]})
     y = hud.card(canvas, rows)
     if guide is not None:
         progress_bar(canvas, y + 8, guide.i, len(guide.targets))
@@ -548,7 +578,10 @@ def draw_guide(frame, views, cur, corners, n, size, status, keys, title, note=No
     hud.pills(canvas, [p for p in (note, status or next_step(views, cur, n, size, cells, sides)) if p])
     hud.bottom_bar(canvas, keys, GUIDE_LEGEND if guide is not None else LEGEND)
     if guide is not None and not guide.done:            # last, so the card never hides part of the outline
-        draw_target(canvas, guide.target()["quad"], matched)
+        quad = guide.target()["quad"].copy()
+        if MIRROR:
+            quad[:, 0] = size[0] - 1 - quad[:, 0]
+        draw_target(canvas, quad, matched)
     return canvas
 
 
@@ -587,6 +620,8 @@ def mode_of(args):
 
 
 def run_camera(args, board, detector):
+    global MIRROR
+    MIRROR = True                                       # the camera window is a mirror (see say())
     cap = common.open_camera(args.source, args.width, args.height)
     frames_dir = os.path.join(common.DATA_DIR, f"calib_{args.name}", time.strftime("%Y%m%d_%H%M%S"))
     os.makedirs(frames_dir, exist_ok=True)
@@ -638,12 +673,12 @@ def run_camera(args, board, detector):
         matched = False
         free = mode == "auto" or (mode == "guided" and guide.done)   # after the last target: free, like --auto
         if mode == "guided" and not guide.done:
-            still = bool(prev) and mean_shift(positions, prev) < STILL_PX
+            still = bool(prev) and mean_shift(positions, prev) < GUIDE_STILL_PX
             event, hints = guide.update(cur, n, views, time.time(), still)
             matched = event in ("hold", "save")
             if event == "save":
                 save(frame, cur)
-                print(f"  target {guide.i + 1}/{len(guide.targets)} done: {guide.target()['name']}")
+                print(f"  target {guide.i + 1}/{len(guide.targets)} done: {say(guide.target()['name'])}")
                 guide.next()
                 flash, status = 4, None
                 if guide.done and not auto_done:
@@ -699,7 +734,7 @@ def run_camera(args, board, detector):
 def main():
     ap = argparse.ArgumentParser(description="Camera calibration with the ChArUco board")
     ap.add_argument("--name", required=True, help="camera name, for example mycam; saves data/camera_<name>.yaml")
-    ap.add_argument("--square-mm", type=float, default=common.BOARD_SQUARE_MM,
+    ap.add_argument("--square-mm", type=float, default=None,
                     help="side of one printed board square, in mm (measure your print)")
     ap.add_argument("--images", help='photo file pattern, for example "data/calib_hp/*.jpg"')
     ap.add_argument("--source", default="0", help="webcam index (0, 1, ...) or camera URL")
@@ -712,8 +747,9 @@ def main():
     args = ap.parse_args()
     if args.auto and args.manual:
         sys.exit("Use --auto or --manual, not both (without either: guided mode).")
-    if args.square_mm == common.BOARD_SQUARE_MM:
-        print("Note: --square-mm not given, using 30.0 mm. Measure your print for accurate results.")
+    if args.square_mm is None:
+        args.square_mm = common.BOARD_SQUARE_MM
+        print(f"Note: --square-mm not given, using {common.BOARD_SQUARE_MM:g} mm. Measure your print for accurate results.")
     board = common.make_board(args.square_mm)
     detector = cv2.aruco.CharucoDetector(board)
     if args.images:
