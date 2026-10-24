@@ -185,6 +185,7 @@ webcam; calibrate yours.
 python tools/calibrate.py --name mycam --square-mm 30
 ```
 Replace 30 with the square you measured (ours: 29.8). Keys in the calibration window: N skip target · B back one target · C calibrate now · Q quit.
+For a clean reading: print on matte paper, tape it flat to something hard, light the board from the side (a lamp behind the camera shines back off a tilted board), and keep your fingers off the squares. The hints speak to you behind the board: "pull the top edge toward you" means that edge goes away from the camera. If one target will not match, N skips it.
 Without the outlines: add `--auto` (a frame is saved whenever the board is held still at a new position).
 
 Run the agent on the laptop (boxes listed in `config/boxes.json`, 80 mm markers):

@@ -107,8 +107,10 @@ def test_wrong_position_is_not_saved_and_the_hints_point_the_right_way(board, de
         assert want in hints, (want, hints)
 
 
-@pytest.mark.parametrize("k, want, edge", [(5, "tilt left side away", "left"), (6, "tilt right side away", "right"),
-                                           (7, "tilt top away", "top"), (8, "tilt bottom away", "bottom")])
+@pytest.mark.parametrize("k, want, edge", [(5, "pull the left edge toward you", "left"),
+                                           (6, "pull the right edge toward you", "right"),
+                                           (7, "pull the top edge toward you", "top"),
+                                           (8, "pull the bottom edge toward you", "bottom")])
 def test_tilt_hints_name_the_side_that_must_go_away(board, detector, k, want, edge):
     g = c.Guide(board, SIZE)
     g.i = k
@@ -155,7 +157,7 @@ def test_side_target_needs_a_tilt_that_counts_for_the_verdict(board, detector):
     v, n = seen(board, detector, *at_target(board, 5, yaw=-15))
     assert "left" not in c.tilt_sides(v.normal)
     matched, hints = g.check(v, n)
-    assert not matched and "tilt more: left side away" in hints, hints
+    assert not matched and "pull the left edge a bit more toward you" in hints, hints
     v, n = seen(board, detector, *at_target(board, 5, yaw=-26))
     matched, hints = g.check(v, n)
     assert matched and "left" in c.tilt_sides(v.normal), hints
@@ -169,7 +171,7 @@ def test_mirrored_window_speaks_in_what_the_person_sees(board, detector, monkeyp
     assert "move right" in g.check(v, n)[1]                                  # = the mirror's left: move it right
     g.i = 5
     v, n = seen(board, detector, *at_target(board, 5, yaw=0, pitch=0))
-    assert "tilt right side away" in g.check(v, n)[1]                        # the camera's left side is the mirror's right
+    assert "pull the right edge toward you" in g.check(v, n)[1]              # the camera's left side is the mirror's right
     assert c.say("top-left corner") == "top-right corner" and c.say("top away") == "top away"
     # the drawing: the target on the camera image's left edge shows up on the right half of the window
     frame = np.zeros((SIZE[1], SIZE[0], 3), np.uint8)
@@ -194,3 +196,38 @@ def test_square_mm_note_only_when_the_option_is_missing(tmp_path):
                                         text=True, timeout=120).stdout
     assert "--square-mm not given" not in run("--square-mm", "30")
     assert "--square-mm not given" in run()
+
+
+def test_wrong_way_round_says_which_edge_and_the_gauge_shows_it(board, detector):
+    """Target 8 wants the top edge away from the camera; held the other way round (bottom away, as in a hand test on
+    24 Okt), the hint names the top edge and the gauge reads below 0."""
+    g = c.Guide(board, SIZE)
+    g.i = 7
+    v, n = seen(board, detector, *at_target(board, 7, pitch=30))
+    matched, hints = g.check(v, n)
+    assert not matched and "pull the top edge toward you" in hints, hints
+    assert c.turn(v.guide_normal)[1] > 20                                  # the bottom edge is the one away now
+    frame = np.zeros((SIZE[1], SIZE[0], 3), np.uint8)
+    canvas = c.draw_guide(frame, [], v, None, 0, SIZE, None, "keys", "title", guide=g)
+    assert canvas.shape == frame.shape
+    assert "toward you" not in c.tilt_text(v.normal) and "away from the camera" in c.tilt_text(v.normal)
+
+
+def test_skip_hint_after_a_while_on_one_target(board, detector):
+    g = c.Guide(board, SIZE)
+    g.i = 7
+    v, n = seen(board, detector, *at_target(board, 7, pitch=30))
+    assert not any("N skips" in h for h in g.update(v, n, [], now=100.0)[1])
+    assert not any("N skips" in h for h in g.update(v, n, [], now=100.0 + c.SKIP_HINT_SEC - 1)[1])
+    assert any("N skips" in h for h in g.update(v, n, [], now=100.0 + c.SKIP_HINT_SEC)[1])
+    g.next()                                                               # a new target: the clock starts again
+    assert not any("N skips" in h for h in g.update(v, n, [], now=200.0)[1])
+
+
+@pytest.mark.parametrize("skip", range(len(c.TARGETS)))
+def test_one_skipped_target_still_passes(board, all_views, skip):
+    """On clean synthetic photos, any single target can be skipped and the verdict is still PASS (real prints are
+    noisier: this shows the skip itself is not what fails a calibration)."""
+    views = [v for k, (v, _) in enumerate(all_views) if k != skip]
+    rms, K, dist, sd, _ = c.calibrate(views, SIZE)
+    assert c.assess(views, SIZE, rms, K, sd)[0] == common.CALIB_PASS

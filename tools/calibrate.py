@@ -75,9 +75,12 @@ SIDE_TARGET_DEG = 30     # targets tilted this much are there for a tilt side: i
 HINT_POS = 0.03          # hints: move when the centre is off by more than 3% of the diagonal,
 HINT_SCALE = 0.25        # closer / further when the size is off by more than 25% (also a condition for a match),
 HINT_TILT_DEG = MATCH_TILT_DEG   # tilt only when the angle is what keeps it from matching
+SKIP_HINT_SEC = 20.0     # a target not matched for this long: say that N skips it (a skipped target rarely decides
+                         # the verdict: the others cover the same cells and tilts, see test_one_skipped_target_still_passes)
 # (name, centre x and y as fractions of the image, board width as a fraction of the image width when flat, yaw, pitch).
 # The widths keep the printed board (209 mm wide) about 50 cm from a laptop webcam at the centre target.
 # yaw < 0: the board's left side away from the camera (it faces the left of the image); pitch < 0: its top away.
+# Names and hints speak to the person holding the board, behind it: away from the camera = "toward you".
 # The first nine cover all 12 coverage cells and the four tilt sides; the other five add perspective, which pins down
 # the focal length.
 TARGETS = (
@@ -86,10 +89,10 @@ TARGETS = (
     ("top-right corner", 0.82, 0.26, 0.24, 0, 0),
     ("bottom-right corner", 0.82, 0.74, 0.24, 0, 0),
     ("bottom-left corner", 0.18, 0.74, 0.24, 0, 0),
-    ("left edge, left side away", 0.22, 0.50, 0.26, -30, 0),
-    ("right edge, right side away", 0.78, 0.50, 0.26, 30, 0),
-    ("top edge, top away", 0.50, 0.27, 0.26, 0, -30),
-    ("bottom edge, bottom away", 0.50, 0.73, 0.26, 0, 30),
+    ("left side, left edge toward you", 0.22, 0.50, 0.26, -30, 0),
+    ("right side, right edge toward you", 0.78, 0.50, 0.26, 30, 0),
+    ("top, top edge toward you", 0.50, 0.27, 0.26, 0, -30),
+    ("bottom, bottom edge toward you", 0.50, 0.73, 0.26, 0, 30),
     ("close to the camera", 0.50, 0.50, 0.44, 0, 0),
     ("top-left, tilted", 0.28, 0.33, 0.23, 25, 22),
     ("top-right, tilted", 0.72, 0.33, 0.23, -25, 22),
@@ -169,9 +172,12 @@ def say(text):
 
 
 def tilt_text(normal):
+    """The tilt as the edges that are further from the camera. The camera window speaks to the person holding the
+    board ("toward you" = away from the camera); photo mode names the camera."""
     yaw, pitch = turn(normal)
-    return say(f"tilt {'left' if yaw < 0 else 'right'} {abs(yaw):.0f}, "
-               f"{'top' if pitch < 0 else 'bottom'} {abs(pitch):.0f} degrees")
+    edges = (f"{'left' if yaw < 0 else 'right'} edge {abs(yaw):.0f}, "
+             f"{'top' if pitch < 0 else 'bottom'} edge {abs(pitch):.0f} degrees")
+    return say(("toward you: " if MIRROR else "away from the camera: ") + edges)
 
 
 def find_repeat(view, saved):
@@ -237,7 +243,7 @@ class Guide:
     target comes. check() also says what to change when it does not match yet."""
 
     def __init__(self, board, size):
-        self.size, self.i, self.since = size, 0, None
+        self.size, self.i, self.since, self.shown_since = size, 0, None, None
         self.diag = float(np.hypot(*size))
         self.targets = []
         for k, t in enumerate(TARGETS):
@@ -279,14 +285,17 @@ class Guide:
             hints.append("further")
         yaw, pitch = turn(view.guide_normal)
         dy, dp = t["yaw"] - yaw, t["pitch"] - pitch
-        for delta, flat, less, more in ((dy, t["yaw"] == 0, "tilt left side away", "tilt right side away"),
-                                        (dp, t["pitch"] == 0, "tilt top away", "tilt bottom away")):
+        # said to the person holding the board, behind it: the edge that must go away from the camera comes toward them
+        for delta, flat, less, more in ((dy, t["yaw"] == 0, "pull the left edge toward you",
+                                         "pull the right edge toward you"),
+                                        (dp, t["pitch"] == 0, "pull the top edge toward you",
+                                         "pull the bottom edge toward you")):
             if abs(delta) > HINT_TILT_DEG:
                 hints.append("face the camera" if flat else less if delta < 0 else more)
         # a side target must give that side for the verdict: its tilt as assess() reads it, MIN_TILT_DEG or more
         short = sorted(t["sides"] - tilt_sides(view.normal))
-        if short and not any(h.startswith("tilt") for h in hints):
-            hints += [f"tilt more: {side} {'side ' if side in ('left', 'right') else ''}away" for side in short]
+        if short and not any(h.startswith("pull") for h in hints):
+            hints += [f"pull the {side} edge a bit more toward you" for side in short]
         hints = list(dict.fromkeys(hints))                 # "face the camera" only once
         matched = (quad_distance(q, tq) < MATCH_POS * self.diag and abs(scale - 1) <= HINT_SCALE
                    and abs(dy) <= MATCH_TILT_DEG and abs(dp) <= MATCH_TILT_DEG and not short)
@@ -299,9 +308,12 @@ class Guide:
         "repeat" (it matches, but repeats a saved frame), "move" (not matched yet) or "done"."""
         if self.done:
             return "done", []
+        self.shown_since = now if self.shown_since is None else self.shown_since
         matched, hints = self.check(view, n)
         if not matched:
             self.since = None
+            if now - self.shown_since >= SKIP_HINT_SEC:
+                hints = hints + ["not matching? N skips this target"]
             return "move", hints
         same = find_repeat(view, views)
         if same is not None:
@@ -317,10 +329,10 @@ class Guide:
         return "hold", ["hold still..."]
 
     def next(self):
-        self.i, self.since = min(self.i + 1, len(self.targets)), None
+        self.i, self.since, self.shown_since = min(self.i + 1, len(self.targets)), None, None
 
     def back(self):
-        self.i, self.since = max(self.i - 1, 0), None
+        self.i, self.since, self.shown_since = max(self.i - 1, 0), None, None
 
 
 def coverage(views, size):
@@ -496,6 +508,48 @@ def side_chips(img, y, sides):
     return y + h
 
 
+GAUGE_RANGE = 60.0       # degrees at each end of the tilt gauge
+GAUGE_W = 140
+
+
+def tilt_gauges(img, y, view, t):
+    """Under the chips, for a tilted target: per tilted axis, how far the asked edge is pulled toward the person (away
+    from the camera) now, on a gauge with the range that matches in green. Below 0 = the wrong way round."""
+    rows = []
+    for k, (want, near) in enumerate(((t["yaw"], ("left", "right")), (t["pitch"], ("top", "bottom")))):
+        if want == 0:
+            continue
+        now = None if view is None else int(round(turn(view.guide_normal)[k] * (-1 if want < 0 else 1)))
+        lo = abs(want) - MATCH_TILT_DEG
+        if near[want > 0] in t["sides"]:
+            lo = max(lo, MIN_TILT_DEG)
+        rows.append((say(f"{near[want > 0]} edge toward you"), now, round(lo), round(abs(want) + MATCH_TILT_DEG)))
+    if not rows:
+        return y
+    size, pad = 15, 12
+    cap = hud.metrics(size, 600)[0]
+    row_h = cap + 10 + 16 + 8                           # label line, then the gauge and the numbers
+    value_w = hud.text_w("now -60, need 20-48", size, 500)
+    w = 2 * pad + max(max(hud.text_w(r[0], size, 600) for r in rows), GAUGE_W + 12 + value_w)
+    x0 = hud.M
+    hud.rounded(img, x0, y, x0 + w, y + pad + row_h * len(rows), 12, hud.BGR["NAVY"], 0.85)
+    for i, (label, now, lo, hi) in enumerate(rows):
+        top = y + pad + row_h * i
+        hud.text(img, label, (x0 + pad, top + cap), size, hud.BGR["WHITE"], 600)
+        cy, gx = top + cap + 10 + 8, x0 + pad
+        at = lambda d: int(gx + GAUGE_W * (np.clip(d, -GAUGE_RANGE, GAUGE_RANGE) + GAUGE_RANGE) / (2 * GAUGE_RANGE))
+        cv2.line(img, (gx, cy), (gx + GAUGE_W, cy), hud.BGR["MUTED"], 2, cv2.LINE_AA)
+        cv2.line(img, (at(0), cy - 6), (at(0), cy + 6), hud.BGR["MUTED"], 2, cv2.LINE_AA)        # 0 = facing the camera
+        cv2.line(img, (at(lo), cy), (at(hi), cy), hud.BGR["GREEN"], 8, cv2.LINE_AA)               # matches here
+        ok = now is not None and lo <= now <= hi
+        if now is not None:
+            cv2.circle(img, (at(now), cy), 7, hud.BGR["GREEN"] if ok else hud.BGR["YELLOW"], -1, cv2.LINE_AA)
+            cv2.circle(img, (at(now), cy), 7, hud.BGR["WHITE"], 2, cv2.LINE_AA)
+        value = ("now -" if now is None else f"now {now:+d}") + f", need {lo}-{hi}"
+        hud.text(img, value, (gx + GAUGE_W + 12, cy + cap // 2), size, hud.BGR["GREEN"] if ok else hud.BGR["WHITE"], 500)
+    return y + pad + row_h * len(rows)
+
+
 def draw_target(img, quad, matched):
     """The guided target: the board's outline in brand blue with viewfinder corners (green once it matches)."""
     q = quad.astype(np.int32)
@@ -574,7 +628,9 @@ def draw_guide(frame, views, cur, corners, n, size, status, keys, title, note=No
     if guide is not None:
         progress_bar(canvas, y + 8, guide.i, len(guide.targets))
         y += 8 + 8
-    side_chips(canvas, y + 8, sides)
+    y = side_chips(canvas, y + 8, sides)
+    if guide is not None and not guide.done:
+        tilt_gauges(canvas, y + 8, cur, guide.target())
     hud.pills(canvas, [p for p in (note, status or next_step(views, cur, n, size, cells, sides)) if p])
     hud.bottom_bar(canvas, keys, GUIDE_LEGEND if guide is not None else LEGEND)
     if guide is not None and not guide.done:            # last, so the card never hides part of the outline
