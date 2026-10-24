@@ -45,19 +45,31 @@
   h1[tabindex="-1"]:focus { outline: none; }
 
   /* hero band */
-  /* navy hero: a still blueprint grid (24 px minor, every 5th line clearer) that fades out toward the edges and the
-     bottom, strongest around the proof card, plus a soft brand-blue light behind the card so it looks lifted */
-  .hero { position: relative; isolation: isolate; background-color: var(--band); padding-bottom: var(--overlap); color: #fff;
-    --bp-minor: 0.04; --bp-major: 0.07; --bp-x: 71%; --bp-y: 420px;   /* centre of the proof card */
-    background-image: radial-gradient(620px 500px at var(--bp-x) var(--bp-y), rgba(36,87,197,0.24), rgba(36,87,197,0.10) 45%, transparent 75%); }
+  /* navy hero: a still blueprint grid (24 px minor, every 5th line clearer and 1.5 px) that fades out toward the edges
+     and the bottom, strongest around the proof card; behind it a brand-blue light that drifts and breathes slowly */
+  .hero { position: relative; isolation: isolate; overflow: hidden; overflow: clip; background-color: var(--band); padding-bottom: var(--overlap); color: #fff;
+    --bp-minor: 0.065; --bp-major: 0.115; --bp-mw: 1.5px; --bp-x: 71%; --bp-y: 420px;   /* centre of the proof card */
+    --glow-w: 1240px; --glow-h: 1000px; }
   .hero::before, .band::before { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
-    background-image: linear-gradient(rgba(143,176,240,var(--bp-major)) 1px, transparent 1px), linear-gradient(90deg, rgba(143,176,240,var(--bp-major)) 1px, transparent 1px),
+    background-image: linear-gradient(rgba(143,176,240,var(--bp-major)) var(--bp-mw, 1px), transparent var(--bp-mw, 1px)), linear-gradient(90deg, rgba(143,176,240,var(--bp-major)) var(--bp-mw, 1px), transparent var(--bp-mw, 1px)),
       linear-gradient(rgba(143,176,240,var(--bp-minor)) 1px, transparent 1px), linear-gradient(90deg, rgba(143,176,240,var(--bp-minor)) 1px, transparent 1px);
     background-size: 120px 120px, 120px 120px, 24px 24px, 24px 24px; }
   .hero::before { -webkit-mask-image: radial-gradient(760px 600px at var(--bp-x) var(--bp-y), #000, rgba(0,0,0,0.55) 45%, transparent 80%);
     mask-image: radial-gradient(760px 600px at var(--bp-x) var(--bp-y), #000, rgba(0,0,0,0.55) 45%, transparent 80%); }
-  @media (max-width: 860px) { .hero { --bp-x: 50%; --bp-y: 530px; } }
-  @media (max-width: 520px) { .hero { --bp-minor: 0.03; --bp-major: 0.05; } }
+  /* the light: two soft radial gradients on one layer, under the grid. Only transform and opacity move (cheap):
+     it drifts about 6% of its size and breathes between 0.18 and 0.26 (opacity 0.7-1 of a 0.26 light), 16 s,
+     ease-in-out, back and forth. Paused when the hero is off screen or the page is hidden (JS adds .glow-off). */
+  .hero::after { content: ""; position: absolute; z-index: -2; pointer-events: none; width: var(--glow-w); height: var(--glow-h);
+    left: calc(var(--bp-x) - var(--glow-w) / 2); top: calc(var(--bp-y) - var(--glow-h) / 2);
+    background: radial-gradient(closest-side, rgba(36,87,197,0.26), rgba(36,87,197,0.11) 45%, transparent),
+      radial-gradient(closest-side at 64% 40%, rgba(36,87,197,0.12), transparent 70%);
+    opacity: 0.85; will-change: transform, opacity; animation: hero-glow 16s ease-in-out infinite alternate; }
+  @keyframes hero-glow { from { transform: translate(-6%, 4%) scale(1); opacity: 0.7; } to { transform: translate(6%, -4%) scale(1.05); opacity: 1; } }
+  .hero.glow-off::after { animation-play-state: paused; }
+  .hero.hero-demo::after { content: none; }
+  @media (prefers-reduced-motion: reduce) { .hero::after { animation: none; } }
+  @media (max-width: 860px) { .hero { --bp-x: 50%; --bp-y: 530px; --glow-w: 820px; --glow-h: 820px; } }
+  @media (max-width: 520px) { .hero { --bp-minor: 0.05; --bp-major: 0.09; } }
   .hero a { color: #fff; }
   .topbar { background: rgba(9,20,40,0.35); border-bottom: 1px solid var(--band-border); }
   .topbar .wrap { display: flex; align-items: center; justify-content: space-between; gap: 16px; height: 56px; }
@@ -1674,6 +1686,15 @@
       if (e.animationName === "rv-rise") { t.classList.remove("rv", "in"); t.style.removeProperty("--rv-d"); }   // back to its own styles
       if (e.animationName === "rv-tab") t.classList.remove("tab-in");
     });
+  })();
+
+  // the hero light (CSS animation): paused while the Home hero is off screen, in another tab or the page is hidden
+  (function () {
+    var hero = document.querySelector("#view-home .hero"), onScreen = true;
+    if (!hero) return;
+    function set() { hero.classList.toggle("glow-off", document.hidden || !onScreen); }
+    if (window.IntersectionObserver) new IntersectionObserver(function (es) { onScreen = es[0].isIntersecting; set(); }).observe(hero);
+    document.addEventListener("visibilitychange", set);
   })();
 
   /* ---------- tabs: hash routing, one file ---------- */
