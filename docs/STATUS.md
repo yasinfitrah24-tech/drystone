@@ -2,7 +2,7 @@
 
 Salinan status untuk repo (dibaca Yasin, Vincent, dan Claude masing-masing). Update di commit yang sama setiap ada keputusan atau hasil tes baru. Semua jam = waktu China.
 
-Terakhir diperbarui: 24 Okt 2026. Live: `drystone-service:2eff781` (kalibrasi terpandu: jendela cermin, target sisi yang dihitung, lebih longgar, sejak 24 Okt 13.50; rollback `8a2a37d`). **Evaluasi 25 percobaan baru selesai: FAIL (C2b, kelebihan 1 roboh); C1, C2a, C3, C4 lulus.**
+Terakhir diperbarui: 24 Okt 2026. Live: `drystone-service:7aa4f67` (Setup: petunjuk kalibrasi dan tips, syarat PASS dengan fokus ≤ 3%, perintah `--aws` setelah bagian Lambda; sejak 24 Okt 15.20; rollback `2eff781`). **Evaluasi 25 percobaan baru selesai: FAIL (C2b, kelebihan 1 roboh); C1, C2a, C3, C4 lulus.**
 
 ## Ringkasan
 - **Lomba:** OpenCV AI Competition 2026 (https://opencv26.devpost.com/). Deadline **27 Okt, 14.45** (target submit 26 Okt malam). Penjurian 27 Okt–10 Nov, endpoint harus tetap hidup.
@@ -234,6 +234,8 @@ Latihan final 18 Okt 13.36–13.41, `agent.py --aws`, Lambda `drystone-service:3
 ### Uji tangan Setup lulus + perintah agent `--aws` dipindah (24 Okt)
 - **Uji tangan Yasin dengan kamera dan cetakan asli** (clone `E:\setup-test\drystone`, setelah batas 3%): ke-14 target selesai, **PASS**: RMS 0,437 px, ketidakpastian fx 2,17% / fy 2,24%, cakupan 12/12, keempat sisi miring, fx 910 ± 20 (kalibrasi kami 900,0). `data/camera_mycam.yaml` terbentuk dan `agent.py --calib data/camera_mycam.yaml --marker-mm 80` jalan ("aman"). Alur Setup clone → install → kalibrasi → agent teruji dari awal sampai akhir.
 - Pertanyaan Yasin "fungsi perintah --aws ini apa?": dua perintah `get-function-url-config` + `agent.py … --aws` ada di bagian kamera, sebelum bagian yang membuat Lambda-nya. **Dipindah** ke akhir "Your own AWS Lambda" dengan judul "Run the agent with your Lambda (optional, after the first-time setup)" + kalimat apa fungsinya (laptop tetap kamera dan jendela, keputusan dihitung di Lambda, cadangan laptop kalau AWS gagal) + catatan kalibrasi di image. Di bagian kamera tinggal satu kalimat yang menunjuk ke sana. README: kalimat yang sama, ditandai opsional; SITE_COPY ikut. Perintah tidak berubah. 111 tes lulus.
+- **Deploy 24 Okt 15.20** (juga membawa `84a3c5b`, `14725d9`, `3580543` ke halaman): image `drystone-service:7aa4f67` (+ `:latest`, digest `sha256:84574d8c…d684`), Lambda `Successful`/`Active`. **Rollback target: `drystone-service:2eff781`.**
+- **Tes live (15.22):** `GET /` 200, HTML identik (sha256) dengan `web/index.html`; teks baru ada ("Run the agent with your Lambda", syarat PASS 3%, tips cetak/cahaya, "pull the top edge toward you") · lima tab, kedua diagram 200, `/img/web_desktop.png` → 404 · s1 +16 cm → RED 73% dan s2 +13 cm → YELLOW 27%, sama dengan rekaman · s2 +16 cm → RED 69%, usulan +9 cm · `aws/test_endpoint.py` s2 +6 cm → GREEN GUIDE · `/log` → 200 · override tanpa alasan → 400 · 0 baris ERROR di CloudWatch (20 menit). Dua cek lama di skrip tes ("~10 s", atribut `data-link` PDF) bernilai False karena teks dan link PDF sudah diganti sebelumnya, bukan karena deploy ini.
 
 ### Batas ketidakpastian fokus kalibrasi 1% → 3% (24 Okt, keputusan Yasin)
 - Uji tangan dengan pencocokan longgar: ke-14 target selesai, RMS 0,40 px, cakupan 12/12, keempat sisi miring, tapi RETRY karena ketidakpastian fx 2,52% (batas 1%). Foto tambahan yang hampir datar tidak membantu. Karena RETRY, `data/camera_mycam.yaml` tidak dibuat, sehingga perintah agent di Setup macet (draft bisa dipakai, dengan peringatan).
