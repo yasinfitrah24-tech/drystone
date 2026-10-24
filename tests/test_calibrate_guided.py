@@ -76,11 +76,13 @@ def test_every_target_is_reached_and_the_list_covers_everything(board, all_views
 def test_target_reached_and_held_still_is_saved(board, all_views):
     g = c.Guide(board, SIZE)
     v, n = all_views[0]
+    hold = c.MATCH_SEC
     assert g.update(v, n, [], now=10.0)[0] == "hold"
-    assert g.update(v, n, [], now=10.3)[0] == "hold"
-    assert g.update(v, n, [], now=10.6, still=False)[0] == "hold"        # moving: the clock starts again
-    assert g.update(v, n, [], now=10.7)[0] == "hold"
-    assert g.update(v, n, [], now=11.25)[0] == "save"
+    assert g.update(v, n, [], now=10.0 + hold / 2)[0] == "hold"
+    assert g.update(v, n, [], now=10.0 + hold + 0.1, still=False)[0] == "hold"   # moving: the clock starts again
+    assert g.update(v, n, [], now=11.0)[0] == "hold"
+    assert g.update(v, n, [], now=11.0 + hold - 0.01)[0] == "hold"
+    assert g.update(v, n, [], now=11.0 + hold)[0] == "save"
     g.next()
     assert g.i == 1
     # going back to it: the same frame again is a repeat, not a second save
@@ -92,13 +94,13 @@ def test_target_reached_and_held_still_is_saved(board, all_views):
 def test_wrong_position_is_not_saved_and_the_hints_point_the_right_way(board, detector):
     g = c.Guide(board, SIZE)                                             # target 1: centre, flat
     z = c.target_pose(board, SIZE, c.TARGETS[0])[1][2]
-    cases = [((0.30 * z, 0, 0), {}, "move left"),          # board too far right in the image
-             ((-0.30 * z, 0, 0), {}, "move right"),
-             ((0, 0.20 * z, 0), {}, "move up"),     # (small enough to keep the whole board in view)
-             ((0, -0.20 * z, 0), {}, "move down"),
-             ((0, 0, 0.5 * z), {}, "closer"),
-             ((0, 0, -0.3 * z), {}, "further"),
-             ((0, 0, 0), {"yaw": -25}, "face the camera")]
+    cases = [((0.32 * z, 0, 0), {}, "move left"),          # board too far right in the image
+             ((-0.32 * z, 0, 0), {}, "move right"),
+             ((0, 0.28 * z, 0), {}, "move up"),     # (small enough to keep most of the board in view)
+             ((0, -0.28 * z, 0), {}, "move down"),
+             ((0, 0, 0.9 * z), {}, "closer"),
+             ((0, 0, -0.45 * z), {}, "further"),
+             ((0, 0, 0), {"yaw": -40}, "face the camera")]
     for shift, turn_to, want in cases:
         v, n = seen(board, detector, *at_target(board, 0, shift, **turn_to))
         for now in (0.0, 1.0, 2.0):
@@ -125,13 +127,25 @@ def test_tilt_hints_name_the_side_that_must_go_away(board, detector, k, want, ed
     assert edges[edge] < edges[other]
 
 
-def test_whole_board_needed_away_from_the_corners(board, detector):
+def test_board_mostly_out_of_view_is_not_used(board, detector):
     g = c.Guide(board, SIZE)
     z = c.target_pose(board, SIZE, c.TARGETS[0])[1][2]
-    v, n = seen(board, detector, *at_target(board, 0, (0.70 * z, 0, 0)))  # most of the board past the right edge
-    assert v is not None and n < c.FULL_CORNERS                       # seen, but less than half of it
+    v, n = seen(board, detector, *at_target(board, 0, (0.95 * z, 0, 0)))  # most of the board past the right edge
+    assert v is None and n < c.MIN_CORNERS
     event, hints = g.update(v, n, [], 0.0)
     assert event == "move" and hints == ["show the whole board"]
+
+
+def test_loose_enough_for_a_hand_held_print(board, detector):
+    """What a hand-held printed board looks like in practice still matches: off by about 10% of the diagonal, 30%
+    smaller, the side tilt 22 degrees instead of 30, the other axis 15 degrees off, and only 8 corners needed."""
+    g = c.Guide(board, SIZE)
+    g.i = 7                                                               # top, top edge toward you (pitch -30)
+    z = c.target_pose(board, SIZE, c.TARGETS[7])[1][2]
+    v, n = seen(board, detector, *at_target(board, 7, (0.10 * z, 0.08 * z, 0.4 * z), yaw=15, pitch=-22))
+    matched, hints = g.check(v, n)
+    assert matched, hints
+    assert c.FULL_CORNERS == c.MIN_CORNERS == 8
 
 
 def test_verdict_labels(board, all_views, monkeypatch):

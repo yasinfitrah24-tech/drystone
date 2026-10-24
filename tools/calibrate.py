@@ -63,18 +63,21 @@ KEYS = {"guided": (("N", "skip target"), ("B", "back one target"), ("C", "calibr
 
 # ---------------------------------------------------------------- guided mode: one target outline at a time
 GUIDE_F = 0.7            # focal length guess (x image width) to draw the targets and read the tilt against them
-# Loosened twice after hand-held tests (24 Okt): a webcam finds 10-22 of the 24 corners per frame, and a board held
-# by hand is rarely within 6% / 10 degrees of a target for long. The saved frames still pass the same checks, and a
-# side target only matches when its tilt counts for the verdict (MIN_TILT_DEG toward that side, see Guide.check).
-MATCH_POS = 0.10         # matched: the four outline corners within 10% of the image diagonal on average,
-MATCH_TILT_DEG = 18.0    # the tilt within 18 degrees of the target's,
-MATCH_SEC = 0.5          # held still for half a second
-GUIDE_STILL_PX = 3.0     # "still" for a hand-held board: corners moving less than this per frame
-FULL_CORNERS = 10        # targets away from the image corners want at least 10 of the board's 24 corners
+# Loosened three times after hand-held tests with a printed board (24 Okt): ink, glare and a webcam give 9-17 of the
+# 24 corners per frame, and a hand-held board is rarely close to a target for long. The outline is a guide to where and
+# which way to hold the board, not a precision test: every saved frame still passes the same checks, the verdict
+# (RMS, focal length uncertainty, coverage) is unchanged, and a side target only matches when its tilt counts for the
+# verdict (MIN_TILT_DEG toward that side, see Guide.check).
+MATCH_POS = 0.15         # matched: the four outline corners within 15% of the image diagonal on average,
+MATCH_SCALE = 0.40       # the board's size within 40% of the outline's,
+MATCH_TILT_DEG = 25.0    # flat targets: tilted less than 25 degrees; tilted targets: within 25 degrees of the target's
+MIN_TILTED_DEG = 10.0    # ... and at least 10 degrees the asked way (side targets: MIN_TILT_DEG, which the verdict counts)
+MATCH_SEC = 0.3          # held still for 0.3 s
+GUIDE_STILL_PX = 5.0     # "still" for a hand-held board: corners moving less than this per frame
+FULL_CORNERS = MIN_CORNERS   # every target takes a frame with as many corners as any saved frame needs
 SIDE_TARGET_DEG = 30     # targets tilted this much are there for a tilt side: it must count (>= MIN_TILT_DEG)
 HINT_POS = 0.03          # hints: move when the centre is off by more than 3% of the diagonal,
-HINT_SCALE = 0.25        # closer / further when the size is off by more than 25% (also a condition for a match),
-HINT_TILT_DEG = MATCH_TILT_DEG   # tilt only when the angle is what keeps it from matching
+HINT_SCALE = MATCH_SCALE # closer / further only when the size is what keeps it from matching
 SKIP_HINT_SEC = 20.0     # a target not matched for this long: say that N skips it (a skipped target rarely decides
                          # the verdict: the others cover the same cells and tilts, see test_one_skipped_target_still_passes)
 # (name, centre x and y as fractions of the image, board width as a fraction of the image width when flat, yaw, pitch).
@@ -238,6 +241,19 @@ def quad_distance(a, b):
     return float(min(np.mean(np.linalg.norm(np.roll(a, k, axis=0) - b, axis=1)) for k in range(4)))
 
 
+def tilt_range(want, side=False):
+    """For a tilted target: how far (degrees) the asked edge must be away from the camera to match."""
+    return max(abs(want) - MATCH_TILT_DEG, MIN_TILT_DEG if side else MIN_TILTED_DEG), abs(want) + MATCH_TILT_DEG
+
+
+def axis_ok(want, angle, side=False):
+    """One axis of the board's tilt (turn() degrees) against the target's."""
+    if want == 0:
+        return abs(angle) <= MATCH_TILT_DEG
+    lo, hi = tilt_range(want, side)
+    return lo <= (angle if want > 0 else -angle) <= hi
+
+
 class Guide:
     """Guided mode: one target outline at a time. A board that matches it and is held still is saved, then the next
     target comes. check() also says what to change when it does not match yet."""
@@ -286,19 +302,20 @@ class Guide:
         yaw, pitch = turn(view.guide_normal)
         dy, dp = t["yaw"] - yaw, t["pitch"] - pitch
         # said to the person holding the board, behind it: the edge that must go away from the camera comes toward them
-        for delta, flat, less, more in ((dy, t["yaw"] == 0, "pull the left edge toward you",
-                                         "pull the right edge toward you"),
-                                        (dp, t["pitch"] == 0, "pull the top edge toward you",
-                                         "pull the bottom edge toward you")):
-            if abs(delta) > HINT_TILT_DEG:
+        tilt_ok = (axis_ok(t["yaw"], yaw), axis_ok(t["pitch"], pitch))
+        for ok, delta, flat, less, more in ((tilt_ok[0], dy, t["yaw"] == 0, "pull the left edge toward you",
+                                             "pull the right edge toward you"),
+                                            (tilt_ok[1], dp, t["pitch"] == 0, "pull the top edge toward you",
+                                             "pull the bottom edge toward you")):
+            if not ok:
                 hints.append("face the camera" if flat else less if delta < 0 else more)
         # a side target must give that side for the verdict: its tilt as assess() reads it, MIN_TILT_DEG or more
         short = sorted(t["sides"] - tilt_sides(view.normal))
         if short and not any(h.startswith("pull") for h in hints):
             hints += [f"pull the {side} edge a bit more toward you" for side in short]
         hints = list(dict.fromkeys(hints))                 # "face the camera" only once
-        matched = (quad_distance(q, tq) < MATCH_POS * self.diag and abs(scale - 1) <= HINT_SCALE
-                   and abs(dy) <= MATCH_TILT_DEG and abs(dp) <= MATCH_TILT_DEG and not short)
+        matched = (quad_distance(q, tq) < MATCH_POS * self.diag and abs(scale - 1) <= MATCH_SCALE
+                   and all(tilt_ok) and not short)
         if matched:
             return [], True
         return hints or ["line the corners up with the blue outline"], False
@@ -520,10 +537,8 @@ def tilt_gauges(img, y, view, t):
         if want == 0:
             continue
         now = None if view is None else int(round(turn(view.guide_normal)[k] * (-1 if want < 0 else 1)))
-        lo = abs(want) - MATCH_TILT_DEG
-        if near[want > 0] in t["sides"]:
-            lo = max(lo, MIN_TILT_DEG)
-        rows.append((say(f"{near[want > 0]} edge toward you"), now, round(lo), round(abs(want) + MATCH_TILT_DEG)))
+        lo, hi = tilt_range(want, near[want > 0] in t["sides"])
+        rows.append((say(f"{near[want > 0]} edge toward you"), now, round(lo), round(hi)))
     if not rows:
         return y
     size, pad = 15, 12
