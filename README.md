@@ -213,7 +213,8 @@ export DRYSTONE_URL=$(aws lambda get-function-url-config --function-name dryston
 python tools/agent.py --calib data/camera_mycam.yaml --marker-mm 80 --aws "$DRYSTONE_URL"
 ```
 
-Run the tests (web endpoint, check after placement, the whole agent loop with a fake camera):
+Run the tests (web endpoint, check after placement, the whole agent loop with a fake camera; 111 tests, about 3
+minutes, because they run real physics simulations):
 ```
 python -m pytest tests -q
 ```

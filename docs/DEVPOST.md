@@ -2,7 +2,8 @@
 
 Draft text for the Devpost form; Yasin fills the form. Every number comes from `docs/STATUS.md`, `docs/REPORT.md` or
 `data/eval_report/`; statistics have the same sources as the report (section 11). The live demo link goes in the
-Devpost "Try it out" field, not in this file.
+Devpost "Try it out" field, not in this file. Repository (public, also for "Try it out"):
+https://github.com/yasinfitrah24-tech/drystone
 
 **For Yasin, image gallery:** upload `docs/img/architecture.png` first, then `docs/img/agent_loop.png` (both
 1920×1080 PNG, about 0.23 MB each; checked: no Function URL or account number in the pictures or their metadata).
@@ -60,7 +61,7 @@ Drystone is a decision-support prototype, **not a certified safety device**. We 
   photo API and the judges' page with its API, and supervisor choices go to CloudWatch Logs. Deploys are tagged with
   the git commit, and a lifecycle policy keeps the previous version for rollback. The service also has request
   limits, a cache and a zero-spend budget alarm.
-- Testing: 89 automated tests. Many use synthetic camera photos rendered through the real calibration, including
+- Testing: 111 automated tests. Many use synthetic camera photos rendered through the real calibration, including
   the whole agent loop with a fake camera, both on the laptop and through the Lambda handler.
 
 ## Challenges we ran into

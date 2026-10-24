@@ -263,7 +263,7 @@ def test_links_start_hidden():
     html = _page_html()
     links = _page_links(html)
     tags = re.findall(r"<a [^>]*data-link=[^>]*>", html)
-    assert len(tags) == 4                                          # video, repo, report x2
+    assert len(tags) == 6                                          # video, repo, report x2, markers, board
     for t in tags:
         u = links[re.search(r'data-link="(\w+)"', t).group(1)]
         filled = u not in ("", "#")

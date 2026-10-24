@@ -497,7 +497,7 @@
   .card3 b { font-size: 17px; }
   .card3 p { margin: 8px 0 0; font-size: 15px; line-height: 1.55; color: var(--body); }
   .card3.warn { border: 1.5px dashed var(--yellow-edge); }
-  .agent-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+  .agent-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
   @media (max-width: 900px) { .agent-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
   .rules-table th.mono { font-size: 12px; letter-spacing: 0.04em; white-space: nowrap; }
   .closing { text-align: center; }
@@ -880,7 +880,7 @@
         <p class="hero-sub">Nothing holds it but placement.</p>
         <p class="hero-for">For anyone stacking boxes by hand. One webcam, one printed marker per box.</p>
         <p class="hero-body">Drystone checks where the next box goes, then tells you to place it, ask, or move it.</p>
-        <div class="hero-cta"><a class="btn-solid" href="#demo">Check a placement</a><a class="btn-line" data-link="report" href="#" hidden>View report</a></div>
+        <div class="hero-cta"><a class="btn-solid" href="#demo">Check a placement</a><a class="btn-line" data-link="report" href="https://github.com/yasinfitrah24-tech/drystone/blob/main/docs/REPORT.md">View report</a></div>
       </div>
       <figure class="proof" id="proof" aria-label="Replay of a real check: sample s1, next box at +16 cm. RED, move it: P(fall) 73%. Safer spot +10 cm.">
         <div class="proof-top"><span class="proof-rec"><i aria-hidden="true"></i>REPLAY</span><span class="proof-cmd" id="proof-cmd">s1 &middot; next box &rarr; +16 cm</span><span class="proof-tag">real check</span></div>
@@ -943,7 +943,7 @@
         <div class="tech"><span class="tech-k">AWS Lambda</span><p>Same decision code as the laptop agent. Supervisor choices logged in CloudWatch.</p></div>
       </div>
     </div>
-    <p class="facts mono">89 tests &middot; 25 locked trials &middot; every decision logged</p>
+    <p class="facts mono">111 tests &middot; 25 locked trials &middot; every decision logged</p>
   </section>
 </div>
 <section class="roles" aria-label="Who does what">
@@ -1100,6 +1100,8 @@
       <div class="ev"><span class="num" data-count>12/12</span><span>falls detected (7/7 in rehearsal)</span></div>
       <div class="ev"><span class="num" data-count>4</span><span>setups refused until fixed</span></div>
       <div class="ev"><span class="num" data-count>0</span><span>retakes, 0 fallbacks</span></div>
+      <div class="ev"><span class="num">0.6 cm</span><span>mean placement error of boxes that stood; 10 of 13 within 1 cm</span></div>
+      <div class="ev"><span class="num">7.6 s</span><span>median decision time on AWS Lambda (round trip, 25 decisions)</span></div>
     </div>
   </section>
 
@@ -1111,7 +1113,7 @@
       <li>A decision aid prototype, not a certified safety device.</li>
       <li>Photos show boxes only, no faces.</li>
     </ul>
-    <a class="more" data-link="report" href="#" hidden>Full report &amp; failure cases &rarr;</a>
+    <a class="more" data-link="report" href="https://github.com/yasinfitrah24-tech/drystone/blob/main/docs/REPORT.md">Full report &amp; failure cases &rarr;</a>
   </section>
 </div>
 </div>
@@ -1140,7 +1142,7 @@
     <span class="lvl" role="img" aria-label="With a camera"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.5"/></svg></span><h2 id="h-l3">The full agent: camera + markers</h2>
     <p class="block-lead">You need a webcam, printed ArUco markers (DICT_4X4_50, 80 mm, IDs 0&ndash;2), a ChArUco board on something rigid and flat, and boxes listed in <code>config/boxes.json</code>. Measure what you printed. A calibration is only used if it passes the built-in quality check.</p>
     <p class="dl-links"><a class="more" href="print/markers_A4.pdf" download>Download printable markers (PDF) &rarr;</a><a class="more" href="print/charuco_A4.pdf" download>Download calibration board (PDF) &rarr;</a></p>
-    <p class="fine">Print both sheets at 100% (actual size), not &ldquo;fit to page&rdquo;.</p><p class="fine">The same PDFs are in the repository: <code>docs/print/markers_A4.pdf</code> (IDs 0&ndash;2, 80 mm) and <code>docs/print/charuco_A4.pdf</code> (calibration board).</p>
+    <p class="fine">Print both sheets at 100% (actual size), not &ldquo;fit to page&rdquo;.</p><p class="fine">The same PDFs are in the repository: <a data-link="markers" href="https://github.com/yasinfitrah24-tech/drystone/blob/main/docs/print/markers_A4.pdf"><code>docs/print/markers_A4.pdf</code></a> (IDs 0&ndash;2, 80 mm) and <a data-link="board" href="https://github.com/yasinfitrah24-tech/drystone/blob/main/docs/print/charuco_A4.pdf"><code>docs/print/charuco_A4.pdf</code></a> (calibration board).</p>
     <p class="fine">Calibrate your camera. Measure one printed square and use your own name. Match the board to the blue outline on screen; it saves by itself and moves to the next one. About 14 targets. Then the verdict is PASS or RETRY. PASS needs an RMS error of 1 px or less, a focal length uncertainty of 3% or less, and 9 of 12 image regions covered. PASS saves <code>data/camera_mycam.yaml</code>; on RETRY the terminal says what to fix. <code>data/camera_laptop.yaml</code> is our own webcam; calibrate yours.</p>
     <div class="code"><pre><code>python tools/calibrate.py --name mycam --square-mm 30</code></pre><button type="button" class="copy" aria-label="Copy command" title="Copy"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="9" y="9" width="11" height="11" rx="2.5"/><path d="M15 9V6.5A2.5 2.5 0 0 0 12.5 4h-6A2.5 2.5 0 0 0 4 6.5v6A2.5 2.5 0 0 0 6.5 15H9"/></svg></button></div><p class="fine">Replace 30 with the square you measured (ours: 29.8).</p>
     <p class="fine keys" data-keys="calibrate">Keys in the calibration window: <kbd>N</kbd> skip target &middot; <kbd>B</kbd> back one target &middot; <kbd>C</kbd> calibrate now &middot; <kbd>Q</kbd> quit</p>
@@ -1164,8 +1166,8 @@
   </section>
   <section class="block level" aria-labelledby="h-l5">
     <span class="lvl" role="img" aria-label="Verify"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3l7 3v5c0 4.5-3 8.3-7 10-4-1.7-7-5.5-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg></span><h2 id="h-l5">Check our work</h2>
-    <p class="block-lead">Run the test suite, and rebuild the evaluation summary from the published per-trial table, <code>data/eval_report/trials.csv</code>. It writes <code>data/eval_report/from_trials/summary.md</code>, the same as our <code>summary.md</code> except its first line. Our raw logs stay on our laptop (their photos show people).</p>
-    <div class="code"><pre><code>python -m pytest tests -q</code></pre><button type="button" class="copy" aria-label="Copy command" title="Copy"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="9" y="9" width="11" height="11" rx="2.5"/><path d="M15 9V6.5A2.5 2.5 0 0 0 12.5 4h-6A2.5 2.5 0 0 0 4 6.5v6A2.5 2.5 0 0 0 6.5 15H9"/></svg></button></div><div class="code"><pre><code>python tools/eval_report.py --trials data/eval_report/trials.csv</code></pre><button type="button" class="copy" aria-label="Copy command" title="Copy"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="9" y="9" width="11" height="11" rx="2.5"/><path d="M15 9V6.5A2.5 2.5 0 0 0 12.5 4h-6A2.5 2.5 0 0 0 4 6.5v6A2.5 2.5 0 0 0 6.5 15H9"/></svg></button></div>
+    <p class="block-lead">Run the test suite, and rebuild the evaluation summary from the published per-trial table, <code>data/eval_report/trials.csv</code>. It writes <code>data/eval_report/from_trials/summary.md</code> (ignored by git), the same as our <code>summary.md</code> except its first line. Our raw logs stay on our laptop (their photos show people).</p>
+    <div class="code"><pre><code>python -m pytest tests -q</code></pre><button type="button" class="copy" aria-label="Copy command" title="Copy"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="9" y="9" width="11" height="11" rx="2.5"/><path d="M15 9V6.5A2.5 2.5 0 0 0 12.5 4h-6A2.5 2.5 0 0 0 4 6.5v6A2.5 2.5 0 0 0 6.5 15H9"/></svg></button></div><p class="fine">111 tests, about 3 minutes (runs real physics simulations).</p><div class="code"><pre><code>python tools/eval_report.py --trials data/eval_report/trials.csv</code></pre><button type="button" class="copy" aria-label="Copy command" title="Copy"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="9" y="9" width="11" height="11" rx="2.5"/><path d="M15 9V6.5A2.5 2.5 0 0 0 12.5 4h-6A2.5 2.5 0 0 0 4 6.5v6A2.5 2.5 0 0 0 6.5 15H9"/></svg></button></div>
   </section>
 </div>
 </div>
@@ -1184,7 +1186,7 @@
 (function () {
   "use strict";
   // Links: fill these in before submitting. While a value is empty or "#", its links stay hidden.
-  var LINKS = { repo: "https://github.com/yasinfitrah24-tech/drystone", video: "", report: "" };
+  var LINKS = { repo: "https://github.com/yasinfitrah24-tech/drystone", video: "#", report: "https://github.com/yasinfitrah24-tech/drystone/blob/main/docs/REPORT.md", markers: "https://github.com/yasinfitrah24-tech/drystone/blob/main/docs/print/markers_A4.pdf", board: "https://github.com/yasinfitrah24-tech/drystone/blob/main/docs/print/charuco_A4.pdf" };
 
   // overlay colours come from the CSS tokens, so the page and the photo always match
   var css = getComputedStyle(document.documentElement);
