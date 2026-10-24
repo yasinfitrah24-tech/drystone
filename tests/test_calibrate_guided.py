@@ -126,8 +126,8 @@ def test_tilt_hints_name_the_side_that_must_go_away(board, detector, k, want, ed
 def test_whole_board_needed_away_from_the_corners(board, detector):
     g = c.Guide(board, SIZE)
     z = c.target_pose(board, SIZE, c.TARGETS[0])[1][2]
-    v, n = seen(board, detector, *at_target(board, 0, (0.62 * z, 0, 0)))  # half the board past the right edge
-    assert n < c.FULL_CORNERS
+    v, n = seen(board, detector, *at_target(board, 0, (0.70 * z, 0, 0)))  # most of the board past the right edge
+    assert v is not None and n < c.FULL_CORNERS                       # seen, but less than half of it
     event, hints = g.update(v, n, [], 0.0)
     assert event == "move" and hints == ["show the whole board"]
 

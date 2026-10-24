@@ -62,32 +62,35 @@ KEYS = {"guided": (("N", "skip target"), ("B", "back one target"), ("C", "calibr
 
 # ---------------------------------------------------------------- guided mode: one target outline at a time
 GUIDE_F = 0.7            # focal length guess (x image width) to draw the targets and read the tilt against them
-MATCH_POS = 0.06         # matched: the four outline corners within 6% of the image diagonal on average,
-MATCH_TILT_DEG = 10.0    # the tilt within 10 degrees of the target's,
+# Loosened after the first hand-held test (24 Okt): a webcam finds 12-22 of the 24 corners per frame, and a board held
+# by hand is rarely within 6% / 10 degrees of a target for long. The saved frames still pass the same checks.
+MATCH_POS = 0.08         # matched: the four outline corners within 8% of the image diagonal on average,
+MATCH_TILT_DEG = 15.0    # the tilt within 15 degrees of the target's,
 MATCH_SEC = 0.5          # held still for half a second
-FULL_CORNERS = 20        # targets away from the image corners want (almost) the whole board: 20 of its 24 corners
+FULL_CORNERS = 12        # targets away from the image corners want at least half of the board's 24 corners
 HINT_POS = 0.03          # hints: move when the centre is off by more than 3% of the diagonal,
-HINT_SCALE = 0.12        # closer / further when the size is off by more than 12%,
-HINT_TILT_DEG = 6.0      # tilt when an angle is off by more than 6 degrees
-# (name, centre x and y as fractions of the image, board width as a fraction of the image width when flat, yaw, pitch)
+HINT_SCALE = 0.20        # closer / further when the size is off by more than 20% (also a condition for a match),
+HINT_TILT_DEG = MATCH_TILT_DEG   # tilt only when the angle is what keeps it from matching
+# (name, centre x and y as fractions of the image, board width as a fraction of the image width when flat, yaw, pitch).
+# The widths keep the printed board (209 mm wide) about 50 cm from a laptop webcam at the centre target.
 # yaw < 0: the board's left side away from the camera (it faces the left of the image); pitch < 0: its top away.
 # The first nine cover all 12 coverage cells and the four tilt sides; the other five add perspective, which pins down
 # the focal length.
 TARGETS = (
-    ("centre, flat", 0.50, 0.50, 0.36, 0, 0),
-    ("top-left corner", 0.21, 0.28, 0.28, 0, 0),
-    ("top-right corner", 0.79, 0.28, 0.28, 0, 0),
-    ("bottom-right corner", 0.79, 0.72, 0.28, 0, 0),
-    ("bottom-left corner", 0.21, 0.72, 0.28, 0, 0),
-    ("left edge, left side away", 0.25, 0.50, 0.30, -30, 0),
-    ("right edge, right side away", 0.75, 0.50, 0.30, 30, 0),
-    ("top edge, top away", 0.50, 0.29, 0.30, 0, -30),
-    ("bottom edge, bottom away", 0.50, 0.71, 0.30, 0, 30),
-    ("close to the camera", 0.50, 0.50, 0.52, 0, 0),
-    ("top-left, tilted", 0.30, 0.34, 0.27, 25, 22),
-    ("top-right, tilted", 0.70, 0.34, 0.27, -25, 22),
-    ("bottom-left, tilted", 0.30, 0.66, 0.27, 25, -22),
-    ("bottom-right, tilted", 0.70, 0.66, 0.27, -25, -22),
+    ("centre, flat", 0.50, 0.50, 0.30, 0, 0),
+    ("top-left corner", 0.18, 0.26, 0.24, 0, 0),
+    ("top-right corner", 0.82, 0.26, 0.24, 0, 0),
+    ("bottom-right corner", 0.82, 0.74, 0.24, 0, 0),
+    ("bottom-left corner", 0.18, 0.74, 0.24, 0, 0),
+    ("left edge, left side away", 0.22, 0.50, 0.26, -30, 0),
+    ("right edge, right side away", 0.78, 0.50, 0.26, 30, 0),
+    ("top edge, top away", 0.50, 0.27, 0.26, 0, -30),
+    ("bottom edge, bottom away", 0.50, 0.73, 0.26, 0, 30),
+    ("close to the camera", 0.50, 0.50, 0.44, 0, 0),
+    ("top-left, tilted", 0.28, 0.33, 0.23, 25, 22),
+    ("top-right, tilted", 0.72, 0.33, 0.23, -25, 22),
+    ("bottom-left, tilted", 0.28, 0.67, 0.23, 25, -22),
+    ("bottom-right, tilted", 0.72, 0.67, 0.23, -25, -22),
 )
 CORNER_TARGETS = {1, 2, 3, 4}   # these may lose a few board corners at the image edge
 
@@ -257,8 +260,8 @@ class Guide:
             if abs(delta) > HINT_TILT_DEG:
                 hints.append("face the camera" if flat else less if delta < 0 else more)
         hints = list(dict.fromkeys(hints))                 # "face the camera" only once
-        matched = (quad_distance(q, tq) < MATCH_POS * self.diag and abs(dy) <= MATCH_TILT_DEG
-                   and abs(dp) <= MATCH_TILT_DEG)
+        matched = (quad_distance(q, tq) < MATCH_POS * self.diag and abs(scale - 1) <= HINT_SCALE
+                   and abs(dy) <= MATCH_TILT_DEG and abs(dp) <= MATCH_TILT_DEG)
         if matched:
             return True, []
         return False, hints or ["line the corners up with the blue outline"]
