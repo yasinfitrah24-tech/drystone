@@ -82,6 +82,10 @@ def status_tag(status):
     return paint(f" {status} ", fg=ink, bg=z, bold=True) if ink else f"\033[1;97m{_rgb(_HEX[z], bg=True)} {status} \033[0m"
 
 
+# the agent window's keys: the banner prints them, the judges' Setup tab lists them (tests/test_setup_commands.py)
+AGENT_KEYS = (("A / D", "move candidate 1 cm"), ("SPACE", "decide / check"), ("X", "cancel"), ("Q", "quit"))
+
+
 def banner(camera, calib, decisions):
     """Opening block: name, then camera, calibration and where decisions are computed (never the URL)."""
     print()
@@ -90,7 +94,7 @@ def banner(camera, calib, decisions):
     for k, v in (("Camera", camera), ("Calibration", calib), ("Decisions", decisions)):
         print(f"  {paint(f'{k:<13}', fg='MUTED')}{v}")
     print()
-    for k, v in (("A / D", "move candidate 1 cm"), ("SPACE", "decide / check"), ("X", "cancel"), ("Q", "quit")):
+    for k, v in AGENT_KEYS:
         print(f"  {paint(f'{k:<8}', fg='EDGE', bold=True)}{v}")
     print()
     for s in ("The camera reads the stack and draws the next box as a wireframe.",

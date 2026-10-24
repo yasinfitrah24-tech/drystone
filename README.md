@@ -178,18 +178,20 @@ Print the sheets at 100% (actual size, not "fit to page"): [`docs/print/markers_
 markers, DICT_5X5_100, A4 landscape). Both are made by `python tools/make_print_sheets.py` from the settings in
 `tools/common.py`. Measure what you printed.
 
-Calibrate your camera: glue the ChArUco board to a flat hard board, measure one printed square, and repeat until the
-verdict is PASS; it then saves `data/camera_mycam.yaml`. `data/camera_laptop.yaml` is our own webcam;
-calibrate yours.
+Calibrate your camera: glue the ChArUco board to a flat hard board and measure one printed square. Match the board to the blue outline on screen; it saves by itself and moves to the next one. About 14 targets. Then the verdict is PASS or RETRY.
+PASS saves `data/camera_mycam.yaml`; on RETRY the terminal says what to fix. `data/camera_laptop.yaml` is our own
+webcam; calibrate yours.
 ```
-python tools/calibrate.py --name mycam --square-mm 30 --auto
+python tools/calibrate.py --name mycam --square-mm 30
 ```
-Replace 30 with the square you measured (ours: 29.8).
+Replace 30 with the square you measured (ours: 29.8). Keys in the calibration window: N skip target · B back one target · C calibrate now · Q quit.
+Without the outlines: add `--auto` (a frame is saved whenever the board is held still at a new position).
 
 Run the agent on the laptop (boxes listed in `config/boxes.json`, 80 mm markers):
 ```
 python tools/agent.py --calib data/camera_mycam.yaml --marker-mm 80
 ```
+Keys in the agent window: A / D move candidate 1 cm · SPACE decide / check · X cancel · Q quit.
 
 Run the agent with decisions on your own AWS Lambda (see `aws/README.md`; the Lambda image uses the calibration in
 `data/camera_laptop.yaml`, so put yours in that file before you build it). Windows (cmd):

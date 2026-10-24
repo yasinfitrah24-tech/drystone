@@ -23,7 +23,8 @@ Baca file ini setelah `CLAUDE.md` dan `docs/STATUS.md`. Isinya cara kerja yang s
 - Analisis hasil tes dari CSV di `data/` (kolom tx_cm, ty_cm, tz_cm per posisi) untuk membedakan galat acak vs bias sistematis.
 
 ## Pelajaran dari tes 11 Okt
-- Kalibrasi: papan ChArUco **wajib ditempel di bidang keras**. Pakai `--auto`; isi 12/12 kotak cakupan dan miring 4 arah.
+- Kalibrasi: papan ChArUco **wajib ditempel di bidang keras**. Default = mode terpandu (cocokkan papan dengan garis biru, 14 target, simpan sendiri; N lewati, B kembali, C hitung, Q keluar); `--auto` = mode bebas lama. Targetnya menutup 12/12 kotak cakupan dan miring 4 arah.
+- **Setup selalu sinkron dengan kode.** Setiap perubahan perintah, nama opsi, nama file output, tombol keyboard, atau langkah di `tools/` atau `aws/` WAJIB ikut memperbarui tab Setup (`web/index.html`), `docs/SITE_COPY.md`, README "Run it yourself" dan `aws/README.md` di commit yang sama, lalu deploy supaya Setup live ikut berubah. `tests/test_setup_commands.py` mengeceknya (perintah `python tools/...` sama di Setup dan README, opsinya dikenal argparse, tombol sama dengan `calibrate.KEYS` / `agent_hud.AGENT_KEYS`, tanpa `< >`). Kalau tes gagal: perbaiki halaman / README, jangan longgarkan tesnya.
 - Tes 1: tempel tanda selotip tiap 5 cm, tepi benda yang sama selalu di garis, rel buku ditempel ke meja, kamera agak menunduk (marker di sepertiga atas gambar), rentang gerak di tengah gambar. SPASI sekali per posisi, jangan sentuh meja ±1 detik.
 - Ada bias skala ±3% yang belum terjelaskan → dicek ulang dengan kardus asli.
 

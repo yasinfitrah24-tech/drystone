@@ -55,7 +55,7 @@ Pastikan muncul `(.venv)` di awal baris sebelum menjalankan pip atau python. Pyt
 ## Kalibrasi
 - Papan ChArUco wajib ditempel di bidang keras dan rata. Kertas yang dipegang langsung melengkung dan merusak kalibrasi (percobaan 11 Okt: RMS 1.18 px, fx meleset +-75 px).
 - Kalibrasi hanya dipakai kalau vonisnya PASS: RMS <= 1.0 px (bagus < 0.5), ketidakpastian fx/fy <= 1%, cakupan >= 9 dari 12 kotak gambar, minimal 10 posisi papan berbeda. Hasil RETRY disimpan sebagai `camera_<nama>_draft.yaml`. Di YAML nilai `quality` tetap `LAYAK` / `ULANGI` (data, dibaca `common.CALIB_PASS`; file lama tetap bisa dimuat); pengguna hanya melihat PASS / RETRY (`common.VERDICT_TEXT`). Teks yang dilihat pengguna di tools/ semuanya bahasa Inggris.
-- Kamera sendirian: pakai `--auto`. Frame kembar ditolak otomatis.
+- Kalibrasi: mode terpandu (default, tanpa opsi) menampilkan garis target biru satu per satu (14 target); `--auto` = mode bebas lama, `--manual` = SPASI. Frame kembar ditolak otomatis.
 
 ## Aturan kerja
 - Semua jam pakai waktu China.
@@ -66,6 +66,7 @@ Pastikan muncul `(.venv)` di awal baris sebelum menjalankan pip atau python. Pyt
 - Versi dependency di-pin di `requirements.txt`.
 - Tiap klaim di README dan laporan harus didukung angka evaluasi. Drystone adalah alat bantu keputusan, bukan perangkat keselamatan bersertifikat.
 - Biaya AWS: tetap dalam kuota gratis (Lambda 1 juta request dan 400.000 GB-detik/bulan, CloudWatch Logs 5 GB), tanpa AWS Marketplace, alarm Zero spend budget lewat email (`zero-spend-opencv`). Akun tidak tutup sendiri; biaya di atas kuota ditagih. Jangan tulis nomor akun di mana pun.
+- **Setup selalu sinkron dengan kode.** Setiap perubahan perintah, nama opsi, nama file output, tombol keyboard, atau langkah di `tools/` atau `aws/` WAJIB ikut memperbarui tab Setup (`web/index.html`), `docs/SITE_COPY.md`, README "Run it yourself" dan `aws/README.md` di commit yang sama, lalu deploy supaya Setup live ikut berubah. `tests/test_setup_commands.py` mengeceknya (perintah `python tools/...` sama di Setup dan README, opsinya dikenal argparse, tombol sama dengan `calibrate.KEYS` / `agent_hud.AGENT_KEYS`, tanpa `< >`). Kalau tes gagal: perbaiki halaman / README, jangan longgarkan tesnya.
 
 ## Kerja berdua (Yasin + Vincent)
 - Repo: GitHub private `drystone`. Selalu `git pull` sebelum mulai, commit + push setelah selesai.

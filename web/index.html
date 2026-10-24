@@ -605,6 +605,8 @@
   }
   .dl-links { display: flex; flex-wrap: wrap; gap: 4px 24px; margin: 0 0 4px; }
   .dl-links .more[hidden] { display: none; }
+  .keys kbd { display: inline-block; min-width: 1.6em; padding: 1px 6px; border: 1px solid var(--btn-border); border-bottom-width: 2px; border-radius: 5px;
+    background: var(--surface); color: var(--text); font: 600 12px/1.5 var(--mono); text-align: center; }
 
   /* ---------- HUD on the photos: the agent window (tools/agent_hud.py), drawn by the page over the photo ----------
      Sizes are the agent's px on its 1280-px frame times --hu (photo width / 1280), so the proportions match; text never
@@ -716,34 +718,6 @@
     background: linear-gradient(to bottom, rgba(143,176,240,0) calc(100% - 26px), rgba(143,176,240,0.35) calc(100% - 2px), rgba(220,229,245,0.95) calc(100% - 2px)); }
   .photo.scanning .scan i { animation: demo-scan 1.6s linear infinite; }
   @keyframes demo-scan { from { transform: translateY(-100%); } to { transform: translateY(0); } }
-  /* How it decided: five checkpoints, each with its time and a bar for its share of the slowest step */
-  .how .tbar { display: none; }
-  .tline { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 14px; }
-  .tline > li { position: relative; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
-  .tline > li:not(:last-child)::after { content: ""; position: absolute; top: 19px; left: 48px; right: -8px; height: 2px;
-    background-image: repeating-linear-gradient(90deg, var(--tick) 0 8px, transparent 8px 12px); opacity: 0.8; }
-  .ts-dot { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font: 600 13px var(--mono); color: var(--brand);
-    background: var(--surface); border: 1.5px solid var(--brand); box-shadow: 0 0 0 5px rgba(36,87,197,0.08); }
-  .tline > li.dim .ts-dot { border-style: dashed; color: var(--muted); border-color: var(--tick); box-shadow: none; }
-  .ts-name { font-size: 15px; font-weight: 600; line-height: 1.3; }
-  .ts-desc { font-size: 13px; line-height: 1.4; color: var(--muted); }
-  .ts-row { display: flex; align-items: center; gap: 8px; margin-top: 2px; }
-  .ts-ms { font: 600 13px var(--mono); white-space: nowrap; }
-  .ts-cached { font: 600 10.5px var(--mono); letter-spacing: 0.04em; color: var(--brand); border: 1px solid rgba(36,87,197,0.45); border-radius: 999px; padding: 1px 7px; }
-  .ts-bar { display: block; height: 6px; border-radius: 3px; background: rgba(36,87,197,0.12); overflow: hidden; }
-  .ts-bar i { display: block; height: 100%; border-radius: 3px; background: var(--brand); }
-  .tline details { font-size: 13px; }
-  .tline summary { cursor: pointer; color: var(--brand); font-size: 14px; font-weight: 500; min-height: 44px; display: flex; align-items: center; }
-  .tline details ul { margin: 4px 0 0; padding-left: 16px; color: var(--body); }
-  .tline details li { font: 12px/1.45 var(--mono); margin-bottom: 3px; overflow-wrap: anywhere; }
-  @media (max-width: 860px) {
-    .tline { grid-template-columns: minmax(0, 1fr); gap: 18px; }
-    .tline > li { display: grid; grid-template-columns: 40px minmax(0, 1fr); column-gap: 14px; row-gap: 4px; }
-    .tline > li > :not(.ts-dot) { grid-column: 2; }
-    .ts-dot { grid-row: 1 / span 4; }
-    .tline > li:not(:last-child)::after { top: 48px; bottom: -14px; left: 19px; right: auto; width: 2px; height: auto;
-      background-image: repeating-linear-gradient(180deg, var(--tick) 0 8px, transparent 8px 12px); }
-  }
   /* sample picker: the picked card has a blue ring and glow; hover glows */
   .thumb { transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease; }
   .thumb[aria-pressed="true"] { border: 2px solid var(--brand); padding: 4px; box-shadow: 0 0 0 3px rgba(36,87,197,0.16), 0 8px 22px rgba(36,87,197,0.22); }
@@ -969,7 +943,7 @@
         <div class="tech"><span class="tech-k">AWS Lambda</span><p>Same decision code as the laptop agent. Supervisor choices logged in CloudWatch.</p></div>
       </div>
     </div>
-    <p class="facts mono">71 tests &middot; 25 locked trials &middot; every decision logged</p>
+    <p class="facts mono">86 tests &middot; 25 locked trials &middot; every decision logged</p>
   </section>
 </div>
 <section class="roles" aria-label="Who does what">
@@ -1093,7 +1067,7 @@
   <div class="wrap">
     <div class="sec-head"><h2 id="h-how">How it decided</h2><span class="mono" id="total">total &mdash; ms</span></div>
     <div class="tbar" id="tbar" aria-hidden="true"></div>
-    <ol class="tline" id="trace"></ol>
+    <ol class="stages" id="trace"></ol>
   </div>
 </section>
 </div>
@@ -1167,10 +1141,13 @@
     <p class="block-lead">You need a webcam, printed ArUco markers (DICT_4X4_50, 80 mm, IDs 0&ndash;2), a ChArUco board on something rigid and flat, and boxes listed in <code>config/boxes.json</code>. Measure what you printed. A calibration is only used if it passes the built-in quality check.</p>
     <p class="dl-links"><a class="more" href="print/markers_A4.pdf" download>Download printable markers (PDF) &rarr;</a><a class="more" href="print/charuco_A4.pdf" download>Download calibration board (PDF) &rarr;</a></p>
     <p class="fine">Print both sheets at 100% (actual size), not &ldquo;fit to page&rdquo;.</p><p class="fine">The same PDFs are in the repository: <code>docs/print/markers_A4.pdf</code> (IDs 0&ndash;2, 80 mm) and <code>docs/print/charuco_A4.pdf</code> (calibration board).</p>
-    <p class="fine">Calibrate your camera. Measure one printed square and use your own name. Repeat until the verdict is PASS; it then saves <code>data/camera_mycam.yaml</code>. <code>data/camera_laptop.yaml</code> is our own webcam; calibrate yours.</p>
-    <div class="code"><pre><code>python tools/calibrate.py --name mycam --square-mm 30 --auto</code></pre><button type="button" class="copy" aria-label="Copy command" title="Copy"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="9" y="9" width="11" height="11" rx="2.5"/><path d="M15 9V6.5A2.5 2.5 0 0 0 12.5 4h-6A2.5 2.5 0 0 0 4 6.5v6A2.5 2.5 0 0 0 6.5 15H9"/></svg></button></div><p class="fine">Replace 30 with the square you measured (ours: 29.8).</p>
+    <p class="fine">Calibrate your camera. Measure one printed square and use your own name. Match the board to the blue outline on screen; it saves by itself and moves to the next one. About 14 targets. Then the verdict is PASS or RETRY. PASS saves <code>data/camera_mycam.yaml</code>; on RETRY the terminal says what to fix. <code>data/camera_laptop.yaml</code> is our own webcam; calibrate yours.</p>
+    <div class="code"><pre><code>python tools/calibrate.py --name mycam --square-mm 30</code></pre><button type="button" class="copy" aria-label="Copy command" title="Copy"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="9" y="9" width="11" height="11" rx="2.5"/><path d="M15 9V6.5A2.5 2.5 0 0 0 12.5 4h-6A2.5 2.5 0 0 0 4 6.5v6A2.5 2.5 0 0 0 6.5 15H9"/></svg></button></div><p class="fine">Replace 30 with the square you measured (ours: 29.8).</p>
+    <p class="fine keys" data-keys="calibrate">Keys in the calibration window: <kbd>N</kbd> skip target &middot; <kbd>B</kbd> back one target &middot; <kbd>C</kbd> calibrate now &middot; <kbd>Q</kbd> quit</p>
+    <p class="fine">Without the outlines: add <code>--auto</code> (a frame is saved whenever the board is held still at a new position).</p>
     <p class="fine">Run the agent on the laptop:</p>
     <div class="code"><pre><code>python tools/agent.py --calib data/camera_mycam.yaml --marker-mm 80</code></pre><button type="button" class="copy" aria-label="Copy command" title="Copy"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="9" y="9" width="11" height="11" rx="2.5"/><path d="M15 9V6.5A2.5 2.5 0 0 0 12.5 4h-6A2.5 2.5 0 0 0 4 6.5v6A2.5 2.5 0 0 0 6.5 15H9"/></svg></button></div>
+    <p class="fine keys" data-keys="agent">Keys in the agent window: <kbd>A / D</kbd> move candidate 1 cm &middot; <kbd>SPACE</kbd> decide / check &middot; <kbd>X</kbd> cancel &middot; <kbd>Q</kbd> quit</p>
     <p class="fine">Or with decisions on your own AWS Lambda (next section). The Lambda image uses the calibration in <code>data/camera_laptop.yaml</code>, so put yours in that file before you build it.</p>
     <p class="fine"><strong>Windows (cmd)</strong></p><div class="code"><pre><code>for /f %i in ('aws lambda get-function-url-config --function-name drystone --region ap-southeast-1 --query FunctionUrl --output text') do set DRYSTONE_URL=%i</code></pre><button type="button" class="copy" aria-label="Copy command" title="Copy"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="9" y="9" width="11" height="11" rx="2.5"/><path d="M15 9V6.5A2.5 2.5 0 0 0 12.5 4h-6A2.5 2.5 0 0 0 4 6.5v6A2.5 2.5 0 0 0 6.5 15H9"/></svg></button></div><div class="code"><pre><code>python tools/agent.py --calib data/camera_mycam.yaml --marker-mm 80 --aws %DRYSTONE_URL%</code></pre><button type="button" class="copy" aria-label="Copy command" title="Copy"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="9" y="9" width="11" height="11" rx="2.5"/><path d="M15 9V6.5A2.5 2.5 0 0 0 12.5 4h-6A2.5 2.5 0 0 0 4 6.5v6A2.5 2.5 0 0 0 6.5 15H9"/></svg></button></div><p class="fine"><strong>macOS / Linux</strong></p><div class="code"><pre><code>export DRYSTONE_URL=$(aws lambda get-function-url-config --function-name drystone --region ap-southeast-1 --query FunctionUrl --output text)</code></pre><button type="button" class="copy" aria-label="Copy command" title="Copy"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="9" y="9" width="11" height="11" rx="2.5"/><path d="M15 9V6.5A2.5 2.5 0 0 0 12.5 4h-6A2.5 2.5 0 0 0 4 6.5v6A2.5 2.5 0 0 0 6.5 15H9"/></svg></button></div><div class="code"><pre><code>python tools/agent.py --calib data/camera_mycam.yaml --marker-mm 80 --aws "$DRYSTONE_URL"</code></pre><button type="button" class="copy" aria-label="Copy command" title="Copy"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="9" y="9" width="11" height="11" rx="2.5"/><path d="M15 9V6.5A2.5 2.5 0 0 0 12.5 4h-6A2.5 2.5 0 0 0 4 6.5v6A2.5 2.5 0 0 0 6.5 15H9"/></svg></button></div>
   </section>
@@ -1637,16 +1614,14 @@
   function renderTrace() {
     var r = state.status === "result" && state.result ? state.result : null;
     var stages = r && r.stages ? r.stages : null, h = "";
-    var maxMs = stages ? Math.max.apply(null, stages.map(function (x) { return x.ms; }).concat([1])) : 1;
     STAGES.forEach(function (def, i) {
       var st = stages ? stages[i] : null;
       var name = st ? st.name : def[0];
       var desc = (STAGES.filter(function (x) { return x[0] === name; })[0] || def)[1];
-      var ms = !st ? "\u2014 ms" : st.ms < 1 ? "<1 ms" : st.ms.toLocaleString("en-US") + " ms";
-      h += '<li class="' + (st ? "" : "dim") + '"><span class="ts-dot">' + (i + 1) + '</span><span class="ts-name">' + esc(name) + "</span>" +
-        '<span class="ts-desc">' + esc(desc) + '</span><span class="ts-row"><span class="ts-ms">' + ms + "</span>" +
-        (st && r.cached ? '<span class="ts-cached" title="From the cache; the time is the first run">cached</span>' : "") + "</span>" +
-        '<span class="ts-bar" aria-hidden="true"><i style="width:' + (st ? Math.max(st.ms, 0) / maxMs * 100 : 0).toFixed(1) + '%"></i></span>';
+      var ms = !st ? "— ms" : (r.cached ? "cached" : st.ms < 1 ? "<1 ms" : st.ms.toLocaleString("en-US") + " ms");
+      h += '<li class="stage' + (st ? "" : " dim") + '"><div class="stage-top"><span class="stage-n">' + (i + 1) +
+        '</span><span class="stage-line"></span><span class="stage-ms">' + ms + "</span></div>" +
+        '<span class="stage-name">' + esc(name) + '</span><span class="stage-desc">' + esc(desc) + "</span>";
       if (st && st.lines.length) {
         h += "<details><summary>Trace (" + st.lines.length + ")</summary><ul>";
         st.lines.forEach(function (l) { h += "<li>" + esc(l) + "</li>"; });
@@ -1655,13 +1630,20 @@
       h += "</li>";
     });
     el("trace").innerHTML = h;
-    var total = "total \u2014 ms";
+    var total = "total — ms";
     if (stages) {
       var sum = stages.reduce(function (t, s) { return t + s.ms; }, 0);
-      total = r.cached ? "cached \u00b7 first run " + sum.toLocaleString("en-US") + " ms"
+      total = r.cached ? "cached · first run " + sum.toLocaleString("en-US") + " ms"
                        : "total " + sum.toLocaleString("en-US") + " ms";
     }
     el("total").textContent = total;
+    // timing bar: one segment per stage, width = share of the time (all equal before a result)
+    var bar = el("tbar"), sumMs = stages ? stages.reduce(function (t, x) { return t + x.ms; }, 0) : 0;
+    bar.className = "tbar" + (stages ? "" : " empty");
+    bar.innerHTML = STAGES.map(function (d, i) {
+      var grow = stages && sumMs ? Math.max(stages[i].ms, 0) / sumMs * 100 : 20;
+      return '<i style="flex:' + grow.toFixed(2) + ' 1 0" title="' + (i + 1) + '. ' + esc(d[0]) + '"></i>';
+    }).join("");
   }
 
   /* ---------- supervisor choices ---------- */
