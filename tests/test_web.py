@@ -313,13 +313,26 @@ def test_ghost_boxes_match_the_service():
     start = html.index("  var GHOST = ") + len("  var GHOST = ")
     page = json.loads(html[start:html.index(";\n", start)])
     data = ghost_boxes.compute()
-    assert page == data, "run: python tools/ghost_boxes.py --write"
+    hint = "run: python tools/ghost_boxes.py --write"
+
+    def close(a, b, why):
+        """Same points (count and order); each coordinate within 0.5 px: floating point rounds differently on other
+        CPUs (macOS Apple Silicon is 0.1 px off; x86 laptop and Lambda match exactly)."""
+        assert len(a) == len(b), why
+        for p, q in zip(a, b):
+            assert len(p) == len(q) and all(abs(u - v) <= 0.5 for u, v in zip(p, q)), (why, p, q)
+
+    assert sorted(page) == sorted(data), hint                       # the same samples
+    for sample in data:
+        assert sorted(page[sample]) == sorted(data[sample]), hint   # the same offsets
+        for off in data[sample]:
+            close(page[sample][off], data[sample][off], hint)
     lo, hi = META["offset_range_cm"]
     assert all(len(v) == hi - lo + 1 for v in page.values())
     for sample, off in (("s2", S2["YELLOW"]), ("s1", 16)):        # answers other tests already compute (cached)
         status, r, _ = call("POST", "/", {"sample": sample, "offset_cm": off})
         cand = next(p["corners"] for p in r["polygons"] if p["role"] == "candidate")
-        assert page[sample][str(off)] == cand
+        close(page[sample][str(off)], cand, hint)
 
 
 def test_live_diagrams_link_to_their_images():
