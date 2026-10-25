@@ -2,7 +2,7 @@
 
 Salinan status untuk repo (dibaca Yasin, Vincent, dan Claude masing-masing). Update di commit yang sama setiap ada keputusan atau hasil tes baru. Semua jam = waktu China.
 
-Terakhir diperbarui: 24 Okt 2026. Live: `drystone-service:7abd58e` (LINKS terisi kecuali video, 111 tes, dua angka Evidence; sejak 24 Okt 15.48; rollback `7aa4f67`). **Evaluasi 25 percobaan baru selesai: FAIL (C2b, kelebihan 1 roboh); C1, C2a, C3, C4 lulus.**
+Terakhir diperbarui: 25 Okt 2026. **Submitted ke Devpost 25 Okt (email konfirmasi).** Video demo: https://youtu.be/XkX7w039kXU (unlisted, 3:39); `LINKS.video`, README dan DEVPOST.md diisi 25 Okt, live setelah deploy berikutnya. Live: `drystone-service:7abd58e` (LINKS terisi kecuali video, 111 tes, dua angka Evidence; sejak 24 Okt 15.48; rollback `7aa4f67`). **Evaluasi 25 percobaan baru selesai: FAIL (C2b, kelebihan 1 roboh); C1, C2a, C3, C4 lulus.**
 
 ## Ringkasan
 - **Lomba:** OpenCV AI Competition 2026 (https://opencv26.devpost.com/). Deadline **27 Okt, 14.45** (target submit 26 Okt malam). Penjurian 27 Okt–10 Nov, endpoint harus tetap hidup.

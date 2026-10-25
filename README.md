@@ -12,7 +12,7 @@ ask, or move it.</sub></p>
 
 <p align="center">
   <a href="#live-demo-for-judges">Live demo</a> ·
-  Video (coming soon) ·
+  <a href="https://youtu.be/XkX7w039kXU">Video</a> ·
   <a href="https://github.com/yasinfitrah24-tech/drystone/blob/main/docs/REPORT.md">Report</a> ·
   <a href="#run-it-yourself">Setup</a>
 </p>
@@ -31,7 +31,7 @@ transportation and warehousing alone there were 99,800 nonfatal cases with days 
 12,100 were "struck by object or equipment" (a broader category than falling stacks); see the sources in
 [docs/REPORT.md](docs/REPORT.md).
 
-Built for the OpenCV AI Competition 2026.
+Built for the OpenCV AI Competition 2026. Demo video: https://youtu.be/XkX7w039kXU (narration: Vincent).
 
 ## Live demo for judges
 The link to the live page is on our Devpost submission page. The page runs on AWS Lambda (ap-southeast-1) with

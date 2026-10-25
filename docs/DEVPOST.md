@@ -8,6 +8,9 @@ https://github.com/yasinfitrah24-tech/drystone
 **For Yasin, image gallery:** upload `docs/img/architecture.png` first, then `docs/img/agent_loop.png` (both
 1920×1080 PNG, about 0.23 MB each; checked: no Function URL or account number in the pictures or their metadata).
 
+## Video
+https://youtu.be/XkX7w039kXU (unlisted, 3:39). Narration: Vincent.
+
 ## Tagline
 Predict before you stack: a camera, OpenCV 5 and a physics simulation estimate the chance a stack of boxes falls
 before the next box goes on.
