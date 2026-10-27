@@ -2,7 +2,7 @@
 
 Salinan status untuk repo (dibaca Yasin, Vincent, dan Claude masing-masing). Update di commit yang sama setiap ada keputusan atau hasil tes baru. Semua jam = waktu China.
 
-Terakhir diperbarui: 25 Okt 2026. **Submitted ke Devpost 25 Okt (email konfirmasi).** Video demo: https://youtu.be/XkX7w039kXU (unlisted, 3:39); `LINKS.video`, README dan DEVPOST.md diisi 25 Okt, live setelah deploy berikutnya. Live: `drystone-service:7abd58e` (LINKS terisi kecuali video, 111 tes, dua angka Evidence; sejak 24 Okt 15.48; rollback `7aa4f67`). **Evaluasi 25 percobaan baru selesai: FAIL (C2b, kelebihan 1 roboh); C1, C2a, C3, C4 lulus.**
+Terakhir diperbarui: 27 Okt 2026. **Submitted ke Devpost 25 Okt (email konfirmasi).** Video demo: https://youtu.be/XkX7w039kXU (unlisted, 3:39); `LINKS.video`, README dan DEVPOST.md diisi 25 Okt, live setelah deploy berikutnya. Live: `drystone-service:b89de74` (kartu hero tanpa label overhang/margin dan garis pusat massa putih; sejak 27 Okt 09.07; rollback `bdc465d`, yang sudah memuat `LINKS.video`). **Evaluasi 25 percobaan baru selesai: FAIL (C2b, kelebihan 1 roboh); C1, C2a, C3, C4 lulus.**
 
 ## Ringkasan
 - **Lomba:** OpenCV AI Competition 2026 (https://opencv26.devpost.com/). Deadline **27 Okt, 14.45** (target submit 26 Okt malam). Penjurian 27 Okt–10 Nov, endpoint harus tetap hidup.
@@ -230,6 +230,11 @@ Latihan final 18 Okt 13.36–13.41, `agent.py --aws`, Lambda `drystone-service:3
 - `tests/test_web.py`: frasa yang dicek jadi "can take ~10 s" (copy Demo: "The first check can take ~10 s"). 53 tes lulus. Logika keputusan, `samples.json`, format API, setelan evaluasi tidak berubah. Screenshot `docs/img/web_desktop.png` dan `web_mobile.png` diperbarui.
 - **Deploy 23 Okt 08.34:** image `drystone-service:b0f4b7f` (+ `:latest`, digest `sha256:52ecb387…baa4`), Lambda `Successful`/`Active`. **Rollback target: `drystone-service:3ca4c46`.**
 - **Tes live (08.35–08.37):** `GET /` 200, copy baru ada (judul, kata zona place it/ask/move it, teks "can take ~10 s", ikon copy, logo OpenCV dan MuJoCo, ikon GitHub, tombol "View report") · lima tab, kedua diagram 200, `/img/web_desktop.png` → 404 · s1 +16 cm → RED 73% dan s2 +13 cm → YELLOW 27%, sama persis dengan rekaman · s2 +16 cm → RED 69%, usulan +9 cm · `aws/test_endpoint.py` → GREEN GUIDE · `/log` → 200 + CloudWatch · override tanpa alasan → 400 · 0 baris ERROR.
+
+### Kartu hero: label overhang/margin dan garis pusat massa putih dihapus (27 Okt) — hanya tampilan
+- Permintaan Yasin: di replay kartu hero, hapus tulisan "overhang 55%" / "margin -1.5 cm" dan bagian putihnya (garis putus-putus tegak dari pusat massa + titik putih). Garis merah putus-putus tepi kardus bawah tetap; urutan replay, waktunya, dan angka di kartu tidak berubah. Tidak ada tes atau teks SITE_COPY yang bergantung pada bagian ini.
+- Cek lokal (Edge headless, fase LOCK dan frame akhir): label dan garis putih tidak muncul, 0 error JS. 111 tes lulus.
+- Commit `b89de74`. **Deploy 27 Okt 09.07** (Docker Desktop mati dulu, dinyalakan): image `drystone-service:b89de74` (+ `:latest`, digest `sha256:095ac08c…a220`), Lambda `Successful`/`Active`. **Rollback target: `drystone-service:bdc465d`.** Tes live: HTML identik (sha256), label `overhang` / `margin` dan garis pusat massa tidak ada di halaman live, garis tepi merah ada; s1 +16 → RED 73% usulan +10 · s2 +13 → YELLOW 27% usulan +9 · s2 +16 → RED 69% usulan +9 · diagram PNG dan PDF 200 · `test_endpoint` GREEN GUIDE · `/log` 200 + baris CloudWatch · override tanpa alasan 400 · 0 ERROR.
 
 ### Logo di atas README (24 Okt) — hanya README dan gambar, tanpa deploy
 - Baru: `docs/img/logo-light.svg` (tulisan `#13294B`) dan `docs/img/logo-dark.svg` (tulisan putih), latar transparan, 211×64 px, ±5 KB. Sama dengan logo website: tiga balok `#2457C5` bertepi `#8FB0F0` (15 × 8,5 px, jarak 1,5 px, balok atas +4 px), "Drystone" IBM Plex Sans Bold 17 px; posisi tiap huruf diukur di halaman (kerning, −0,01em), huruf diubah jadi path (fontTools + font OFL dari Google Fonts, font tidak di-commit), jadi tidak butuh font saat ditampilkan. Dibandingkan berdampingan dengan logo halaman: sama.
