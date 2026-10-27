@@ -1875,20 +1875,11 @@
         }
         if (t < T.red) edges(cand, "rgba(230,233,239,0.85)", lw, 1, [10, 8]);
         var top = stack[stack.length - 1], ex = (top[6][0] + top[7][0]) / 2, ey = Math.min(top[6][1], top[7][1]);
-        var cx = cand.reduce(function (v, pt) { return v + pt[0]; }, 0) / 8, cy = cand.reduce(function (v, pt) { return v + pt[1]; }, 0) / 8;
         var cy0 = Math.min.apply(null, cand.map(function (pt) { return pt[1]; }));
         g.save(); g.globalAlpha = ease((t - T.twin) / 0.4);
         g.setLineDash([6, 6]); g.lineWidth = 2;
         g.strokeStyle = ZONE.RED; g.beginPath(); g.moveTo(ex, ey); g.lineTo(ex, cy0 - 10); g.stroke();        // edge of the box below
-        g.strokeStyle = "#ffffff"; g.beginPath(); g.moveTo(cx, cy); g.lineTo(cx, ey); g.stroke();             // centre of mass, straight down
-        g.setLineDash([]); g.fillStyle = "#ffffff"; g.beginPath(); g.arc(cx, cy, 5, 0, 2 * Math.PI); g.fill();
         g.restore();
-        if (t >= T.twin + 0.3) {                      // in the empty corner right of the box below
-          G = g;
-          label("overhang " + Math.round(d.overhang_pct) + "%", ex + 14, ey + 32, "#E6E9EF", 22);
-          label("margin " + d.static_margin_cm.toFixed(1) + " cm", ex + 14, ey + 60, "#E6E9EF", 22);
-          G = ctx;
-        }
       }
 
       // e. decision, then the safer spot
